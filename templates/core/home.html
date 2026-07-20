@@ -6,9 +6,12 @@
 <section class="hero" data-island="hero-slider">
   <div class="hero-media">
     {# Drop real event photos at static/img/hero-1.webp, hero-2.webp, hero-3.webp — the slider picks them up. #}
-    <div class="hero-slide is-active" data-src="{% static 'img/hero-1.webp' %}"></div>
-    <div class="hero-slide" data-src="{% static 'img/hero-2.webp' %}"></div>
-    <div class="hero-slide" data-src="{% static 'img/hero-3.webp' %}"></div>
+    {# Curated free photos (Pexels license). Photographers: Kampus Production,
+       Andy Barbour, Tosin Olowoleni. To self-host later: download these URLs
+       into static/img/ and point data-src back at static files. #}
+    <div class="hero-slide is-active" data-src="https://images.pexels.com/photos/5940713/pexels-photo-5940713.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
+    <div class="hero-slide" data-src="https://images.pexels.com/photos/6684514/pexels-photo-6684514.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
+    <div class="hero-slide" data-src="https://images.pexels.com/photos/34162714/pexels-photo-34162714.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
     <div class="hero-veil"></div>
     <div class="hero-veil-2"></div>
   </div>
@@ -43,8 +46,8 @@
     <div class="reveal">
       <div class="media-frame">
         {# Replace with a real programme photo: static/img/home-what-we-do.webp #}
-        <img src="{% static 'img/home-what-we-do.webp' %}" alt="Embark participants in a live session"
-             onerror="this.outerHTML='<div class=\'placeholder-photo\'>Programme photo<br>static/img/home-what-we-do.webp</div>'">
+        <img src="https://images.pexels.com/photos/9034265/pexels-photo-9034265.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="A facilitator teaching a business session"
+             loading="lazy" onerror="this.src='{% static 'img/home-what-we-do.webp' %}'">Programme photo<br>static/img/home-what-we-do.webp</div>'">
       </div>
       <div style="margin-top:26px">
         <p class="eyebrow gold" style="color:var(--orange)">Flagship programme</p>

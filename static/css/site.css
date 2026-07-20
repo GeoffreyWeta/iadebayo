@@ -839,3 +839,7 @@ h2 { margin: 0 0 .5em; }
 
 /* v12 — rotating hero word pops in brand red, brightened for dark bg */
 .hero .accent-red { color: #FF4B50; }
+
+/* v13 — every framed image fits its position regardless of source shape */
+.media-frame img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; }
+.split .media-frame img { aspect-ratio: 4 / 3; }
