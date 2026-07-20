@@ -47,26 +47,14 @@
       <ul>
         <li><a href="{% url 'core:home' %}">Home</a></li>
         <li><a href="{% url 'core:about' %}">About</a></li>
-        <li class="has-sub">
-          <a href="{% url 'core:embark' %}">Embark <span class="caret" aria-hidden="true">▾</span></a>
-          <ul class="sub">
-            <li><a href="{% url 'core:embark' %}#overview">Overview</a></li>
-            <li><a href="{% url 'core:embark' %}#curriculum">Curriculum</a></li>
-            <li><a href="{% url 'core:embark' %}#faculty">Faculty</a></li>
-            <li><a href="{% url 'core:embark' %}#alumni">Alumni</a></li>
-            <li><a href="{% url 'core:apply' %}">Apply</a></li>
-          </ul>
-        </li>
+        <li><a href="{% url 'core:embark' %}">Embark</a></li>
         <li><a href="{% url 'core:media' %}">Media</a></li>
         <li><a href="{% url 'blog:list' %}">Blog</a></li>
-        <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
         <li><a href="{% url 'core:get_involved' %}">Get Involved</a></li>
-        <li><a href="{% url 'core:resources' %}">Resources</a></li>
         <li><a href="{% url 'core:contact' %}">Contact</a></li>
       </ul>
     </nav>
     <div class="header-actions">
-      <div id="google_translate_element" class="translate-slot" aria-label="Translate this site"></div>
       <a class="btn btn-red btn-apply" href="{% url 'core:apply' %}">Apply to Embark</a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Open menu">
         <span></span><span></span><span></span>
@@ -115,6 +103,7 @@
         <li><a href="{% url 'core:contact' %}">Contact form</a></li>
         <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
         <li><a href="{% url 'core:get_involved' %}">Get involved</a></li>
+        <li><a href="{% url 'core:resources' %}">Resources</a></li>
       </ul>
     </div>
     <div class="footer-col footer-news">
@@ -141,11 +130,6 @@
 
 <script src="{% static 'js/site.js' %}" defer></script>
 <script src="{% static 'js/islands.js' %}" defer></script>
-{# Language translator (menu-area requirement). Loads Google Translate widget. #}
-<script>
-function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,fr,pt,ar,sw,ha,yo,ig',layout:google.translate.TranslateElement.InlineLayout.SIMPLE},'google_translate_element');}
-</script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

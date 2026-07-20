@@ -818,3 +818,8 @@ h2 { margin: 0 0 .5em; }
 .theme-embark .site-header .has-sub .sub a:hover { color: var(--ink); }
 .theme-embark .site-footer a { color: rgba(255,255,255,.78); }
 .theme-embark .site-footer a:hover { color: var(--gold); }
+
+/* v10 — nav decrowded: fewer items, roomier links; dropdown machinery retired */
+.main-nav a { padding: 10px 15px; font-size: .92rem; }
+.has-sub .sub, .caret, .translate-slot { display: none !important; }
+@media (max-width: 1080px) { .main-nav a { padding: 10px 11px; font-size: .88rem; } }
