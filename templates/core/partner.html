@@ -23,7 +23,7 @@
       <p class="statement" style="margin-top:40px">Every partnership expands what one young founder somewhere can access.</p>
     </div>
     <div class="form-card reveal">
-      <h2 style="font-size:1.6rem">Partner with us</h2>
+      <h2 class="form-title">Partner with us</h2>
       <form method="post" action="{% url 'submissions:partner' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% include "includes/form_fields.html" %}

@@ -843,3 +843,49 @@ h2 { margin: 0 0 .5em; }
 /* v13 — every framed image fits its position regardless of source shape */
 .media-frame img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; }
 .split .media-frame img { aspect-ratio: 4 / 3; }
+
+/* ============================================================
+   v14 — EXCELLENCE PASS: order, alignment, rhythm
+   ============================================================ */
+
+/* Checklists: one consistent style everywhere (about, embark, apply) */
+.ticklist { list-style: none; padding: 0; margin: 0; }
+.ticklist li {
+  padding: 14px 0 14px 30px; border-bottom: 1px solid var(--line);
+  font-weight: 600; color: var(--ink); position: relative;
+}
+.ticklist li:last-child { border-bottom: 0; }
+.ticklist li::before { content: "✓"; position: absolute; left: 0; top: 14px; color: var(--red); font-weight: 800; }
+.theme-embark .ticklist li { color: var(--em-dark); border-color: rgba(35,31,32,.12); }
+.theme-embark .ticklist li::before { color: var(--em-orange); }
+.on-dark .ticklist li, .section-dark .ticklist li { color: #fff; border-color: rgba(255,255,255,.18); }
+
+/* Form card headings: consistent size + spacing */
+.form-title { font-size: 1.55rem; margin-bottom: 6px; }
+.form-card > p { margin-top: 0; }
+.form-card form { margin-top: 22px; }
+
+/* Centered sections: the eyebrow underline must center too (was left-stuck) */
+.center .eyebrow, .cta-band .eyebrow { text-align: center; }
+.center .eyebrow::after, .cta-band .eyebrow::after { margin-left: auto; margin-right: auto; }
+
+/* Cards: equal heights in a row; actions pinned to the bottom */
+.card-grid { align-items: stretch; }
+.card { display: flex; flex-direction: column; }
+.card p:last-child, .card .card-cta { margin-top: auto; }
+.card h3 { margin-bottom: 10px; }
+
+/* Testimonials & people: consistent internal rhythm */
+.testimonial { min-height: 100%; }
+.person h3 { margin-top: 0; }
+.person .role { display: block; margin-top: 2px; }
+
+/* Headlines: balanced line breaks (no orphan words) */
+h1, h2, .statement, .band-quote { text-wrap: balance; }
+
+/* Split sections: media and text top-align consistently */
+.split { align-items: start; }
+.split > .reveal > .media-frame:first-child { margin-top: 6px; }
+
+/* Consistent gap after intro leads */
+.page-head .lead { max-width: 62ch; }

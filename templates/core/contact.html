@@ -18,7 +18,7 @@
       </ul>
     </div>
     <div class="form-card reveal">
-      <h2 style="font-size:1.6rem">Send a message</h2>
+      <h2 class="form-title">Send a message</h2>
       <form method="post" action="{% url 'submissions:contact' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% include "includes/form_fields.html" %}

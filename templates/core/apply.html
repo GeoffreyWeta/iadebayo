@@ -16,12 +16,12 @@
     <div>
       <div class="reveal">
         <p class="eyebrow" style="color:var(--orange)">Who can apply?</p>
-        <ul class="faq" style="list-style:none;padding:0;margin:0 0 40px">
-          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Be an undergraduate student or recent graduate</li>
-          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Own or co-own an existing business with measurable traction</li>
-          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Operate a business within Africa</li>
-          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Demonstrate commitment to growing your venture</li>
-          <li style="padding:12px 0;font-weight:600">Have reliable access to a laptop or smartphone and the internet throughout the programme</li>
+        <ul class="ticklist">
+          <li>Be an undergraduate student or recent graduate</li>
+          <li>Own or co-own an existing business with measurable traction</li>
+          <li>Operate a business within Africa</li>
+          <li>Demonstrate commitment to growing your venture</li>
+          <li>Have reliable access to a laptop or smartphone and the internet throughout the programme</li>
         </ul>
         <p class="eyebrow" style="color:var(--orange)">Programme highlights</p>
         <div class="chip-row" style="margin-bottom:40px">
@@ -41,7 +41,7 @@
       </div>
     </div>
     <div class="form-card reveal" id="apply-form">
-      <h2 style="font-size:1.6rem">Application form</h2>
+      <h2 class="form-title">Application form</h2>
       <p style="color:var(--muted);margin-top:-6px">Fields marked * are required. You'll receive a confirmation email once submitted.</p>
       <form method="post" action="{% url 'submissions:apply' %}" class="form-grid" novalidate>
         {% csrf_token %}

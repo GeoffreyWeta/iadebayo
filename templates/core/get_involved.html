@@ -16,7 +16,7 @@
       <p>The programme is delivered entirely online, enabling you to contribute from anywhere in the world. Live teaching sessions are held on weekends to accommodate your work schedule, while one-to-one mentorship sessions are scheduled flexibly based on each mentor's availability.</p>
     </div>
     <div class="form-card reveal">
-      <h2 style="font-size:1.6rem">Join our faculty</h2>
+      <h2 class="form-title">Join our faculty</h2>
       <form method="post" action="{% url 'submissions:faculty' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% with form=faculty_form %}{% include "includes/form_fields.html" %}{% endwith %}
@@ -35,7 +35,7 @@
       <p>As a volunteer, you'll become part of a passionate community committed to equipping young entrepreneurs with the knowledge, networks, and opportunities they need to build successful businesses. Most volunteer opportunities are flexible and remote, so you can contribute from anywhere in the world.</p>
     </div>
     <div class="form-card reveal">
-      <h2 style="font-size:1.6rem">Volunteer with us</h2>
+      <h2 class="form-title">Volunteer with us</h2>
       <form method="post" action="{% url 'submissions:volunteer' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% with form=volunteer_form %}{% include "includes/form_fields.html" %}{% endwith %}
