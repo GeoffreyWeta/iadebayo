@@ -836,3 +836,6 @@ h2 { margin: 0 0 .5em; }
 @media (max-width: 1060px) {
   .main-nav a { padding: 10px 7px; font-size: .84rem; }
 }
+
+/* v12 — rotating hero word pops in brand red, brightened for dark bg */
+.hero .accent-red { color: #FF4B50; }

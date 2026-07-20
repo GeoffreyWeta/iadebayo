@@ -59,9 +59,15 @@ class Command(BaseCommand):
             excerpt="From customer research to bookkeeping, AI tools are levelling the field for small teams.",
             body="AI is no longer optional for lean startups.\n\n## Start with customer research\nModern language models turn interview transcripts into insight in minutes.\n\n## Automate the boring parts\nInvoicing, follow-ups, and reporting are the easiest wins.",
             published=True, published_at=timezone.now())
-        # Sample gallery images (replace with real event photos in the admin)
+        # Sample gallery images (replace with real event photos in the admin).
+        # Shipped in static/ (tracked by git) and copied into media/ here so
+        # fresh deployments (e.g. Render) get a populated gallery.
+        gal_dir = Path(settings.MEDIA_ROOT) / "gallery"
+        gal_dir.mkdir(parents=True, exist_ok=True)
         for i in range(1, 7):
-            if (Path(settings.MEDIA_ROOT) / "gallery" / f"sample-{i}.webp").exists():
+            src = Path(settings.BASE_DIR) / "static" / "img" / "gallery" / f"sample-{i}.webp"
+            if src.exists():
+                shutil.copy(src, gal_dir / f"sample-{i}.webp")
                 GalleryImage.objects.create(image=f"gallery/sample-{i}.webp",
                                             caption=f"Sample event photo {i}", order=i)
         # Cover images for the demo posts
