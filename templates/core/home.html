@@ -45,7 +45,7 @@
       <div class="media-frame">
         {# Replace with a real programme photo: static/img/home-what-we-do.webp #}
         <img src="https://images.pexels.com/photos/9034265/pexels-photo-9034265.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="A facilitator teaching a business session"
-             loading="lazy" onerror="this.src='{% static 'img/home-what-we-do.webp' %}'">Programme photo<br>static/img/home-what-we-do.webp</div>'">
+             loading="lazy" onerror="this.src='{% static 'img/home-what-we-do.webp' %}'">
       </div>
       <div style="margin-top:26px">
         <p class="eyebrow gold" style="color:var(--orange)">Flagship programme</p>
@@ -150,17 +150,6 @@
 </section>
 
 
-{# ============ LIFE AT EMBARK — photo strip #}
-{% if gallery_strip %}
-<section class="section section-tight">
-  <div class="container">
-    <div class="section-head"><p class="eyebrow">Life at the Foundation</p><h2>Moments that <span class="accent accent-red">matter.</span></h2></div>
-    <div class="strip-grid">
-      {% for g in gallery_strip %}<figure class="reveal"><img src="{{ g.image.url }}" alt="{{ g.caption }}" loading="lazy"></figure>{% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
 
 {# ============ CTA #}
 <section class="section section-dark on-dark cta-band">
