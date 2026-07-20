@@ -1,0 +1,20 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: push this repo to GitHub, then Render Dashboard → New → Blueprint.
+services:
+  - type: web
+    name: iadebayo-foundation
+    runtime: python
+    plan: free               # demo tier: sleeps after inactivity (cold starts)
+    buildCommand: "./render-build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: SERVE_MEDIA        # demo only: Django serves /media/
+        value: "True"
+      - key: WEB_CONCURRENCY
+        value: "2"

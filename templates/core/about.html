@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">About us</p>
+    <h1>Founded on lessons <span class="accent accent-light">learned the hard way.</span></h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      <p class="eyebrow">Our story</p>
+      <h2>Talent isn't the problem. Access is.</h2>
+      <p>The inspiration behind IADEBAYO Foundation stems from the entrepreneurial journey of its visionary, Dare Adebayo, who began his entrepreneurial journey immediately after secondary school and launched his second business while at university. Like many first-time entrepreneurs, he experienced numerous setbacks, learned difficult lessons, and navigated the uncertainties of building a business with limited guidance.</p>
+      <p>It was only after participating in startup accelerator programmes that he gained the practical insights, mentorship, and strategic thinking that transformed his approach to building and growing businesses.</p>
+      <p class="statement">Many promising young entrepreneurs do not fail because they lack ambition or talent; they fail because they lack access to the right knowledge, mentors, and entrepreneurial community at the right time.</p>
+      <p>Driven by this conviction, Dare founded the Embark Entrepreneurship Academy, the flagship initiative of IADEBAYO Foundation, to equip undergraduate students, recent graduates, and early-stage entrepreneurs across Africa with practical entrepreneurship education, mentorship, and a supportive community.</p>
+      <p>Our mission is simple: to ensure that the next generation of African entrepreneurs starts with the guidance, community, and opportunities that many founders wish they had from day one.</p>
+    </div>
+    <div class="reveal">
+      <div class="media-frame">
+        <img src="{% static 'img/about-founder.webp' %}" alt="Dare Adebayo, founder of IADEBAYO Foundation"
+             onerror="this.outerHTML='<div class=\'placeholder-photo\'>Founder photo<br>static/img/about-founder.webp</div>'">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-cream">
+  <div class="container grid-2">
+    <div class="card reveal">
+      <p class="eyebrow">Vision</p>
+      <p class="statement" style="border:none;padding:0">To be the foremost organization grooming young people to be entrepreneurs and change-makers.</p>
+    </div>
+    <div class="card reveal">
+      <p class="eyebrow">Mission</p>
+      <p class="statement" style="border:none;padding:0">Provide a platform to inspire, groom, empower, and mentor young people to acquire skills, become creative, innovative, and enterprising.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split split-tight">
+    <div class="reveal">
+      <p class="eyebrow">What we believe</p>
+      <h2>Five convictions guide everything we do.</h2>
+      <ul class="faq" style="list-style:none;padding:0;margin:0">
+        <li style="padding:16px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Entrepreneurship can be taught.</li>
+        <li style="padding:16px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Young people should have access to practical entrepreneurial education early.</li>
+        <li style="padding:16px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Sustainable businesses create sustainable communities.</li>
+        <li style="padding:16px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Mentorship accelerates success.</li>
+        <li style="padding:16px 0;font-weight:700;color:var(--ink)">Leadership and character are as important as business skills.</li>
+      </ul>
+    </div>
+    <div class="reveal">
+      <p class="eyebrow">Our core values</p>
+      <h2>How we show up.</h2>
+      <div class="chip-row">
+        {% for v in values %}<span class="chip">{{ v }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-dark on-dark">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Our team</p>
+      <h2>United by a shared belief.</h2>
+      <p class="lead">With diverse expertise across business, education, technology, operations, and leadership, we are dedicated to supporting young entrepreneurs with the knowledge, mentorship, and opportunities they need to succeed.</p>
+    </div>
+    {% if team %}
+    <div class="people-grid">
+      {% for m in team %}
+      <div class="person reveal">
+        <div class="person-photo">{% if m.photo %}<img src="{{ m.photo.url }}" alt="{{ m.name }}" loading="lazy">{% endif %}</div>
+        <h3 style="color:#fff">{{ m.name }}</h3>
+        <span class="role" style="color:rgba(255,255,255,.75)">{{ m.role }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:rgba(255,255,255,.75)">Team profiles appear here — add them in the admin under <strong>Team members</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Partner with us</p>
+    <h1>Stronger <span class="accent accent-light">together.</span></h1>
+    <p class="lead">We welcome partnerships with universities, corporations, entrepreneurship hubs, foundations, NGOs, development organisations, and ecosystem partners who share our commitment to developing Africa's next generation of entrepreneurs.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow">Partnership opportunities</p>
+      <div class="chip-row">
+        <span class="chip">University collaborations</span>
+        <span class="chip">Guest facilitators</span>
+        <span class="chip">Mentorship</span>
+        <span class="chip">Entrepreneurship events</span>
+        <span class="chip">Student outreach</span>
+        <span class="chip">Curriculum collaboration</span>
+        <span class="chip">Research &amp; thought leadership</span>
+      </div>
+      <p class="statement" style="margin-top:40px">Every partnership expands what one young founder somewhere can access.</p>
+    </div>
+    <div class="form-card reveal">
+      <h2 style="font-size:1.6rem">Partner with us</h2>
+      <form method="post" action="{% url 'submissions:partner' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <div class="full"><button class="btn btn-blue" type="submit" style="width:100%">Send inquiry</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

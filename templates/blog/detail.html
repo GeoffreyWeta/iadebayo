@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block og_image %}{% if post.cover_image %}{{ SITE_BASE_URL }}{{ post.cover_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container article">
+    <p class="eyebrow">{{ post.get_category_display }}</p>
+    <h1 style="font-size:clamp(2rem,4.4vw,3.2rem)">{{ post.title }}</h1>
+    <p style="color:var(--muted)">By {{ post.author_name }} · <time datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"j F Y" }}</time></p>
+    {% if post.cover_image %}<div class="article-cover"><img src="{{ post.cover_image.url }}" alt=""></div>{% endif %}
+    {% for block in post.body_blocks %}
+      {% if block.type == "h2" %}<h2>{{ block.text }}</h2>{% else %}<p>{{ block.text }}</p>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% if related %}
+<section class="section section-cream section-tight">
+  <div class="container">
+    <p class="eyebrow">Keep reading</p>
+    <div class="post-grid">
+      {% for post in related %}{% include "blog/_card.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% block scripts %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"{{ post.title|escapejs }}",
+ "datePublished":"{{ post.published_at|date:'c' }}","author":{"@type":"Organization","name":"IADEBAYO Foundation"}}
+</script>
+{% endblock %}
+{% endblock %}

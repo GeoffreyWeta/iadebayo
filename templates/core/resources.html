@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container"><p class="eyebrow">Resources</p><h1>Tools for the <span class="accent accent-light">journey.</span></h1></div>
+</section>
+<section class="section">
+  <div class="container">
+    {% if resources %}
+    <div class="card-grid">
+      {% for r in resources %}
+      <div class="card reveal">
+        <div class="card-icon">↓</div>
+        <h3>{{ r.title }}</h3>
+        <p>{{ r.description }}</p>
+        <p style="margin-top:16px"><a class="btn btn-outline" href="{{ r.file.url }}" download>Download</a></p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Downloadable materials appear here — upload them in the admin under <strong>Resources</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

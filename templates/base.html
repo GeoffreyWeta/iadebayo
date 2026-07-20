@@ -1,0 +1,151 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page_meta_title %}{{ page_meta_title }}{% elif meta_title %}{{ meta_title }} — {{ SITE_NAME }}{% else %}{{ SITE_NAME }}{% endif %}</title>
+  <meta name="description" content="{% if page_meta_description %}{{ page_meta_description }}{% else %}{{ meta_description|default:'IADEBAYO Foundation empowers young African entrepreneurs through education, mentorship, and community.' }}{% endif %}">
+  <link rel="canonical" href="{{ SITE_BASE_URL }}{{ request.path }}">
+  <link rel="icon" href="{% static 'img/favicon.png' %}">
+  {# Open Graph / social sharing previews #}
+  <meta property="og:site_name" content="{{ SITE_NAME }}">
+  <meta property="og:title" content="{{ meta_title|default:SITE_NAME }}">
+  <meta property="og:description" content="{{ meta_description|default:'Empowering Africa\'s next generation of entrepreneurs.' }}">
+  <meta property="og:url" content="{{ SITE_BASE_URL }}{{ request.path }}">
+  <meta property="og:image" content="{% block og_image %}{{ SITE_BASE_URL }}{% static 'img/og-default.png' %}{% endblock %}">
+  <meta name="twitter:card" content="summary_large_image">
+  {# Fonts: Archivo (headlines/body) + Fraunces italic (editorial accents) #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {# Organization schema (schema.org structured data) #}
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"NGO","name":"IADEBAYO Foundation",
+   "url":"{{ SITE_BASE_URL }}","email":"hello@iadebayo.foundation",
+   "description":"A nonprofit empowering young African entrepreneurs through entrepreneurship education, mentorship, and community.",
+   "logo":"{{ SITE_BASE_URL }}{% static 'img/logo.png' %}"}
+  </script>
+  {% if RECAPTCHA_SITE_KEY %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
+  {% if GA_MEASUREMENT_ID %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_MEASUREMENT_ID }}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ GA_MEASUREMENT_ID }}');</script>
+  {% endif %}
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header" id="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{% url 'core:home' %}" aria-label="IADEBAYO Foundation — home">
+      <img src="{% static 'img/mark-white.png' %}" alt="" class="brand-logo"
+           onerror="this.style.display='none'">
+      <span class="brand-word">iAdebayo <em>Foundation</em></span>
+    </a>
+    <nav class="main-nav" id="main-nav" aria-label="Main">
+      <ul>
+        <li><a href="{% url 'core:home' %}">Home</a></li>
+        <li><a href="{% url 'core:about' %}">About</a></li>
+        <li class="has-sub">
+          <a href="{% url 'core:embark' %}">Embark <span class="caret" aria-hidden="true">▾</span></a>
+          <ul class="sub">
+            <li><a href="{% url 'core:embark' %}#overview">Overview</a></li>
+            <li><a href="{% url 'core:embark' %}#curriculum">Curriculum</a></li>
+            <li><a href="{% url 'core:embark' %}#faculty">Faculty</a></li>
+            <li><a href="{% url 'core:embark' %}#alumni">Alumni</a></li>
+            <li><a href="{% url 'core:apply' %}">Apply</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'core:media' %}">Media</a></li>
+        <li><a href="{% url 'blog:list' %}">Blog</a></li>
+        <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
+        <li><a href="{% url 'core:get_involved' %}">Get Involved</a></li>
+        <li><a href="{% url 'core:resources' %}">Resources</a></li>
+        <li><a href="{% url 'core:contact' %}">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <div id="google_translate_element" class="translate-slot" aria-label="Translate this site"></div>
+      <a class="btn btn-red btn-apply" href="{% url 'core:apply' %}">Apply to Embark</a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+{% if messages %}
+<div class="flash-stack container" role="status" aria-live="polite">
+  {% for m in messages %}<div class="flash flash-{{ m.tags }}">{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<main id="main">{% block content %}{% endblock %}</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <img src="{% static 'img/logo-white.png' %}" alt="IADEBAYO Foundation" class="footer-logo"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+      <span class="brand-word brand-word-light" style="display:none">IADEBAYO<em>Foundation</em></span>
+      <p>Empowering Africa's next generation of entrepreneurs through education, mentorship, and community.</p>
+      <ul class="social" aria-label="Social media">
+        <li><a href="https://www.linkedin.com/" aria-label="LinkedIn">in</a></li>
+        <li><a href="https://www.facebook.com/" aria-label="Facebook">f</a></li>
+        <li><a href="https://www.instagram.com/" aria-label="Instagram">ig</a></li>
+        <li><a href="https://www.youtube.com/" aria-label="YouTube">yt</a></li>
+      </ul>
+    </div>
+    <nav class="footer-col" aria-label="Quick links">
+      <h3>Quick links</h3>
+      <ul>
+        <li><a href="{% url 'core:about' %}">About</a></li>
+        <li><a href="{% url 'core:embark' %}">Embark Academy</a></li>
+        <li><a href="{% url 'core:embark' %}#faculty">Faculty</a></li>
+        <li><a href="{% url 'core:embark' %}#alumni">Alumni</a></li>
+        <li><a href="{% url 'core:apply' %}">Apply</a></li>
+        <li><a href="{% url 'blog:list' %}">Blog</a></li>
+      </ul>
+    </nav>
+    <div class="footer-col">
+      <h3>Contact</h3>
+      <ul>
+        <li><a href="mailto:hello@iadebayo.foundation">hello@iadebayo.foundation</a></li>
+        <li><a href="{% url 'core:contact' %}">Contact form</a></li>
+        <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
+        <li><a href="{% url 'core:get_involved' %}">Get involved</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-news">
+      <h3>Newsletter</h3>
+      <p>Stories and opportunities for young African entrepreneurs, in your inbox.</p>
+      <form method="post" action="{% url 'submissions:newsletter' %}" class="newsletter-form">
+        {% csrf_token %}
+        {{ footer_newsletter_form.email }}
+        <button class="btn btn-red" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© {% now "Y" %} IADEBAYO Foundation. All rights reserved.</p>
+    <ul>
+      <li><a href="{% url 'core:privacy' %}">Privacy Policy</a></li>
+      <li><a href="{% url 'core:terms' %}">Terms of Use</a></li>
+    </ul>
+  </div>
+</footer>
+
+<button class="spark-top" id="spark-top" aria-label="Back to top">✳</button>
+<a class="sticky-apply" href="{% url 'core:apply' %}">Apply&nbsp;→</a>
+
+<script src="{% static 'js/site.js' %}" defer></script>
+<script src="{% static 'js/islands.js' %}" defer></script>
+{# Language translator (menu-area requirement). Loads Google Translate widget. #}
+<script>
+function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,fr,pt,ar,sw,ha,yo,ig',layout:google.translate.TranslateElement.InlineLayout.SIMPLE},'google_translate_element');}
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

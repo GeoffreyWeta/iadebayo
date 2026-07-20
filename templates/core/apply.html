@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block body_class %}theme-embark{% endblock %}
+{% load static %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:6px">
+    <div class="subbrand-note" style="display:inline-flex">✳ An IADEBAYO Foundation programme</div>
+    <h1 style="margin-top:20px">Apply to <span class="accent accent-orange">Embark.</span></h1>
+    <p class="lead">Free, online, and built for undergraduates and recent graduates already running businesses in Africa.</p>
+  </div>
+</section>
+
+<section class="section section-cream">
+  <div class="container split" style="align-items:flex-start">
+    <div>
+      <div class="reveal">
+        <p class="eyebrow" style="color:var(--orange)">Who can apply?</p>
+        <ul class="faq" style="list-style:none;padding:0;margin:0 0 40px">
+          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Be an undergraduate student or recent graduate</li>
+          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Own or co-own an existing business with measurable traction</li>
+          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Operate a business within Africa</li>
+          <li style="padding:12px 0;border-bottom:1px solid var(--line);font-weight:600">Demonstrate commitment to growing your venture</li>
+          <li style="padding:12px 0;font-weight:600">Have reliable access to a laptop or smartphone and the internet throughout the programme</li>
+        </ul>
+        <p class="eyebrow" style="color:var(--orange)">Programme highlights</p>
+        <div class="chip-row" style="margin-bottom:40px">
+          <span class="chip">Learn from experienced entrepreneurs</span>
+          <span class="chip">Mentorship</span>
+          <span class="chip">Pan-African community</span>
+          <span class="chip">Capstone Project</span>
+          <span class="chip">Pitch Competition</span>
+          <span class="chip">Certificate of Completion</span>
+        </div>
+        <p class="eyebrow" style="color:var(--orange)">Frequently asked questions</p>
+        <div class="faq">
+          {% for q, a in faqs %}
+          <details><summary>{{ q }}</summary><div class="answer">{{ a }}</div></details>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="form-card reveal" id="apply-form">
+      <h2 style="font-size:1.6rem">Application form</h2>
+      <p style="color:var(--muted);margin-top:-6px">Fields marked * are required. You'll receive a confirmation email once submitted.</p>
+      <form method="post" action="{% url 'submissions:apply' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Submit application</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

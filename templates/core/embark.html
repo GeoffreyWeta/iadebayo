@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block body_class %}theme-embark{% endblock %}
+{% load static %}
+{% block content %}
+<section class="hero" style="min-height:70vh">
+  <div class="hero-media">
+    <div class="hero-slide is-active" data-src="{% static 'img/embark-hero.webp' %}"></div>
+    <div class="hero-veil"></div>
+    <div class="hero-veil-2"></div>
+  </div>
+  <div class="container hero-inner">
+    <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:10px;display:block">
+    <span class="subbrand-note">✳ An IADEBAYO Foundation programme</span>
+    <h1 style="margin-top:20px">Building entrepreneurs <span class="accent accent-orange" data-island="rotate-words"
+      data-words="who build Africa.|who create jobs.|who solve real problems.">who build Africa.</span></h1>
+    <p class="lead">Embark Entrepreneurship Academy empowers undergraduate students, recent graduates, and early-stage entrepreneurs across Africa with the mindset, practical business knowledge, mentorship, and community to build ventures that create jobs and solve real problems.</p>
+    <div class="hero-cta">
+      <a class="btn btn-orange" href="{% url 'core:apply' %}">Apply to the Academy</a>
+      <a class="btn btn-ghost" href="#curriculum">See the curriculum</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="overview">
+  <div class="container split">
+    <div class="reveal">
+      <p class="eyebrow" style="color:var(--orange)">Overview · Why Embark exists</p>
+      <h2>1.3 billion young Africans by 2050. Entrepreneurship has to work.</h2>
+      <p>By 2050, Africa is projected to have a population of approximately 2.5 billion people, with around 1.3 billion between the ages of 15 and 34. Entrepreneurship will play a vital role in creating employment for this rapidly growing youth population.</p>
+      <p>Yet research consistently shows that many businesses fail because founders lack access to practical business education, experienced mentors, entrepreneurial networks, and strategic guidance.</p>
+      <p class="statement">Embark exists to close this gap — structured learning, mentorship, and a supportive community that equips founders to build resilient, sustainable ventures.</p>
+      <p>We are sector-agnostic and welcome entrepreneurs from all industries — technology, agriculture, education, healthcare, fashion, manufacturing, the creative industries, retail, and beyond.</p>
+    </div>
+    <div class="reveal">
+      <p class="eyebrow" style="color:var(--orange)">Our goals</p>
+      <ul class="faq" style="list-style:none;padding:0;margin:0">
+        <li style="padding:14px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Raise a new generation of African entrepreneurs</li>
+        <li style="padding:14px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Encourage innovation and problem-solving</li>
+        <li style="padding:14px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Promote job creation</li>
+        <li style="padding:14px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Reduce poverty through entrepreneurship</li>
+        <li style="padding:14px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)">Build financially independent young people</li>
+        <li style="padding:14px 0;font-weight:700;color:var(--ink)">Inspire ethical leadership and lifelong learning</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section section-dark on-dark impact">
+  <div class="container">
+    <p class="eyebrow">Academy impact</p>
+    <h2>Two years of empowering <span class="accent accent-light">African entrepreneurs.</span></h2>
+    <div class="impact-grid" data-island="counters">
+      {% for s in stats %}
+      <div>
+        <div class="impact-num"><span data-count="{{ s.value }}">{{ s.value }}</span><span class="suffix">{{ s.suffix }}</span></div>
+        <div class="impact-label">{{ s.label }}</div>
+      </div>
+      {% empty %}
+      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
+      <div><div class="impact-num">—</div><div class="impact-label">Entrepreneurs Empowered</div></div>
+      <div><div class="impact-num">—</div><div class="impact-label">African Countries</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section-cream">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow" style="color:var(--orange)">Programme model</p>
+      <h2>Practical learning, real-world application.</h2>
+    </div>
+    <div class="card-grid">
+      {% for c in components %}
+      <div class="card reveal"><div class="card-icon">✳</div><h3>{{ c.name }}</h3><p>{{ c.text }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="curriculum">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow" style="color:var(--orange)">Curriculum</p>
+      <h2>Seventeen modules. <span class="accent accent-red">Immediately applicable.</span></h2>
+      <p class="lead">Each module combines practical instruction, assignments, case studies, and discussions designed to help participants immediately apply what they learn to their businesses.</p>
+    </div>
+    <ol class="curriculum-list">
+      {% for m in curriculum %}<li>{{ m }}</li>{% endfor %}
+    </ol>
+  </div>
+</section>
+
+
+<section class="image-band" style="background-image:url('{% static 'img/embark-band.webp' %}')">
+  <div class="veil"></div>
+  <div class="container" style="padding:90px 24px">
+    <p class="band-quote">Sector-agnostic. Pan-African. Completely free for selected founders.</p>
+  </div>
+</section>
+
+<section class="section section-dark on-dark" id="faculty">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Faculty — mentors &amp; facilitators</p>
+      <h2>Learn from people who've <span class="accent accent-light">actually built.</span></h2>
+      <p class="lead">Experienced founders, business leaders, professionals, and subject-matter experts who guide participants throughout the Academy — bringing practical entrepreneurial experience, insight, accountability, and encouragement beyond the classroom.</p>
+    </div>
+    {% if faculty %}
+    <div class="people-grid">
+      {% for p in faculty %}
+      <div class="person reveal">
+        <div class="person-photo">{% if p.photo %}<img src="{{ p.photo.url }}" alt="{{ p.name }}" loading="lazy">{% endif %}</div>
+        <h3 style="color:#fff">{{ p.name }}</h3>
+        <span class="role" style="color:rgba(255,255,255,.75)">{{ p.title_company }}</span>
+        <div class="expertise" style="color:rgba(255,255,255,.7)">{{ p.expertise }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:rgba(255,255,255,.75)">Faculty profiles appear here — add mentors and facilitators in the admin under <strong>Faculty members</strong>.</p>
+    {% endif %}
+    <div style="margin-top:36px"><a class="btn btn-orange" href="{% url 'core:get_involved' %}">Join our faculty</a></div>
+  </div>
+</section>
+
+<section class="section" id="alumni">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow" style="color:var(--orange)">Meet our alumni</p>
+      <h2>Journeys that started at Embark.</h2>
+    </div>
+    {% if testimonials %}
+    <div class="testimonial-grid">
+      {% for t in testimonials %}
+        {% if t.kind == "video" %}
+          <div class="video-embed"><iframe loading="lazy" src="{{ t.youtube_embed_url }}" title="{{ t.name }} — alumni story" allowfullscreen></iframe></div>
+        {% else %}
+          <div class="testimonial">
+            <blockquote>“{{ t.quote }}”</blockquote>
+            <div class="who">{% if t.photo %}<img src="{{ t.photo.url }}" alt="">{% endif %}<div><strong>{{ t.name }}</strong><span>{{ t.business }}</span></div></div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Alumni testimonials appear here — add them in the admin under <strong>Testimonials</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section-cream cta-band">
+  <div class="container">
+    <p class="eyebrow" style="justify-content:center;color:var(--orange)">Cohort applications</p>
+    <h2>Free. Online. Built for founders who are <span class="accent accent-red">already building.</span></h2>
+    <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark →</a>
+  </div>
+</section>
+{% endblock %}

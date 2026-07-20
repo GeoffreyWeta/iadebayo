@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Get involved</p>
+    <h1>Give the guidance you <span class="accent accent-light">wish you'd had.</span></h1>
+  </div>
+</section>
+
+<section class="section" id="faculty">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow">Join our faculty — facilitator or mentor</p>
+      <h2>Help develop the entrepreneurs who will shape Africa's future.</h2>
+      <p>We invite accomplished entrepreneurs, business leaders, and distinguished professionals to contribute their expertise as Facilitators and Mentors. By sharing your experience, you will help emerging founders make better decisions, overcome challenges, and build resilient, high-impact businesses.</p>
+      <p>The programme is delivered entirely online, enabling you to contribute from anywhere in the world. Live teaching sessions are held on weekends to accommodate your work schedule, while one-to-one mentorship sessions are scheduled flexibly based on each mentor's availability.</p>
+    </div>
+    <div class="form-card reveal">
+      <h2 style="font-size:1.6rem">Join our faculty</h2>
+      <form method="post" action="{% url 'submissions:faculty' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% with form=faculty_form %}{% include "includes/form_fields.html" %}{% endwith %}
+        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Apply to join the faculty</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="section section-cream" id="volunteer">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow" style="color:var(--orange)">Volunteer</p>
+      <h2>Contribute your time, skills, and experience.</h2>
+      <p>Whether your expertise is in programme coordination, event management, marketing and communications, content creation, technology, design, administration, or community engagement — there are meaningful opportunities to support our mission.</p>
+      <p>As a volunteer, you'll become part of a passionate community committed to equipping young entrepreneurs with the knowledge, networks, and opportunities they need to build successful businesses. Most volunteer opportunities are flexible and remote, so you can contribute from anywhere in the world.</p>
+    </div>
+    <div class="form-card reveal">
+      <h2 style="font-size:1.6rem">Volunteer with us</h2>
+      <form method="post" action="{% url 'submissions:volunteer' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% with form=volunteer_form %}{% include "includes/form_fields.html" %}{% endwith %}
+        <div class="full"><button class="btn btn-blue" type="submit" style="width:100%">Volunteer with us</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

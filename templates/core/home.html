@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+{# ============ HERO — big scrolling slides (React island w/ static fallback) #}
+<section class="hero" data-island="hero-slider">
+  <div class="hero-media">
+    {# Drop real event photos at static/img/hero-1.webp, hero-2.webp, hero-3.webp — the slider picks them up. #}
+    <div class="hero-slide is-active" data-src="{% static 'img/hero-1.webp' %}"></div>
+    <div class="hero-slide" data-src="{% static 'img/hero-2.webp' %}"></div>
+    <div class="hero-slide" data-src="{% static 'img/hero-3.webp' %}"></div>
+    <div class="hero-veil"></div>
+    <div class="hero-veil-2"></div>
+  </div>
+  <div class="container hero-inner">
+    <h1>Empowering Africa's next generation of <span class="accent accent-light" data-island="rotate-words"
+      data-words="entrepreneurs.|innovators.|job creators.|changemakers.|leaders.">entrepreneurs.</span></h1>
+    <p class="lead">Practical business education, mentorship, and community for young Africans turning ideas into ventures that create jobs and strengthen communities.</p>
+    <div class="hero-cta">
+      <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark</a>
+      <a class="btn btn-ghost" href="{% url 'core:about' %}">Our story</a>
+    </div>
+    {% if milestones %}
+    <div class="hero-timeline">
+      {% for m in milestones %}<div><span class="yr">{{ m.year }}</span><span class="tx">{{ m.text }}</span></div>{% endfor %}
+    </div>
+    {% else %}<div class="hero-rule"></div>{% endif %}
+  </div>
+</section>
+
+
+
+{# ============ WHAT WE DO #}
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      <p class="eyebrow">What we do</p>
+      <h2>Millions of young Africans aspire to build. Too few get the support to succeed.</h2>
+      <p>IADEBAYO Foundation is a nonprofit committed to equipping young Africans with the entrepreneurial mindset, practical business education, mentorship, and community they need to build sustainable businesses and create lasting impact.</p>
+      <p>Africa is home to one of the world's youngest populations — an extraordinary opportunity and a pressing challenge. While millions of young Africans aspire to become entrepreneurs, many lack access to quality entrepreneurial education, mentorship, and the support systems needed to build sustainable businesses.</p>
+      <p class="statement">We exist to bridge this gap — turning ideas into thriving ventures that create jobs and strengthen communities.</p>
+    </div>
+    <div class="reveal">
+      <div class="media-frame">
+        {# Replace with a real programme photo: static/img/home-what-we-do.webp #}
+        <img src="{% static 'img/home-what-we-do.webp' %}" alt="Embark participants in a live session"
+             onerror="this.outerHTML='<div class=\'placeholder-photo\'>Programme photo<br>static/img/home-what-we-do.webp</div>'">
+      </div>
+      <div style="margin-top:26px">
+        <p class="eyebrow gold" style="color:var(--orange)">Flagship programme</p>
+        <h3>Embark Entrepreneurship Academy</h3>
+        <p style="color:var(--muted)">A virtual entrepreneurship academy equipping undergraduate students, recent graduates, and early-stage entrepreneurs with the mindset, business knowledge, mentorship, and community needed to build sustainable ventures.</p>
+        <a class="btn btn-outline" href="{% url 'core:embark' %}">Explore Embark →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ============ IMPACT NUMBERS #}
+<section class="section section-dark on-dark impact">
+  <div class="container">
+    <p class="eyebrow">Our impact</p>
+    <h2>Celebrating two years of empowering <span class="accent accent-light">African entrepreneurs.</span></h2>
+    <div class="impact-grid" data-island="counters">
+      {% for s in stats %}
+      <div>
+        <div class="impact-num"><span data-count="{{ s.value }}">{{ s.value }}</span><span class="suffix">{{ s.suffix }}</span></div>
+        <div class="impact-label">{{ s.label }}</div>
+      </div>
+      {% empty %}
+      {# Placeholder until the team enters real numbers in the admin (Impact stats) #}
+      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
+      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Applications</div></div>
+      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
+      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">African Countries</div></div>
+      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Facilitators</div></div>
+      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Mentors</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ============ HOW WE DEVELOP ENTREPRENEURS (cards) #}
+<section class="section section-cream">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">How we develop entrepreneurs</p>
+      <h2>Five components. One journey.</h2>
+    </div>
+    <div class="card-grid">
+      {% for c in components %}
+      <div class="card reveal">
+        <div class="card-icon">✳</div>
+        <h3>{{ c.name }}</h3>
+        <p>{{ c.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="center" style="margin-top:44px">
+      <a class="btn btn-red" href="{% url 'core:apply' %}">Apply now</a>
+    </div>
+  </div>
+</section>
+
+{# ============ ALUMNI STORIES #}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Alumni stories</p>
+      <h2>Built here. <span class="accent accent-red">Building Africa.</span></h2>
+    </div>
+    {% if testimonials %}
+    <div class="testimonial-grid">
+      {% for t in testimonials %}
+        {% if t.kind == "video" %}
+        <div class="video-embed"><iframe loading="lazy" src="{{ t.youtube_embed_url }}" title="{{ t.name }} — alumni story" allowfullscreen></iframe></div>
+        {% else %}
+        <div class="testimonial">
+          <blockquote>“{{ t.quote }}”</blockquote>
+          <div class="who">
+            {% if t.photo %}<img src="{{ t.photo.url }}" alt="">{% endif %}
+            <div><strong>{{ t.name }}</strong><span>{{ t.business }}</span></div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Alumni video and picture testimonials will appear here — add them in the admin under <strong>Testimonials</strong> and tick “featured”.</p>
+    {% endif %}
+  </div>
+</section>
+
+{# ============ LATEST FROM THE BLOG #}
+<section class="section section-tight" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">From the blog</p>
+      <h2>Latest insights</h2>
+    </div>
+    {% if latest_posts %}
+    <div class="post-grid">
+      {% for post in latest_posts %}{% include "blog/_card.html" %}{% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Blog posts will appear here once published from the admin.</p>
+    {% endif %}
+  </div>
+</section>
+
+
+{# ============ LIFE AT EMBARK — photo strip #}
+{% if gallery_strip %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="section-head"><p class="eyebrow">Life at the Foundation</p><h2>Moments that <span class="accent accent-red">matter.</span></h2></div>
+    <div class="strip-grid">
+      {% for g in gallery_strip %}<figure class="reveal"><img src="{{ g.image.url }}" alt="{{ g.caption }}" loading="lazy"></figure>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ============ CTA #}
+<section class="section section-dark on-dark cta-band">
+  <div class="container">
+    <p class="eyebrow" style="justify-content:center">Ready to build?</p>
+    <h2>Your business deserves the guidance you wish you had from <span class="accent accent-light">day one.</span></h2>
+    <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark Academy</a>
+  </div>
+</section>
+{% endblock %}

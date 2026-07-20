@@ -1,0 +1,12 @@
+{# Renders any Django form's visible fields into the styled grid. #}
+{% for field in form.visible_fields %}
+  <div class="form-field {% if field.field.widget.input_type == None or field.name in 'message,motivation,about,proposal,business_description' %}full{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+    {{ field }}
+    {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+  </div>
+{% endfor %}
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+{% if RECAPTCHA_SITE_KEY %}
+  <div class="recaptcha-slot full"><div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div></div>
+{% endif %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Media</p>
+    <h1>Moments from the <span class="accent accent-light">movement.</span></h1>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <div class="section-head"><p class="eyebrow">Spotlight Show</p><h2>Conversations with founders and changemakers.</h2></div>
+    {% if videos %}
+    <div class="video-grid">
+      {% for v in videos %}
+      <div class="video-embed"><iframe loading="lazy" src="{{ v.youtube_embed_url }}" title="{{ v.title }}" allowfullscreen></iframe></div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Spotlight videos appear here — add YouTube links in the admin under <strong>Spotlight videos</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+<section class="section section-cream">
+  <div class="container">
+    <div class="section-head"><p class="eyebrow" style="color:var(--orange)">Photo gallery</p><h2>From our events.</h2></div>
+    {% if gallery %}
+    <div class="gallery-grid">
+      {% for g in gallery %}
+      <figure><img src="{{ g.image.url }}" alt="{{ g.caption }}" loading="lazy"></figure>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">Event photos appear here — upload them in the admin under <strong>Gallery images</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

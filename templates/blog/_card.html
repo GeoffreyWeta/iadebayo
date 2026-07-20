@@ -1,0 +1,11 @@
+<article class="post-card reveal">
+  <div class="cover">
+    {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="" loading="lazy">{% endif %}
+  </div>
+  <div class="body">
+    <span class="cat">{{ post.get_category_display }}</span>
+    <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
+    <p>{{ post.excerpt }}</p>
+    <time datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"j F Y" }}</time>
+  </div>
+</article>

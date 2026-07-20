@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container"><p class="eyebrow">Contact</p><h1>Let's <span class="accent accent-light">talk.</span></h1></div>
+</section>
+<section class="section">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow">Reach us</p>
+      <h2>We'd love to hear from you.</h2>
+      <p>Questions about the Academy, partnerships, media, or anything else — send a message and the team will get back to you.</p>
+      <p><strong>Email:</strong> <a href="mailto:hello@iadebayo.foundation">hello@iadebayo.foundation</a></p>
+      <ul class="social" aria-label="Social media" style="margin-top:26px">
+        <li><a href="https://www.linkedin.com/" aria-label="LinkedIn" style="border-color:var(--line);color:var(--ink)">in</a></li>
+        <li><a href="https://www.facebook.com/" aria-label="Facebook" style="border-color:var(--line);color:var(--ink)">f</a></li>
+        <li><a href="https://www.instagram.com/" aria-label="Instagram" style="border-color:var(--line);color:var(--ink)">ig</a></li>
+        <li><a href="https://www.youtube.com/" aria-label="YouTube" style="border-color:var(--line);color:var(--ink)">yt</a></li>
+      </ul>
+    </div>
+    <div class="form-card reveal">
+      <h2 style="font-size:1.6rem">Send a message</h2>
+      <form method="post" action="{% url 'submissions:contact' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Send message</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

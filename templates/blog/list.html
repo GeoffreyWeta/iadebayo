@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Blog</p>
+    <h1>Ideas for <span class="accent accent-light">builders.</span></h1>
+    <div class="chip-row" style="margin-top:26px">
+      <a class="chip" href="{% url 'blog:list' %}" style="text-decoration:none;{% if not active_category %}background:var(--gold);border-color:var(--gold);color:var(--ink){% else %}background:transparent;color:#fff;border-color:rgba(255,255,255,.4){% endif %}">All</a>
+      {% for value, label in categories %}
+      <a class="chip" href="{% url 'blog:list' %}?category={{ value }}" style="text-decoration:none;{% if active_category == value %}background:var(--gold);border-color:var(--gold);color:var(--ink){% else %}background:transparent;color:#fff;border-color:rgba(255,255,255,.4){% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    {% if page.object_list %}
+    <div class="post-grid">
+      {% for post in page.object_list %}{% include "blog/_card.html" %}{% endfor %}
+    </div>
+    {% if page.has_other_pages %}
+    <div class="center" style="margin-top:44px;display:flex;gap:12px;justify-content:center">
+      {% if page.has_previous %}<a class="btn btn-outline" href="?page={{ page.previous_page_number }}{% if active_category %}&category={{ active_category }}{% endif %}">← Newer</a>{% endif %}
+      {% if page.has_next %}<a class="btn btn-outline" href="?page={{ page.next_page_number }}{% if active_category %}&category={{ active_category }}{% endif %}">Older →</a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="color:var(--muted)">No posts yet — publish your first from the admin under <strong>Blog › Posts</strong>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
