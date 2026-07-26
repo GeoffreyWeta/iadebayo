@@ -1066,6 +1066,14 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
                              rgba(27,23,24,.10) 100%);
 }
 
+/* Hero headings are always over photography, so they are always white.
+   `.theme-embark h1` (v7) and `.hero h1` (base) both score 0-1-1, so the
+   theme rule won on source order alone and painted the Embark hero
+   headline charcoal #231F20 on a charcoal hero — invisible. The Apply
+   page escaped it only because .page-head carries `on-dark`. */
+.theme-embark .hero h1,
+.theme-embark .hero h2 { color: #fff; }
+
 /* Embark's rotating phrase takes the soft orange the theme already uses
    on dark surfaces (see .theme-embark .on-dark .eyebrow). Scoped to
    .hero — on cream and white sections solid --em-orange is correct. */
@@ -1089,4 +1097,32 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
                                         rgba(27,23,24,.46) 62%,
                                         rgba(27,23,24,.50) 100%);
   }
+}
+
+/* ============================================================
+   v17 — Programme cards: all five on one row (desktop)
+
+   auto-fit with minmax(240px, 1fr) only fits 4 columns in the
+   1112px container, so the fifth card orphaned onto its own row.
+   Forcing 5 columns means resizing the card to match: tighter gap
+   and padding, slightly smaller type.
+
+   The 1140px floor is set by the longest title, "Pitch
+   Competition" — any narrower and it wraps to two lines while its
+   siblings stay on one, which reads as a mistake. Between 641px
+   and there we pin 3 columns (a deliberate 3 + 2) because plain
+   auto-fit swings back to 4 around 1100px and re-orphans the
+   fifth card. Below 641px the existing single-column rule wins.
+   ============================================================ */
+@media (min-width: 1140px) {
+  .card-grid-5 { grid-template-columns: repeat(5, 1fr); gap: 18px; }
+  .card-grid-5 .card { padding: 28px 18px; }
+  .card-grid-5 .card h3 { font-size: 1rem; letter-spacing: -0.01em; }
+  .card-grid-5 .card p { font-size: .9rem; line-height: 1.55; }
+  .card-grid-5 .card-icon {
+    width: 40px; height: 40px; border-radius: 10px; font-size: 1.1rem;
+  }
+}
+@media (min-width: 641px) and (max-width: 1139px) {
+  .card-grid-5 { grid-template-columns: repeat(3, 1fr); }
 }

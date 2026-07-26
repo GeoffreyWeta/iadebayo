@@ -6,7 +6,12 @@
 <section class="hero" data-island="hero-slider">
   <div class="hero-media">
     {# Self-hosted at static/img/hero-1.webp, hero-2.webp, hero-3.webp — swap the files to change the slider. #}
-    <div class="hero-slide is-active" data-src="{% static 'img/hero-1.webp' %}"></div>
+    {% comment %}
+      First slide also set inline so the hero still shows a photo if the
+      island never mounts; the slider overwrites it with the same URL.
+    {% endcomment %}
+    <div class="hero-slide is-active" data-src="{% static 'img/hero-1.webp' %}"
+         style="background-image:url('{% static 'img/hero-1.webp' %}')"></div>
     <div class="hero-slide" data-src="{% static 'img/hero-2.webp' %}"></div>
     <div class="hero-slide" data-src="{% static 'img/hero-3.webp' %}"></div>
     <div class="hero-veil"></div>
@@ -95,7 +100,8 @@
       <p class="eyebrow">How we develop entrepreneurs</p>
       <h2 class="one-line">Five components. One journey.</h2>
     </div>
-    <div class="card-grid">
+    {# card-grid-5: keeps the five components on one row on desktop #}
+    <div class="card-grid card-grid-5">
       {% for c in components %}
       <div class="card reveal">
         <div class="card-icon">✳</div>

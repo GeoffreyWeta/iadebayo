@@ -4,7 +4,12 @@
 {% block content %}
 <section class="hero" style="min-height:70vh">
   <div class="hero-media">
-    <div class="hero-slide is-active" data-src="{% static 'img/embark-hero.webp' %}"></div>
+    {% comment %}
+      One fixed photo, so it is set inline rather than via data-src: the
+      hero-slider island only runs where there are slides to rotate, and
+      this page has none — data-src alone left the hero with no image.
+    {% endcomment %}
+    <div class="hero-slide is-active" style="background-image:url('{% static 'img/embark-hero.webp' %}')"></div>
     <div class="hero-veil"></div>
     <div class="hero-veil-2"></div>
   </div>
@@ -14,7 +19,9 @@
     {% comment %}
       Static line + rotating promise. The ghost span holds the longest phrase so
       the hero reserves its height once and never reflows as words cycle.
-      NB: {# … #} is single-line only — spanning lines leaks the text onto the page.
+      NB: hash-style template comments are single-line only — if one spans
+      lines Django stops treating it as a comment and prints it on the page.
+      Use this block form whenever a note needs more than one line.
     {% endcomment %}
     <h1 class="hero-headline" style="margin-top:20px">Become the Entrepreneur&nbsp;who<span class="rotator">
       <span class="rotator-ghost" aria-hidden="true">thinks like a CEO, not just a&nbsp;founder</span>
@@ -82,7 +89,8 @@
       <p class="eyebrow" style="color:var(--orange)">Programme model</p>
       <h2>Practical learning, real-world application.</h2>
     </div>
-    <div class="card-grid">
+    {# card-grid-5: keeps the five components on one row on desktop #}
+    <div class="card-grid card-grid-5">
       {% for c in components %}
       <div class="card reveal"><div class="card-icon">✳</div><h3>{{ c.name }}</h3><p>{{ c.text }}</p></div>
       {% endfor %}
