@@ -7,7 +7,7 @@
     <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:6px">
     <div class="subbrand-note" style="display:inline-flex">✳ An IADEBAYO Foundation programme</div>
     <h1 style="margin-top:20px">Apply to <span class="accent accent-orange">Embark.</span></h1>
-    <p class="lead">Free, online, and built for undergraduates and recent graduates already running businesses in Africa.</p>
+    <p class="lead">Free, online, and built for undergraduates and graduates already running businesses in Africa.</p>
   </div>
 </section>
 
@@ -17,7 +17,7 @@
       <div class="reveal">
         <p class="eyebrow" style="color:var(--orange)">Who can apply?</p>
         <ul class="ticklist">
-          <li>Be an undergraduate student or recent graduate</li>
+          <li>Be an undergraduate or a graduate</li>
           <li>Own or co-own an existing business with measurable traction</li>
           <li>Operate a business within Africa</li>
           <li>Demonstrate commitment to growing your venture</li>
@@ -40,15 +40,72 @@
         </div>
       </div>
     </div>
+
     <div class="form-card reveal" id="apply-form">
-      <h2 class="form-title">Application form</h2>
-      <p style="color:var(--muted);margin-top:-6px">Fields marked * are required. You'll receive a confirmation email once submitted.</p>
-      <form method="post" action="{% url 'submissions:apply' %}" class="form-grid" novalidate>
+      <h2 class="form-title">Embark application form</h2>
+
+      {# ---- "About Embark": the short intro the form opens with #}
+      <div class="form-intro">
+        <p>Embark is the IADEBAYO Foundation's entrepreneurship academy. Across one cohort
+          you get a structured curriculum, live classes with people who have built real
+          businesses, a mentor matched to your sector, a capstone project, and a
+          pan-African community of founders. It costs nothing.</p>
+        {% if embark_intro_video %}
+        <p><a class="form-intro-video" href="{{ embark_intro_video }}" target="_blank" rel="noopener">
+          ▶&nbsp; Watch the one-minute explainer</a></p>
+        {% endif %}
+      </div>
+
+      <p class="form-note">Three short sections. Fields marked * are required, and you'll
+        get a confirmation email once you submit.</p>
+
+      <form method="post" action="{% url 'submissions:apply' %}" class="form-steps"
+            enctype="multipart/form-data" novalidate
+            id="embark-form" data-draft-key="embark-application">
         {% csrf_token %}
-        {% include "includes/form_fields.html" %}
-        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Submit application</button></div>
+
+        {# Progress rail — becomes clickable once the step script runs #}
+        <ol class="step-rail">
+          {% for section in form.sections %}
+          <li class="step-rail-item" data-goto="{{ section.index }}">
+            <span class="step-rail-num">{{ section.index }}</span>
+            <span class="step-rail-label">{{ section.title }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+
+        {% if form.errors %}
+        <div class="form-error form-error-top" role="alert">
+          Some answers need another look — the fields below are marked.
+          Please also re-select your video: no browser can keep an upload across a page reload.
+        </div>
+        {% endif %}
+
+        {% for section in form.sections %}
+          {% include "includes/form_section.html" %}
+        {% endfor %}
+
+        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+        {% if RECAPTCHA_SITE_KEY %}
+        <div class="recaptcha-slot"><div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div></div>
+        {% endif %}
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" data-step-prev hidden>← Back</button>
+          <button type="button" class="btn btn-orange" data-step-next hidden>Next →</button>
+          <button type="submit" class="btn btn-primary" data-step-submit>Submit application</button>
+        </div>
+        <p class="form-draft-note" hidden>
+          Your answers are saved in this browser as you type, so you can close the tab and
+          come back to finish. The video is the one thing that cannot be saved — choose the
+          file again before you submit.
+        </p>
       </form>
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/form-steps.js' %}" defer></script>
 {% endblock %}

@@ -22,7 +22,7 @@
       <form method="post" action="{% url 'submissions:contact' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% include "includes/form_fields.html" %}
-        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Send message</button></div>
+        <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Send message</button></div>
       </form>
     </div>
   </div>

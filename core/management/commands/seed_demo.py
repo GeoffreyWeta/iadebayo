@@ -21,19 +21,14 @@ class Command(BaseCommand):
             self.stdout.write("Content already exists — skipping.")
             return
 
-        for i, (label, value, suffix) in enumerate([
-            ("Cohorts", 4, ""), ("Applications", 1200, "+"),
-            ("Entrepreneurs Empowered", 250, "+"), ("African Countries", 12, ""), ("Live Sessions", 60, "+"),
-            ("Facilitators", 30, "+"), ("Mentors", 45, "+"),
-        ]):
-            ImpactStat.objects.create(label=label, value=value, suffix=suffix, order=i)
+        ImpactStat.sync_canonical()
 
         TeamMember.objects.create(name="Dare Adebayo", role="Founder", order=0)
         for i, (year, text) in enumerate([
             ("2024", "IADEBAYO Foundation is born"),
             ("Cohort 1", "Embark Entrepreneurship Academy launches"),
-            ("2025", "Alumni ventures span 12 African countries"),
-            ("Cohort 4", "Applications pass 1,200"),
+            ("2025", "Alumni ventures span four African countries"),
+            ("Cohort 4", "70 entrepreneurs empowered"),
             ("2026", "Celebrating two years of impact"),
         ]):
             Milestone.objects.create(year=year, text=text, order=i)

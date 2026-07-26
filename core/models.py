@@ -2,10 +2,22 @@
 from django.db import models
 
 
+# The agreed impact numbers, in display order. Single source of truth for the
+# seed command, `manage.py sync_impact_stats`, and the template fallbacks.
+CANONICAL_IMPACT_STATS = [
+    ("Years", 2, ""),
+    ("Cohorts", 4, ""),
+    ("Entrepreneurs Empowered", 70, ""),
+    ("African Countries", 4, ""),
+    ("Live Sessions", 80, "+"),
+    ("Facilitators & Mentors", 42, "+"),
+]
+
+
 class ImpactStat(models.Model):
     """Numbers for the 'Impact' sections (Home + Embark pages).
 
-    The spec has XYZ placeholders — the team fills real numbers in admin.
+    Defaults come from CANONICAL_IMPACT_STATS; the team edits them in admin.
     """
     label = models.CharField(max_length=80, help_text="e.g. 'Entrepreneurs Empowered'")
     value = models.PositiveIntegerField(help_text="The number itself, e.g. 250")
@@ -17,6 +29,23 @@ class ImpactStat(models.Model):
 
     def __str__(self):
         return f"{self.value}{self.suffix} {self.label}"
+
+    @classmethod
+    def sync_canonical(cls):
+        """Make the table match CANONICAL_IMPACT_STATS exactly.
+
+        Matches on label so hand-edits to a value are overwritten but the row
+        (and its id) survives. Returns (written, removed_labels).
+        """
+        keep = []
+        for order, (label, value, suffix) in enumerate(CANONICAL_IMPACT_STATS):
+            obj, _ = cls.objects.update_or_create(
+                label=label, defaults={"value": value, "suffix": suffix, "order": order})
+            keep.append(obj.pk)
+        stale = cls.objects.exclude(pk__in=keep)
+        removed = list(stale.values_list("label", flat=True))
+        stale.delete()
+        return len(keep), removed
 
 
 class TeamMember(models.Model):

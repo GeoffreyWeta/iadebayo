@@ -55,7 +55,7 @@
       </ul>
     </nav>
     <div class="header-actions">
-      <a class="btn btn-red btn-apply" href="{% url 'core:apply' %}">Apply to Embark</a>
+      <a class="btn btn-primary btn-apply" href="{% url 'core:apply' %}">Apply to Embark</a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
@@ -99,8 +99,8 @@
     <div class="footer-col">
       <h3>Contact</h3>
       <ul>
-        <li><a href="mailto:hello@iadebayo.foundation">hello@iadebayo.foundation</a></li>
-        <li><a href="{% url 'core:contact' %}">Contact form</a></li>
+        {# Email address deliberately not shown here — visitors go through the form. #}
+        <li><a href="{% url 'core:contact' %}">Contact us</a></li>
         <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
         <li><a href="{% url 'core:get_involved' %}">Get involved</a></li>
         <li><a href="{% url 'core:resources' %}">Resources</a></li>
@@ -112,7 +112,7 @@
       <form method="post" action="{% url 'submissions:newsletter' %}" class="newsletter-form">
         {% csrf_token %}
         {{ footer_newsletter_form.email }}
-        <button class="btn btn-red" type="submit">Subscribe</button>
+        <button class="btn btn-primary" type="submit">Subscribe</button>
       </form>
     </div>
   </div>

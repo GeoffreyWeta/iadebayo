@@ -190,6 +190,10 @@ GA_MEASUREMENT_ID = env("GA_MEASUREMENT_ID", "")
 SITE_NAME = "IADEBAYO Foundation"
 SITE_BASE_URL = env("SITE_BASE_URL", "https://www.iadebayo.foundation")
 
+# One-minute "what Embark does" explainer, linked above the application form.
+# Leave empty and the intro block simply renders without the video link.
+EMBARK_INTRO_VIDEO_URL = env("EMBARK_INTRO_VIDEO_URL", "")
+
 
 # --------------------------------------------------- static serving & media
 # WhiteNoise: compressed static files in production

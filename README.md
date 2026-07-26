@@ -43,13 +43,20 @@ alumni testimonials (text or YouTube), Spotlight videos, gallery photos,
 downloadable resources — and every form submission arrives there too,
 with a "reviewed" checkbox for workflow.
 
-## Images to add
+## Images
 
-Drop real photos at these paths (placeholders show until then):
+Every photo is self-hosted WebP — no third-party image hosts. Swap a file in
+place (same name, same aspect ratio) and the page picks it up:
 
-    static/img/hero-1.jpg  hero-2.jpg  hero-3.jpg   (home hero slider)
-    static/img/embark-hero.jpg                       (Embark page hero)
-    static/img/home-what-we-do.jpg                   (home, programme photo)
-    static/img/about-founder.jpg                     (about page)
+    static/img/hero-1.webp  hero-2.webp  hero-3.webp  (home hero slider, 16:9)
+    static/img/embark-hero.webp                       (Embark page hero, 16:9)
+    static/img/embark-band.webp                       (Embark quote band, 2.5:1)
+    static/img/home-what-we-do.webp                   (home, programme photo, 4:3)
+    static/img/about-founder.webp                     (about page, 4:3)
+    static/img/blog-cover-1.webp  blog-cover-2.webp   (demo post covers, 16:9)
+    static/img/gallery/sample-1..6.webp               (demo gallery, 4:3)
+
+The blog covers and gallery samples are demo content: `seed_demo` copies them
+into `media/` on a fresh database, and the team replaces them from /admin/.
 
 See DEPLOYMENT.md for putting this live.

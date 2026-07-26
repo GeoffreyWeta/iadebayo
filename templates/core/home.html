@@ -5,20 +5,19 @@
 {# ============ HERO — big scrolling slides (React island w/ static fallback) #}
 <section class="hero" data-island="hero-slider">
   <div class="hero-media">
-    {# Drop real event photos at static/img/hero-1.webp, hero-2.webp, hero-3.webp — the slider picks them up. #}
-    {% comment %} Curated free Pexels photos (all pre-2022 uploads, provably human-shot). Photographers: Kampus Production, Andy Barbour, Gustavo Fring. To self-host: download the URLs below into static/img/ and point data-src at static files. {% endcomment %}
-    <div class="hero-slide is-active" data-src="https://images.pexels.com/photos/5940713/pexels-photo-5940713.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
-    <div class="hero-slide" data-src="https://images.pexels.com/photos/6684514/pexels-photo-6684514.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
-    <div class="hero-slide" data-src="https://images.pexels.com/photos/4972199/pexels-photo-4972199.jpeg?auto=compress&cs=tinysrgb&w=1920"></div>
+    {# Self-hosted at static/img/hero-1.webp, hero-2.webp, hero-3.webp — swap the files to change the slider. #}
+    <div class="hero-slide is-active" data-src="{% static 'img/hero-1.webp' %}"></div>
+    <div class="hero-slide" data-src="{% static 'img/hero-2.webp' %}"></div>
+    <div class="hero-slide" data-src="{% static 'img/hero-3.webp' %}"></div>
     <div class="hero-veil"></div>
     <div class="hero-veil-2"></div>
   </div>
   <div class="container hero-inner">
-    <h1>Empowering Africa's next generation of <span class="accent accent-red" data-island="rotate-words"
+    <h1>Empowering Africa's next generation of <span class="accent accent-primary" data-island="rotate-words"
       data-words="entrepreneurs.|innovators.|job creators.|changemakers.|leaders.">entrepreneurs.</span></h1>
     <p class="lead">Practical business education, mentorship, and community for young Africans turning ideas into ventures that create jobs and strengthen communities.</p>
     <div class="hero-cta">
-      <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark</a>
+      <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark</a>
       <a class="btn btn-ghost" href="{% url 'core:about' %}">Our story</a>
     </div>
     {% if milestones %}
@@ -43,9 +42,8 @@
     </div>
     <div class="reveal">
       <div class="media-frame">
-        {# Replace with a real programme photo: static/img/home-what-we-do.webp #}
-        <img src="https://images.pexels.com/photos/9034265/pexels-photo-9034265.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="A facilitator teaching a business session"
-             loading="lazy" onerror="this.src='{% static 'img/home-what-we-do.webp' %}'">
+        <img src="{% static 'img/home-what-we-do.webp' %}" width="1200" height="900"
+             alt="A young fashion entrepreneur running her studio from a laptop and phone" loading="lazy">
       </div>
       <div style="margin-top:26px">
         <p class="eyebrow gold" style="color:var(--orange)">Flagship programme</p>
@@ -69,13 +67,13 @@
         <div class="impact-label">{{ s.label }}</div>
       </div>
       {% empty %}
-      {# Placeholder until the team enters real numbers in the admin (Impact stats) #}
+      {# Fallback if the Impact stats table is empty — run `manage.py sync_impact_stats` #}
+      <div><div class="impact-num"><span data-count="2">2</span></div><div class="impact-label">Years</div></div>
       <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
-      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Applications</div></div>
-      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
-      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">African Countries</div></div>
-      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Facilitators</div></div>
-      <div><div class="impact-num"><span data-count="0">—</span></div><div class="impact-label">Mentors</div></div>
+      <div><div class="impact-num"><span data-count="70">70</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
+      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">African Countries</div></div>
+      <div><div class="impact-num"><span data-count="80">80</span><span class="suffix">+</span></div><div class="impact-label">Live Sessions</div></div>
+      <div><div class="impact-num"><span data-count="42">42</span><span class="suffix">+</span></div><div class="impact-label">Facilitators &amp; Mentors</div></div>
       {% endfor %}
     </div>
   </div>
@@ -98,7 +96,7 @@
       {% endfor %}
     </div>
     <div class="center" style="margin-top:44px">
-      <a class="btn btn-red" href="{% url 'core:apply' %}">Apply now</a>
+      <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply now</a>
     </div>
   </div>
 </section>
@@ -108,7 +106,7 @@
   <div class="container">
     <div class="section-head">
       <p class="eyebrow">Alumni stories</p>
-      <h2>Built here. <span class="accent accent-red">Building Africa.</span></h2>
+      <h2>Built here. <span class="accent accent-primary">Building Africa.</span></h2>
     </div>
     {% if testimonials %}
     <div class="testimonial-grid">
@@ -156,7 +154,7 @@
   <div class="container">
     <p class="eyebrow">Ready to build?</p>
     <h2>Your business deserves the guidance you wish you had from <span class="accent accent-light">day one.</span></h2>
-    <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark Academy</a>
+    <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark Academy</a>
   </div>
 </section>
 {% endblock %}

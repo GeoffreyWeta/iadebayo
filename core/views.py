@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 
 from blog.models import Post
@@ -75,13 +76,22 @@ def embark(request):
     })
 
 
-def apply(request):
-    return render(request, "core/apply.html", {
-        "form": f.EmbarkApplicationForm(),
+def apply_context(form=None):
+    """Context for the apply page. Shared with submissions.views so a form with
+    validation errors can be re-rendered instead of throwing the answers away."""
+    return {
+        "form": form if form is not None else f.EmbarkApplicationForm(),
         "faqs": FAQS,
+        # Optional: the "what Embark does" explainer shown above the form.
+        # Set EMBARK_INTRO_VIDEO_URL once the clip is live on YouTube.
+        "embark_intro_video": settings.EMBARK_INTRO_VIDEO_URL,
         "meta_title": "Apply to Embark",
         "meta_description": "Apply to the Embark Entrepreneurship Academy — free, online, and open to undergraduates and recent graduates building businesses in Africa.",
-    })
+    }
+
+
+def apply(request):
+    return render(request, "core/apply.html", apply_context())
 
 
 def media_page(request):

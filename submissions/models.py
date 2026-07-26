@@ -1,5 +1,28 @@
 """One model per form in the spec. All reviewable in Django admin."""
+from pathlib import Path
+
+from django.core.exceptions import ValidationError
 from django.db import models
+
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".avi", ".mkv"}
+VIDEO_MAX_BYTES = 64 * 1024 * 1024  # 64 MB — ample for a phone-shot minute
+
+
+def validate_application_video(f):
+    """Guard the applicant video upload: recognised container, sane size.
+
+    Duration can't be checked without ffmpeg on the host, so the one-minute
+    limit stays an instruction in the form's help text.
+    """
+    suffix = Path(f.name).suffix.lower()
+    if suffix not in VIDEO_EXTENSIONS:
+        raise ValidationError(
+            "Please upload a video file (%(allowed)s).",
+            params={"allowed": ", ".join(sorted(VIDEO_EXTENSIONS))})
+    if f.size and f.size > VIDEO_MAX_BYTES:
+        raise ValidationError(
+            "That file is %(got)s MB. Please keep the video under %(cap)s MB.",
+            params={"got": round(f.size / 1024 / 1024), "cap": VIDEO_MAX_BYTES // 1024 // 1024})
 
 
 class TimestampedSubmission(models.Model):
@@ -29,21 +52,104 @@ class NewsletterSubscriber(TimestampedSubmission):
 
 
 class EmbarkApplication(TimestampedSubmission):
-    STATUS_CHOICES = [("student", "Undergraduate student"), ("graduate", "Recent graduate")]
-    name = models.CharField(max_length=120)
-    email = models.EmailField()
-    phone = models.CharField(max_length=32)
-    country = models.CharField(max_length=80)
+    """Embark Academy application, in three sections.
+
+    Every field is permissive at the database level so historic applications
+    (submitted against the shorter 2025 form) stay readable. Which fields an
+    applicant *must* answer is decided by EmbarkApplicationForm.REQUIRED.
+    """
+
+    STATUS_CHOICES = [("undergraduate", "Undergraduate"), ("graduate", "Graduate")]
+    GENDER_CHOICES = [("male", "Male"), ("female", "Female")]
+    DEVICE_CHOICES = [("laptop", "Laptop"), ("smartphone", "Smartphone"),
+                      ("tablet", "Tablet"), ("desktop", "Desktop Computer")]
+    YES_NO_CHOICES = [("yes", "Yes"), ("no", "No")]
+    INTERNET_CHOICES = [("yes", "Yes"), ("no", "No"), ("sometimes", "Sometimes")]
+    GROWTH_LIMIT_CHOICES = [
+        ("customers", "Lack of customers"),
+        ("funding", "Lack of funding"),
+        ("knowledge", "Lack of business knowledge"),
+        ("systems", "Lack of systems/processes"),
+        ("partnerships", "Lack of partnerships"),
+        ("confidence", "Lack of confidence"),
+        ("other", "Other (please specify)"),
+    ]
+    REFERRAL_CHOICES = [
+        ("linkedin", "LinkedIn"), ("instagram", "Instagram"), ("facebook", "Facebook"),
+        ("referral", "Friend/Referral"), ("other", "Other (please specify)"),
+    ]
+
+    # ---------------------------------------- Section A: about the applicant
+    name = models.CharField("Full name", max_length=120)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
+    applicant_status = models.CharField("Academic status", max_length=20,
+                                        choices=STATUS_CHOICES, blank=True)
+    email = models.EmailField("Email address", help_text="A Gmail address is preferred")
+    phone = models.CharField("Phone number", max_length=32)
+    date_of_birth = models.DateField("Date of birth", null=True, blank=True)
+    institution = models.CharField("Name of institution", max_length=160, blank=True,
+                                   help_text="Graduated from / currently attending")
     city = models.CharField(max_length=80)
-    applicant_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    institution = models.CharField("University / institution", max_length=160)
+    state = models.CharField("State / region", max_length=80, blank=True)
+    country = models.CharField(max_length=80)
+    social_handle = models.CharField("Business or personal social media handle",
+                                     max_length=160, blank=True)
+
+    # ------------------------------------- Section B: business information
     business_name = models.CharField(max_length=160)
-    business_description = models.TextField(help_text="What the business does and its traction so far")
-    business_sector = models.CharField(max_length=120)
-    motivation = models.TextField("Why do you want to join Embark?")
+    business_video = models.FileField(
+        "One-minute business video", upload_to="applications/videos/", blank=True,
+        validators=[validate_application_video],
+        help_text="Up to one minute: what your business does, the problem it solves, "
+                  "and its impact or value proposition.")
+    year_established = models.PositiveSmallIntegerField(
+        "Year the business was established", null=True, blank=True)
+    revenue_last_year = models.CharField("Approximate revenue generated last year",
+                                         max_length=80, blank=True)
+    revenue_this_year = models.CharField("Approximate revenue generated this year",
+                                         max_length=80, blank=True)
+    major_challenge = models.TextField(
+        "A major challenge your business has faced, and how you addressed it", blank=True)
+    growth_limits = models.CharField(
+        "Biggest factors limiting your growth right now", max_length=200, blank=True,
+        help_text="Stored as comma-separated codes; set by the application form.")
+    growth_limits_other = models.CharField("Other limiting factor", max_length=160, blank=True)
+
+    # ------------------------------------------------------ Commitment
+    device = models.CharField("Device you will use for the programme", max_length=20,
+                              choices=DEVICE_CHOICES, blank=True)
+    will_participate = models.CharField(
+        "Willing to participate actively throughout", max_length=3,
+        choices=YES_NO_CHOICES, blank=True)
+    reliable_internet = models.CharField("Reliable internet for live sessions",
+                                         max_length=10, choices=INTERNET_CHOICES, blank=True)
+    heard_about = models.CharField("How they heard about Embark", max_length=20,
+                                   choices=REFERRAL_CHOICES, blank=True)
+    heard_about_other = models.CharField("Where else they heard about us",
+                                         max_length=160, blank=True)
+    media_consent = models.BooleanField(
+        "Media release consent", default=False,
+        help_text="Agreed that photos and video recorded during the programme may be "
+                  "used by the Foundation.")
+
+    # ------------------- Legacy fields from the 2025 form, kept for history
+    business_description = models.TextField(blank=True, help_text="Legacy — superseded by the video")
+    business_sector = models.CharField(max_length=120, blank=True, help_text="Legacy")
+    motivation = models.TextField("Why do you want to join Embark?", blank=True,
+                                  help_text="Legacy")
 
     def __str__(self):
         return f"{self.name} — {self.business_name}"
+
+    @property
+    def growth_limits_display(self):
+        """The stored codes as the labels the applicant actually ticked."""
+        labels = dict(self.GROWTH_LIMIT_CHOICES)
+        picked = [labels.get(c, c) for c in self.growth_limits.split(",") if c]
+        if self.growth_limits_other:
+            picked = [p for p in picked if p != labels["other"]]
+            picked.append(f"Other: {self.growth_limits_other}")
+        return ", ".join(picked)
 
 
 class FacultyApplication(TimestampedSubmission):

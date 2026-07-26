@@ -20,7 +20,7 @@
       <form method="post" action="{% url 'submissions:faculty' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% with form=faculty_form %}{% include "includes/form_fields.html" %}{% endwith %}
-        <div class="full"><button class="btn btn-red" type="submit" style="width:100%">Apply to join the faculty</button></div>
+        <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Apply to join the faculty</button></div>
       </form>
     </div>
   </div>
@@ -39,7 +39,7 @@
       <form method="post" action="{% url 'submissions:volunteer' %}" class="form-grid" novalidate>
         {% csrf_token %}
         {% with form=volunteer_form %}{% include "includes/form_fields.html" %}{% endwith %}
-        <div class="full"><button class="btn btn-blue" type="submit" style="width:100%">Volunteer with us</button></div>
+        <div class="full"><button class="btn btn-secondary" type="submit" style="width:100%">Volunteer with us</button></div>
       </form>
     </div>
   </div>

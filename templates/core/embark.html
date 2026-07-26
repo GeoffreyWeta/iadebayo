@@ -11,8 +11,13 @@
   <div class="container hero-inner">
     <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:10px;display:block">
     <span class="subbrand-note">✳ An IADEBAYO Foundation programme</span>
-    <h1 style="margin-top:20px">Building entrepreneurs <span class="accent accent-orange" data-island="rotate-words"
-      data-words="who build Africa.|who create jobs.|who solve real problems.">who build Africa.</span></h1>
+    {# Static line + rotating promise. The ghost span holds the longest phrase so
+       the hero reserves its height once and never reflows as words cycle. #}
+    <h1 class="hero-headline" style="margin-top:20px">Become the Entrepreneur who<span class="rotator">
+      <span class="rotator-ghost" aria-hidden="true">thinks like a CEO, not just a founder</span>
+      <span class="accent accent-orange rotator-live" data-island="rotate-words"
+        data-words="grows with confidence, not guesswork|scales with confidence|grows with strategy, not luck|thinks like a CEO, not just a founder|builds systems that scale|grows beyond today&#39;s revenue">grows with confidence, not guesswork</span>
+    </span></h1>
     <p class="lead">Embark Entrepreneurship Academy empowers undergraduate students, recent graduates, and early-stage entrepreneurs across Africa with the mindset, practical business knowledge, mentorship, and community to build ventures that create jobs and solve real problems.</p>
     <div class="hero-cta">
       <a class="btn btn-orange" href="{% url 'core:apply' %}">Apply to the Academy</a>
@@ -56,9 +61,13 @@
         <div class="impact-label">{{ s.label }}</div>
       </div>
       {% empty %}
+      {# Fallback if the Impact stats table is empty — run `manage.py sync_impact_stats` #}
+      <div><div class="impact-num"><span data-count="2">2</span></div><div class="impact-label">Years</div></div>
       <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
-      <div><div class="impact-num">—</div><div class="impact-label">Entrepreneurs Empowered</div></div>
-      <div><div class="impact-num">—</div><div class="impact-label">African Countries</div></div>
+      <div><div class="impact-num"><span data-count="70">70</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
+      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">African Countries</div></div>
+      <div><div class="impact-num"><span data-count="80">80</span><span class="suffix">+</span></div><div class="impact-label">Live Sessions</div></div>
+      <div><div class="impact-num"><span data-count="42">42</span><span class="suffix">+</span></div><div class="impact-label">Facilitators &amp; Mentors</div></div>
       {% endfor %}
     </div>
   </div>
@@ -82,7 +91,7 @@
   <div class="container">
     <div class="section-head">
       <p class="eyebrow" style="color:var(--orange)">Curriculum</p>
-      <h2>Seventeen modules. <span class="accent accent-red">Immediately applicable.</span></h2>
+      <h2>Seventeen modules. <span class="accent accent-primary">Immediately applicable.</span></h2>
       <p class="lead">Each module combines practical instruction, assignments, case studies, and discussions designed to help participants immediately apply what they learn to their businesses.</p>
     </div>
     <ol class="curriculum-list">
@@ -152,8 +161,8 @@
 <section class="section section-cream cta-band">
   <div class="container">
     <p class="eyebrow" style="color:var(--orange)">Cohort applications</p>
-    <h2>Free. Online. Built for founders who are <span class="accent accent-red">already building.</span></h2>
-    <a class="btn btn-red" href="{% url 'core:apply' %}">Apply to Embark →</a>
+    <h2>Free. Online. Built for founders who are <span class="accent accent-primary">already building.</span></h2>
+    <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark →</a>
   </div>
 </section>
 {% endblock %}
