@@ -11,12 +11,15 @@
   <div class="container hero-inner">
     <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:10px;display:block">
     <span class="subbrand-note">✳ An IADEBAYO Foundation programme</span>
-    {# Static line + rotating promise. The ghost span holds the longest phrase so
-       the hero reserves its height once and never reflows as words cycle. #}
-    <h1 class="hero-headline" style="margin-top:20px">Become the Entrepreneur who<span class="rotator">
-      <span class="rotator-ghost" aria-hidden="true">thinks like a CEO, not just a founder</span>
+    {% comment %}
+      Static line + rotating promise. The ghost span holds the longest phrase so
+      the hero reserves its height once and never reflows as words cycle.
+      NB: {# … #} is single-line only — spanning lines leaks the text onto the page.
+    {% endcomment %}
+    <h1 class="hero-headline" style="margin-top:20px">Become the Entrepreneur&nbsp;who<span class="rotator">
+      <span class="rotator-ghost" aria-hidden="true">thinks like a CEO, not just a&nbsp;founder</span>
       <span class="accent accent-orange rotator-live" data-island="rotate-words"
-        data-words="grows with confidence, not guesswork|scales with confidence|grows with strategy, not luck|thinks like a CEO, not just a founder|builds systems that scale|grows beyond today&#39;s revenue">grows with confidence, not guesswork</span>
+        data-words="grows with confidence, not&nbsp;guesswork|scales with&nbsp;confidence|grows with strategy, not&nbsp;luck|thinks like a CEO, not just a&nbsp;founder|builds systems that&nbsp;scale|grows beyond today&#39;s&nbsp;revenue">grows with confidence, not&nbsp;guesswork</span>
     </span></h1>
     <p class="lead">Embark Entrepreneurship Academy empowers undergraduate students, recent graduates, and early-stage entrepreneurs across Africa with the mindset, practical business knowledge, mentorship, and community to build ventures that create jobs and solve real problems.</p>
     <div class="hero-cta">

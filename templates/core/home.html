@@ -13,8 +13,17 @@
     <div class="hero-veil-2"></div>
   </div>
   <div class="container hero-inner">
-    <h1>Empowering Africa's next generation of <span class="accent accent-primary" data-island="rotate-words"
-      data-words="entrepreneurs.|innovators.|job creators.|changemakers.|leaders.">entrepreneurs.</span></h1>
+    {% comment %}
+      The fixed line must never re-wrap when the word swaps, so the rotating word
+      gets its own line: a hidden ghost holding the longest word reserves the box
+      and the live word is positioned over it. The non-breaking spaces pin the two
+      fixed lines ("Empowering Africa's" / "next generation of") at every width.
+    {% endcomment %}
+    <h1 class="hero-headline-compact">Empowering&nbsp;Africa's next&nbsp;generation&nbsp;of<span class="rotator">
+      <span class="rotator-ghost" aria-hidden="true">entrepreneurs.</span>
+      <span class="accent accent-primary rotator-live" data-island="rotate-words"
+        data-words="entrepreneurs.|innovators.|job creators.|changemakers.|leaders.">entrepreneurs.</span>
+    </span></h1>
     <p class="lead">Practical business education, mentorship, and community for young Africans turning ideas into ventures that create jobs and strengthen communities.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark</a>
@@ -84,7 +93,7 @@
   <div class="container">
     <div class="section-head">
       <p class="eyebrow">How we develop entrepreneurs</p>
-      <h2>Five components. One journey.</h2>
+      <h2 class="one-line">Five components. One journey.</h2>
     </div>
     <div class="card-grid">
       {% for c in components %}

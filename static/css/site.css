@@ -905,19 +905,37 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 .page-head .lead { max-width: 62ch; }
 
 /* ============================================================
-   v15 — Rotating-promise headline (Embark hero)
-   Static line, then the changing phrase on its own line. Phrases
-   differ in length, so an invisible ghost holding the longest one
-   reserves the box and the live phrase is absolutely positioned
-   over it — rotation never reflows the hero.
+   v15 — Rotating headline (home + Embark heroes)
+
+   The fixed line and the changing phrase must not share a line
+   box: `text-wrap: balance` re-wraps a whole block whenever its
+   content changes, so a rotating word on the same line as fixed
+   text drags that text around on every swap.
+
+   So .rotator is a block on its own line. Inside it, a hidden
+   ghost holding the longest phrase reserves the height (which is
+   why it must stay in sync with the longest data-words entry) and
+   the live phrase is absolutely positioned over it. Height is
+   therefore correct at any width, for one-line or two-line
+   phrases, with no per-page magic numbers.
    ============================================================ */
-.hero h1.hero-headline { max-width: 30ch; }
-.rotator { display: block; position: relative; margin-top: .08em; min-height: 2.3em; }
+.hero h1.hero-headline { max-width: 30ch; }          /* Embark: long phrases */
+.hero h1.hero-headline-compact { max-width: 21ch; }  /* home: single words */
+.rotator { display: block; position: relative; margin-top: .08em; min-height: 1.15em; }
 .rotator-ghost { display: block; visibility: hidden; }
 .rotator-live { position: absolute; left: 0; top: 0; right: 0; }
 @media (max-width: 640px) {
   .hero h1.hero-headline { max-width: 22ch; }
-  .rotator { min-height: 2.5em; }
+  .hero h1.hero-headline-compact { max-width: 18ch; }
+}
+
+/* Headings that must not break across lines on desktop. Below the
+   breakpoint they wrap normally — nowrap on a phone would overflow. */
+@media (min-width: 961px) {
+  h1.one-line, h2.one-line, h3.one-line, p.one-line {
+    white-space: nowrap;
+    text-wrap: nowrap;   /* beats the inherited `balance` */
+  }
 }
 
 /* ============================================================
@@ -1005,4 +1023,70 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
   .form-step-title { font-size: 1.15rem; }
   .form-actions { flex-direction: column-reverse; }
   .form-actions .btn { width: 100%; flex: none; }
+}
+
+/* ============================================================
+   v17 — HERO LEGIBILITY over photography
+   The hero photos are bright (market stalls, white baskets, sunlit
+   walls), and the old veil only went dark at the bottom — so the
+   headline sat on near-white and the accent word vanished. Two fixes:
+
+   1. The scrim is now weighted to the text side (left) as well as
+      the bottom, so copy always has a dark backing while the subject
+      on the right of frame stays visible.
+   2. Accents on photography need light tints of the brand hues. The
+      solid hues are too dark to read here: brand blue #3E4095 measures
+      1.00:1 against the veil (identical luminance — invisible), and
+      Embark orange #F1592C lands orange-on-orange where the duotone
+      veil is warmest, at 2.21:1.
+
+   The horizontal layer fades to fully transparent by 80%, so the extra
+   darkening lands on the copy and not on the subject. Measured worst
+   case in the headline box, and mean luminance where the subject
+   stands, before → after:
+      Foundation  white 5.5 → 7.4   accent #A9ACFF 2.6 → 3.5   subject .034 → .037
+      Embark      white 7.4 → 10.9  accent #FF9B76 3.6 → 5.3   subject .015 → .015
+   The photo ends up marginally brighter, not darker: the old veil-2
+   dimmed the whole frame bottom-up, this one is weighted to one side.
+   The v12 hero blue needed no new value — the scrim was too thin, not
+   the colour.
+   ============================================================ */
+.hero-veil-2 {
+  background:
+    linear-gradient(100deg, rgba(55,12,15,.80) 0%,  rgba(55,12,15,.60) 30%,
+                            rgba(55,12,15,.20) 58%, rgba(55,12,15,0)   80%),
+    linear-gradient(to top,  rgba(55,12,15,.78) 0%,  rgba(55,12,15,.20) 42%,
+                             rgba(55,12,15,.10) 100%);
+}
+.theme-embark .hero-veil-2 {
+  background:
+    linear-gradient(100deg, rgba(27,23,24,.80) 0%,  rgba(27,23,24,.60) 30%,
+                            rgba(27,23,24,.20) 58%, rgba(27,23,24,0)   80%),
+    linear-gradient(to top,  rgba(27,23,24,.78) 0%,  rgba(27,23,24,.20) 42%,
+                             rgba(27,23,24,.10) 100%);
+}
+
+/* Embark's rotating phrase takes the soft orange the theme already uses
+   on dark surfaces (see .theme-embark .on-dark .eyebrow). Scoped to
+   .hero — on cream and white sections solid --em-orange is correct. */
+.theme-embark .hero .accent-orange,
+.theme-embark .hero .accent-primary { color: var(--em-orange-soft); }
+
+/* Supporting hero copy: lift off the photo rather than blend into it. */
+.hero .lead { color: rgba(255,255,255,.92); }
+.hero h1, .hero .lead { text-shadow: 0 1px 18px rgba(20,6,8,.45); }
+
+/* Phones: the scrim goes full-width — there is no side room for the
+   subject once the copy spans the viewport. */
+@media (max-width: 640px) {
+  .hero-veil-2 {
+    background: linear-gradient(to top, rgba(55,12,15,.84) 0%,
+                                        rgba(55,12,15,.46) 62%,
+                                        rgba(55,12,15,.50) 100%);
+  }
+  .theme-embark .hero-veil-2 {
+    background: linear-gradient(to top, rgba(27,23,24,.84) 0%,
+                                        rgba(27,23,24,.46) 62%,
+                                        rgba(27,23,24,.50) 100%);
+  }
 }
