@@ -24,7 +24,8 @@ class EmbarkAdmin(SubmissionAdmin):
     readonly_fields = ("created_at", "limiting_factors")
     fieldsets = (
         ("Section A — About the applicant", {
-            "fields": ("name", "gender", "applicant_status", "email", "phone",
+            "fields": ("name", "gender", "applicant_status", "email",
+                       ("phone_code", "phone"),
                        "date_of_birth", "institution", ("city", "state", "country"),
                        "social_handle"),
         }),
@@ -49,20 +50,36 @@ class EmbarkAdmin(SubmissionAdmin):
         return obj.growth_limits_display or "—"
 
 
+class PhoneColumnMixin:
+    """Shows the dialling code and number as one readable value."""
+
+    @admin.display(description="Phone")
+    def phone_display(self, obj):
+        return obj.phone_display or "—"
+
+
 @admin.register(models.FacultyApplication)
-class FacultyAdmin(SubmissionAdmin):
-    search_fields = ("name", "email")
-    list_filter = ("reviewed", "faculty_option")
+class FacultyAdmin(PhoneColumnMixin, SubmissionAdmin):
+    search_fields = ("name", "email", "country")
+    list_display = ("name", "faculty_option", "phone_display", "country",
+                    "created_at", "reviewed")
+    list_filter = ("reviewed", "faculty_option", "country", "created_at")
 
 
 @admin.register(models.VolunteerApplication)
-class VolunteerAdmin(SubmissionAdmin):
-    search_fields = ("name", "email", "skills")
+class VolunteerAdmin(PhoneColumnMixin, SubmissionAdmin):
+    search_fields = ("name", "email", "skills", "country")
+    list_display = ("name", "area", "skills", "phone_display", "country",
+                    "created_at", "reviewed")
+    list_filter = ("reviewed", "area", "country", "created_at")
 
 
 @admin.register(models.PartnershipInquiry)
-class PartnerAdmin(SubmissionAdmin):
-    search_fields = ("organization", "name", "email")
+class PartnerAdmin(PhoneColumnMixin, SubmissionAdmin):
+    search_fields = ("organization", "name", "email", "country")
+    list_display = ("organization", "name", "phone_display", "country",
+                    "created_at", "reviewed")
+    list_filter = ("reviewed", "country", "created_at")
 
 
 @admin.register(models.NewsletterSubscriber)

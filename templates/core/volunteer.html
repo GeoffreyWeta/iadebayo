@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Volunteer</p>
+    <h1>Lend your Skills. <span class="accent accent-light">Multiply your Impact.</span></h1>
+    <p class="lead">Volunteer with us and help empower the next generation of African
+      entrepreneurs by contributing your time, skills, and experience.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      <p class="eyebrow">Where you fit</p>
+      <h2>There are meaningful opportunities to support our mission.</h2>
+      <p>Whether your expertise is in programme coordination, event management, marketing and
+        communications, content creation, technology, design, administration, or community
+        engagement, there are meaningful opportunities to support our mission.</p>
+      <p class="statement">As a volunteer, you'll become part of a passionate community
+        committed to equipping young entrepreneurs with the knowledge, networks, and
+        opportunities they need to build successful businesses.</p>
+      <p>Every contribution, whether behind the scenes or directly supporting participants,
+        helps strengthen our programmes and expand our impact across Africa.</p>
+      <p>Most volunteer opportunities are designed to be flexible and can be carried out
+        remotely, allowing you to contribute from anywhere in the world while making a
+        meaningful difference.</p>
+      <div style="margin-top:26px">
+        <a class="btn btn-secondary" href="#volunteer-form">Volunteer With Us</a>
+      </div>
+    </div>
+    <div class="reveal">
+      <p class="eyebrow">Areas we need help with</p>
+      <div class="chip-row">
+        <span class="chip">Programme coordination</span>
+        <span class="chip">Event management</span>
+        <span class="chip">Marketing &amp; communications</span>
+        <span class="chip">Content creation</span>
+        <span class="chip">Technology</span>
+        <span class="chip">Design</span>
+        <span class="chip">Administration</span>
+        <span class="chip">Community engagement</span>
+      </div>
+      <ul class="ticklist" style="margin-top:32px">
+        <li>Flexible hours, arranged around your commitments</li>
+        <li>Mostly remote — volunteer from anywhere in the world</li>
+        <li>Work alongside a team building something that lasts</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section section-cream" id="volunteer-form">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow">Ready when you are</p>
+      <h2>Tell us how you'd like to help.</h2>
+      <p>Share your skills and the area you'd like to contribute to, and we'll match you with
+        work that fits. Every role, behind the scenes or participant-facing, expands what the
+        programme can do.</p>
+    </div>
+    <div class="form-card reveal">
+      <h2 class="form-title">Volunteer With Us</h2>
+      <p class="form-note">Fields marked * are required. We'll be in touch by email.</p>
+      <form method="post" action="{% url 'submissions:volunteer' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <div class="full"><button class="btn btn-secondary" type="submit" style="width:100%">Volunteer With Us</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

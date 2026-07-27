@@ -1,9 +1,17 @@
 {# Renders any Django form's visible fields into the styled grid. #}
 {% for field in form.visible_fields %}
-  <div class="form-field {% if field.field.widget.input_type == None or field.name in 'message,motivation,about,proposal,business_description' %}full{% endif %}">
-    <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
-    {{ field }}
+  <div class="form-field{% if field.name in form.wide_fields %} full{% endif %}{% if field.name in form.row_start_fields %} row-start{% endif %}{% if field.errors %} has-error{% endif %}">
+    {% if field.field.widget.input_type == "checkbox" %}
+      <label class="form-check-row" for="{{ field.id_for_label }}">
+        {{ field }}
+        <span>{{ field.label }}{% if field.field.required %} *{% endif %}</span>
+      </label>
+    {% else %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+      {{ field }}
+    {% endif %}
     {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+    {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
   </div>
 {% endfor %}
 {% for field in form.hidden_fields %}{{ field }}{% endfor %}

@@ -7,7 +7,7 @@
   {% if section.blurb %}<p class="form-step-blurb">{{ section.blurb }}</p>{% endif %}
   <div class="form-grid">
     {% for row in section.rows %}
-      <div class="form-field{% if row.full %} full{% endif %}{% if row.choices %} is-choices{% endif %}{% if row.field.errors %} has-error{% endif %}"{% if row.field.field.required %} data-required="1"{% endif %}>
+      <div class="form-field{% if row.full %} full{% endif %}{% if row.row_start %} row-start{% endif %}{% if row.choices %} is-choices{% endif %}{% if row.field.errors %} has-error{% endif %}"{% if row.field.field.required %} data-required="1"{% endif %}>
         {% if row.single_check %}
           {# lone tickbox (consent): control first, sentence after #}
           <label class="form-check-row" for="{{ row.field.id_for_label }}">

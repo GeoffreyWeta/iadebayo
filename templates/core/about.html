@@ -13,11 +13,30 @@
     <div class="reveal">
       <p class="eyebrow">Our story</p>
       <h2>Talent isn't the problem. Access is.</h2>
-      <p>The inspiration behind IADEBAYO Foundation stems from the entrepreneurial journey of its visionary, Dare Adebayo, who began his entrepreneurial journey immediately after secondary school and launched his second business while at university. Like many first-time entrepreneurs, he experienced numerous setbacks, learned difficult lessons, and navigated the uncertainties of building a business with limited guidance.</p>
-      <p>It was only after participating in startup accelerator programmes that he gained the practical insights, mentorship, and strategic thinking that transformed his approach to building and growing businesses.</p>
-      <p class="statement">Many promising young entrepreneurs do not fail because they lack ambition or talent; they fail because they lack access to the right knowledge, mentors, and entrepreneurial community at the right time.</p>
-      <p>Driven by this conviction, Dare founded the Embark Entrepreneurship Academy, the flagship initiative of IADEBAYO Foundation, to equip undergraduate students, recent graduates, and early-stage entrepreneurs across Africa with practical entrepreneurship education, mentorship, and a supportive community.</p>
-      <p>Our mission is simple: to ensure that the next generation of African entrepreneurs starts with the guidance, community, and opportunities that many founders wish they had from day one.</p>
+      <p>IADEBAYO Foundation was born from one entrepreneur's conviction that building a
+        business shouldn't be harder than it needs to be.</p>
+      <p>Dare Adebayo started his first business shortly after secondary school and his second
+        while still at university. Like many first-time founders, he learned through trial and
+        error — navigating setbacks, making costly mistakes, and spending long periods trying to
+        figure things out without the guidance of experienced entrepreneurs.</p>
+      <p>What transformed his journey wasn't working harder; it was gaining access to the right
+        support. Through startup accelerator programmes, he found mentors, practical business
+        education, and a community of founders who challenged his thinking and accelerated his
+        growth. Those experiences changed not only the way he built businesses but also the
+        opportunities available to him.</p>
+      <p class="statement">Across Africa, countless talented young entrepreneurs don't struggle
+        because they lack ambition or potential. They struggle because they lack timely access
+        to practical knowledge, experienced mentors, and a supportive entrepreneurial
+        community.</p>
+      <p>Determined to help close that gap, Dare founded Embark Entrepreneurship Academy — the
+        flagship programme of IADEBAYO Foundation.</p>
+      <p>Through Embark, we provide free entrepreneurship education, experienced mentors, and a
+        collaborative community for undergraduates, recent graduates, and early-stage
+        entrepreneurs across Africa, equipping them to build sustainable, high-impact
+        businesses.</p>
+      <p>Our mission is simple: to ensure the next generation of African entrepreneurs begins
+        its journey with the guidance, knowledge, and support that many founders only wish they
+        had from day one.</p>
     </div>
     <div class="reveal">
       <div class="media-frame">
@@ -71,6 +90,16 @@
       <h2>United by a shared belief.</h2>
       <p class="lead">With diverse expertise across business, education, technology, operations, and leadership, we are dedicated to supporting young entrepreneurs with the knowledge, mentorship, and opportunities they need to succeed.</p>
     </div>
+    {% comment %}
+      Group shot stands in until the real team photo is supplied. Swap the
+      file at static/img/about-team.webp (4:3) to replace it — the per-person
+      grid below is separate and fills from Team members in the admin.
+    {% endcomment %}
+    <div class="media-frame team-photo reveal">
+      <img src="{% static 'img/about-team.webp' %}" width="1280" height="960"
+           alt="The IADEBAYO Foundation team (stand-in until the team photo is provided)" loading="lazy">
+    </div>
+
     {% if team %}
     <div class="people-grid">
       {% for m in team %}
@@ -82,7 +111,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <p style="color:rgba(255,255,255,.75)">Team profiles appear here — add them in the admin under <strong>Team members</strong>.</p>
+    <p style="color:rgba(255,255,255,.75)">Individual profiles appear here — add them in the admin under <strong>Team members</strong>.</p>
     {% endif %}
   </div>
 </section>

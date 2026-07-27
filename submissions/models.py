@@ -34,6 +34,28 @@ class TimestampedSubmission(models.Model):
         ordering = ["-created_at"]
 
 
+class DiallingCodeMixin(models.Model):
+    """Splits the international dialling code off the national number.
+
+    Kept as its own column rather than baked into `phone` so the code can be a
+    dropdown (see core.countries) while old rows that hold a single free-typed
+    number remain readable. `phone_display` is what the admin and the team
+    notification emails show.
+
+    Mix this in *after* TimestampedSubmission — Django resolves Meta through the
+    MRO, so listing it first makes this Meta win and silently drops the
+    `ordering = ["-created_at"]` that every submission list relies on.
+    """
+    phone_code = models.CharField("Country code", max_length=8, blank=True)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def phone_display(self):
+        return f"{self.phone_code} {self.phone}".strip()
+
+
 class ContactMessage(TimestampedSubmission):
     name = models.CharField(max_length=120)
     email = models.EmailField()
@@ -51,7 +73,7 @@ class NewsletterSubscriber(TimestampedSubmission):
         return self.email
 
 
-class EmbarkApplication(TimestampedSubmission):
+class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
     """Embark Academy application, in three sections.
 
     Every field is permissive at the database level so historic applications
@@ -152,10 +174,10 @@ class EmbarkApplication(TimestampedSubmission):
         return ", ".join(picked)
 
 
-class FacultyApplication(TimestampedSubmission):
+class FacultyApplication(TimestampedSubmission, DiallingCodeMixin):
     OPTION_CHOICES = [("facilitator", "Facilitator"), ("mentor", "Mentor"), ("both", "Both")]
     name = models.CharField(max_length=120)
-    phone = models.CharField(max_length=32)
+    phone = models.CharField("Phone number", max_length=32)
     email = models.EmailField()
     faculty_option = models.CharField(max_length=20, choices=OPTION_CHOICES)
     country = models.CharField(max_length=80)
@@ -169,13 +191,26 @@ class FacultyApplication(TimestampedSubmission):
         return f"{self.name} ({self.get_faculty_option_display()})"
 
 
-class VolunteerApplication(TimestampedSubmission):
+class VolunteerApplication(TimestampedSubmission, DiallingCodeMixin):
+    AREA_CHOICES = [
+        ("programme", "Programme coordination"),
+        ("events", "Event management"),
+        ("marketing", "Marketing and communications"),
+        ("content", "Content creation"),
+        ("technology", "Technology"),
+        ("design", "Design"),
+        ("admin", "Administration"),
+        ("community", "Community engagement"),
+        ("other", "Other (tell us in your motivation)"),
+    ]
     name = models.CharField(max_length=120)
-    phone = models.CharField(max_length=32)
+    phone = models.CharField("Phone number", max_length=32)
     email = models.EmailField()
     skills = models.CharField(max_length=200)
     country = models.CharField(max_length=80)
     city = models.CharField(max_length=80)
+    area = models.CharField("Area you want to volunteer in", max_length=20,
+                            choices=AREA_CHOICES, blank=True)
     motivation = models.TextField("Your motivation")
     about = models.TextField("About you")
     linkedin = models.URLField("LinkedIn", blank=True)
@@ -185,9 +220,9 @@ class VolunteerApplication(TimestampedSubmission):
         return self.name
 
 
-class PartnershipInquiry(TimestampedSubmission):
+class PartnershipInquiry(TimestampedSubmission, DiallingCodeMixin):
     name = models.CharField(max_length=120)
-    phone = models.CharField(max_length=32)
+    phone = models.CharField("Phone number", max_length=32)
     email = models.EmailField()
     organization = models.CharField("Organization name", max_length=160)
     website = models.URLField(blank=True)

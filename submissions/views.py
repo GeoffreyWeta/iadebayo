@@ -41,7 +41,7 @@ def _handle(request, form_class, ack_text, notify_subject, redirect_to, on_inval
 
 def _summary(obj):
     """Readable field dump for the team's notification email."""
-    skip = {"id", "created_at", "reviewed"}
+    skip = {"id", "created_at", "reviewed", "phone_code"}  # code shown via phone_display
     lines = []
     for f in obj._meta.fields:
         if f.name in skip:
@@ -97,16 +97,24 @@ def apply_embark(request):
 
 @require_POST
 def faculty(request):
+    def rerender(form):
+        from core.views import join_faculty_context
+        return render(request, "core/join_faculty.html", join_faculty_context(form))
+
     return _handle(request, forms.FacultyApplicationForm,
                    "applying to join our faculty",
-                   "New faculty application", "core:get_involved")
+                   "New faculty application", "core:join_faculty", on_invalid=rerender)
 
 
 @require_POST
 def volunteer(request):
+    def rerender(form):
+        from core.views import volunteer_context
+        return render(request, "core/volunteer.html", volunteer_context(form))
+
     return _handle(request, forms.VolunteerApplicationForm,
                    "offering to volunteer with IADEBAYO Foundation",
-                   "New volunteer application", "core:get_involved")
+                   "New volunteer application", "core:volunteer", on_invalid=rerender)
 
 
 @require_POST

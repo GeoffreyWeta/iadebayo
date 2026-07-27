@@ -1,6 +1,9 @@
 from datetime import date
 
 from django import forms
+
+from core.countries import country_choices, dial_code_choices
+
 from . import models
 
 
@@ -8,8 +11,33 @@ class BaseStyledForm(forms.ModelForm):
     """Adds consistent CSS classes + honeypot spam trap to every form."""
     website_url = forms.CharField(required=False, widget=forms.HiddenInput)  # honeypot
 
+    # Widgets that need the full width of the two-column grid.
+    WIDE_WIDGETS = (forms.Textarea, forms.RadioSelect, forms.CheckboxSelectMultiple,
+                    forms.CheckboxInput, forms.FileInput)
+
+    # Fields pinned to column 1 so the field after them lands alongside, not on
+    # the next row. The dialling code is meaningless split away from the number
+    # it belongs to, and where it falls otherwise depends on how many fields
+    # happen to precede it.
+    ROW_START_FIELDS = ("phone_code",)
+
+    @property
+    def row_start_fields(self):
+        return [n for n in self.ROW_START_FIELDS if n in self.fields]
+
+    @property
+    def wide_fields(self):
+        """Names of fields that span both grid columns.
+
+        Templates can't run isinstance, so the decision is made here and
+        `includes/form_fields.html` just tests membership.
+        """
+        return [n for n, f in self.fields.items()
+                if isinstance(f.widget, self.WIDE_WIDGETS)]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._install_country_dropdowns()
         for name, field in self.fields.items():
             if name == "website_url":
                 continue
@@ -24,7 +52,10 @@ class BaseStyledForm(forms.ModelForm):
                 continue
             css = "form-input"
             if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.setdefault("rows", 4)
+                # Assign, don't setdefault: Django's Textarea already ships
+                # rows="10", so setdefault silently kept the 10-row box that
+                # made every "motivation" / "about you" field look enormous.
+                field.widget.attrs["rows"] = 3
                 field.widget.attrs.setdefault("placeholder", "")  # label is enough
                 css = "form-input form-textarea"
             elif isinstance(field.widget, forms.Select):
@@ -36,11 +67,38 @@ class BaseStyledForm(forms.ModelForm):
             if not isinstance(field.widget, (forms.Select, forms.FileInput)):
                 field.widget.attrs.setdefault("placeholder", field.label)
 
+    def _install_country_dropdowns(self):
+        """Swap free-typed country / dialling code for validated dropdowns.
+
+        Done here rather than per form so every public form picks it up, and as
+        a form-level ChoiceField rather than model `choices` so submissions made
+        before these dropdowns existed (free text like "Cote d'Ivoire") stay
+        valid in the admin.
+        """
+        if "country" in self.fields:
+            existing = self.fields["country"]
+            self.fields["country"] = forms.ChoiceField(
+                choices=country_choices(), label=existing.label,
+                required=existing.required, help_text=existing.help_text)
+        if "phone_code" in self.fields:
+            existing = self.fields["phone_code"]
+            # The code is only meaningful alongside a number, so it inherits
+            # whether the number itself is required.
+            phone = self.fields.get("phone")
+            self.fields["phone_code"] = forms.ChoiceField(
+                choices=dial_code_choices(), label=existing.label,
+                required=phone.required if phone else existing.required,
+                help_text=existing.help_text)
+
     @staticmethod
     def _label_blank_choice(field):
-        """Replace Django's '---------' placeholder with a readable prompt."""
+        """Replace Django's '---------' placeholder with a readable prompt.
+
+        Fields that already carry a written prompt (country, dialling code)
+        are left alone.
+        """
         choices = list(field.widget.choices)
-        if choices and choices[0][0] in ("", None):
+        if choices and choices[0][0] in ("", None) and choices[0][1] in ("---------", ""):
             choices[0] = ("", "Select…")
             field.widget.choices = choices
 
@@ -64,10 +122,6 @@ class SectionedFormMixin:
         super().__init__(*args, **kwargs)
         for name in self.REQUIRED:
             self.fields[name].required = True
-
-    # Widgets that need the full width of the two-column grid.
-    WIDE_WIDGETS = (forms.Textarea, forms.RadioSelect, forms.CheckboxSelectMultiple,
-                    forms.CheckboxInput, forms.FileInput)
 
     def sections(self):
         """Yield one dict per step, with the layout already decided.
@@ -96,6 +150,7 @@ class SectionedFormMixin:
             "full": isinstance(widget, self.WIDE_WIDGETS),
             "choices": isinstance(widget, (forms.RadioSelect, forms.CheckboxSelectMultiple)),
             "single_check": isinstance(widget, forms.CheckboxInput),
+            "row_start": name in self.ROW_START_FIELDS,
         }
 
 
@@ -125,8 +180,8 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         ("Section A — About the applicant",
          "Tell us who you are. Use an email address you check often; that is where "
          "every update about your application will go.",
-         ["name", "gender", "applicant_status", "email", "phone", "date_of_birth",
-          "institution", "city", "state", "country", "social_handle"]),
+         ["name", "gender", "applicant_status", "email", "phone_code", "phone",
+          "date_of_birth", "institution", "city", "state", "country", "social_handle"]),
         ("Section B — Business information",
          "Now the venture itself. The one-minute video matters as much as the "
          "written answers — filmed on a phone is perfectly fine.",
@@ -159,8 +214,8 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     class Meta:
         model = models.EmbarkApplication
         fields = [
-            "name", "gender", "applicant_status", "email", "phone", "date_of_birth",
-            "institution", "city", "state", "country", "social_handle",
+            "name", "gender", "applicant_status", "email", "phone_code", "phone",
+            "date_of_birth", "institution", "city", "state", "country", "social_handle",
             "business_name", "business_video", "year_established", "revenue_last_year",
             "revenue_this_year", "major_challenge", "growth_limits", "growth_limits_other",
             "device", "will_participate", "reliable_internet", "heard_about",
@@ -228,18 +283,19 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
 class FacultyApplicationForm(BaseStyledForm):
     class Meta:
         model = models.FacultyApplication
-        fields = ["name", "phone", "email", "faculty_option", "country", "city",
-                  "motivation", "about", "linkedin", "instagram"]
+        fields = ["name", "phone_code", "phone", "email", "faculty_option",
+                  "country", "city", "motivation", "about", "linkedin", "instagram"]
 
 
 class VolunteerApplicationForm(BaseStyledForm):
     class Meta:
         model = models.VolunteerApplication
-        fields = ["name", "phone", "email", "skills", "country", "city",
-                  "motivation", "about", "linkedin", "instagram"]
+        fields = ["name", "phone_code", "phone", "email", "skills",
+                  "country", "city", "area", "motivation", "about", "linkedin", "instagram"]
 
 
 class PartnershipInquiryForm(BaseStyledForm):
     class Meta:
         model = models.PartnershipInquiry
-        fields = ["name", "phone", "email", "organization", "website", "country", "city", "proposal"]
+        fields = ["name", "phone_code", "phone", "email", "organization", "website",
+                  "country", "city", "proposal"]

@@ -102,7 +102,7 @@
   <div class="container">
     <div class="section-head">
       <p class="eyebrow" style="color:var(--orange)">Curriculum</p>
-      <h2>Seventeen modules. <span class="accent accent-primary">Immediately applicable.</span></h2>
+      <h2>Expert-Led Modules. <span class="accent accent-primary">Immediately Applicable.</span></h2>
       <p class="lead">Each module combines practical instruction, assignments, case studies, and discussions designed to help participants immediately apply what they learn to their businesses.</p>
     </div>
     <ol class="curriculum-list">
@@ -119,28 +119,25 @@
   </div>
 </section>
 
-<section class="section section-dark on-dark" id="faculty">
+{% comment %}
+  Faculty profiles used to sit here; they now live on the Join Faculty page,
+  so this slot carries the FAQ. #faq is kept as the id, and #faculty is left
+  on the CTA link below so old bookmarks still land somewhere sensible.
+{% endcomment %}
+<section class="section section-dark on-dark" id="faq">
   <div class="container">
     <div class="section-head">
-      <p class="eyebrow">Faculty — mentors &amp; facilitators</p>
-      <h2>Learn from people who've <span class="accent accent-light">actually built.</span></h2>
-      <p class="lead">Experienced founders, business leaders, professionals, and subject-matter experts who guide participants throughout the Academy — bringing practical entrepreneurial experience, insight, accountability, and encouragement beyond the classroom.</p>
+      <p class="eyebrow">Frequently asked questions</p>
+      <h2>Everything you're likely to <span class="accent accent-light">wonder about.</span></h2>
     </div>
-    {% if faculty %}
-    <div class="people-grid">
-      {% for p in faculty %}
-      <div class="person reveal">
-        <div class="person-photo">{% if p.photo %}<img src="{{ p.photo.url }}" alt="{{ p.name }}" loading="lazy">{% endif %}</div>
-        <h3 style="color:#fff">{{ p.name }}</h3>
-        <span class="role" style="color:rgba(255,255,255,.75)">{{ p.title_company }}</span>
-        <div class="expertise" style="color:rgba(255,255,255,.7)">{{ p.expertise }}</div>
-      </div>
+    <div class="faq faq-columns">
+      {% for q, a in faqs %}
+      <details><summary>{{ q }}</summary><div class="answer">{{ a }}</div></details>
       {% endfor %}
     </div>
-    {% else %}
-    <p style="color:rgba(255,255,255,.75)">Faculty profiles appear here — add mentors and facilitators in the admin under <strong>Faculty members</strong>.</p>
-    {% endif %}
-    <div style="margin-top:36px"><a class="btn btn-orange" href="{% url 'core:get_involved' %}">Join our faculty</a></div>
+    <div style="margin-top:40px" id="faculty">
+      <a class="btn btn-orange" href="{% url 'core:join_faculty' %}">Join our faculty</a>
+    </div>
   </div>
 </section>
 

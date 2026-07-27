@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Join our faculty</p>
+    <h1>Share Your Expertise. <span class="accent accent-light">Shape the Next Generation of Entrepreneurs.</span></h1>
+    <p class="lead">We invite accomplished entrepreneurs, business leaders, executives, and
+      experienced professionals to join our Faculty as Facilitators or Mentors, helping
+      ambitious early-stage entrepreneurs build resilient, purpose-driven businesses
+      across Africa.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      <p class="eyebrow">Why it matters</p>
+      <h2>Your knowledge can make a lasting difference.</h2>
+      <p>Whether your expertise is in entrepreneurship, leadership, finance, marketing,
+        sales, technology, product development, operations, legal, human resources, or any
+        other business discipline, your knowledge can make a lasting difference.</p>
+      <p class="statement">By joining our Faculty, you won't just teach a class or mentor a
+        founder; you'll help shape businesses that create jobs, strengthen communities, and
+        contribute to Africa's economic future.</p>
+      <p>Together, we can equip the next generation of entrepreneurs with the knowledge,
+        confidence, and support they need to build businesses that make a lasting impact.</p>
+      <div style="margin-top:26px">
+        <a class="btn btn-primary" href="#faculty-form">Join our Faculty</a>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="grid-1-tight">
+        <div class="card">
+          <div class="card-icon">✳</div>
+          <h3>Facilitators</h3>
+          <p>Facilitators deliver practical, interactive sessions that equip participants with
+            the knowledge, frameworks, and tools they need to build and grow successful
+            businesses. Sessions are conducted virtually on weekends and typically last
+            60&nbsp;minutes. Depending on your area of expertise, you may facilitate one or two
+            sessions during a cohort.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✳</div>
+          <h3>Mentors</h3>
+          <p>Our mentorship programme is a structured three-month journey designed to provide
+            participants with personalised guidance as they navigate the realities of building
+            a business. Mentors are carefully matched with entrepreneurs based on their
+            industry, experience, and development needs. Mentors typically meet with their
+            mentees two to four times each month. Session schedules are arranged flexibly
+            between mentors and mentees.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if faculty %}
+<section class="section section-dark on-dark">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Our faculty</p>
+      <h2>Learn from people who've <span class="accent accent-light">actually built.</span></h2>
+      <p class="lead">Experienced founders, business leaders, professionals, and subject-matter
+        experts who guide participants throughout the Academy — bringing practical
+        entrepreneurial experience, insight, accountability, and encouragement beyond the
+        classroom.</p>
+    </div>
+    <div class="people-grid">
+      {% for p in faculty %}
+      <div class="person reveal">
+        <div class="person-photo">{% if p.photo %}<img src="{{ p.photo.url }}" alt="{{ p.name }}" loading="lazy">{% endif %}</div>
+        <h3 style="color:#fff">{{ p.name }}</h3>
+        <span class="role" style="color:rgba(255,255,255,.75)">{{ p.title_company }}</span>
+        <div class="expertise" style="color:rgba(255,255,255,.7)">{{ p.expertise }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section-cream" id="faculty-form">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      <p class="eyebrow">What we ask of you</p>
+      <h2>A clear, bounded commitment.</h2>
+      <ul class="ticklist">
+        <li>Facilitators: one or two 60-minute virtual sessions per cohort, on a weekend</li>
+        <li>Mentors: a three-month journey, two to four sessions a month</li>
+        <li>Sessions scheduled flexibly, around your working life</li>
+        <li>Everything delivered online — contribute from anywhere in the world</li>
+        <li>Mentees matched to you by industry, experience, and development needs</li>
+      </ul>
+      <p style="color:var(--muted)">Join our Faculty and become part of a growing community
+        committed to empowering Africa's next generation of entrepreneurs.</p>
+    </div>
+    <div class="form-card reveal">
+      <h2 class="form-title">Join our Faculty</h2>
+      <p class="form-note">Fields marked * are required. We'll be in touch by email.</p>
+      <form method="post" action="{% url 'submissions:faculty' %}" class="form-grid" novalidate>
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Join our Faculty</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

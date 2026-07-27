@@ -50,7 +50,17 @@
         <li><a href="{% url 'core:embark' %}">Embark</a></li>
         <li><a href="{% url 'core:media' %}">Media</a></li>
         <li><a href="{% url 'blog:list' %}">Blog</a></li>
-        <li><a href="{% url 'core:get_involved' %}">Get Involved</a></li>
+        {% comment %}
+          Dropdown: hover/focus on desktop, always-expanded sub-list on mobile.
+          The parent stays a real link so the hub page is still reachable.
+        {% endcomment %}
+        <li class="has-sub">
+          <a href="{% url 'core:get_involved' %}" aria-haspopup="true">Get Involved <span class="caret" aria-hidden="true">▾</span></a>
+          <ul class="sub">
+            <li><a href="{% url 'core:join_faculty' %}">Join Faculty</a></li>
+            <li><a href="{% url 'core:volunteer' %}">Volunteer</a></li>
+          </ul>
+        </li>
         <li><a href="{% url 'core:contact' %}">Contact</a></li>
       </ul>
     </nav>
@@ -90,7 +100,9 @@
       <ul>
         <li><a href="{% url 'core:about' %}">About</a></li>
         <li><a href="{% url 'core:embark' %}">Embark Academy</a></li>
-        <li><a href="{% url 'core:embark' %}#faculty">Faculty</a></li>
+        {# Faculty moved off the Embark page onto its own page — that anchor is gone. #}
+        <li><a href="{% url 'core:join_faculty' %}">Join Faculty</a></li>
+        <li><a href="{% url 'core:volunteer' %}">Volunteer</a></li>
         <li><a href="{% url 'core:embark' %}#alumni">Alumni</a></li>
         <li><a href="{% url 'core:apply' %}">Apply</a></li>
         <li><a href="{% url 'blog:list' %}">Blog</a></li>

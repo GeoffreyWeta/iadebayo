@@ -1,46 +1,47 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
 <section class="page-head on-dark">
   <div class="container">
     <p class="eyebrow">Get involved</p>
     <h1>Give the guidance you <span class="accent accent-light">wish you'd had.</span></h1>
+    <p class="lead">Two ways in. Both are online, both fit around your working life, and both
+      put your experience to work for founders who are already building.</p>
   </div>
 </section>
 
-<section class="section" id="faculty">
-  <div class="container split" style="align-items:flex-start">
-    <div class="reveal">
-      <p class="eyebrow">Join our faculty — facilitator or mentor</p>
-      <h2>Help develop the entrepreneurs who will shape Africa's future.</h2>
-      <p>We invite accomplished entrepreneurs, business leaders, and distinguished professionals to contribute their expertise as Facilitators and Mentors. By sharing your experience, you will help emerging founders make better decisions, overcome challenges, and build resilient, high-impact businesses.</p>
-      <p>The programme is delivered entirely online, enabling you to contribute from anywhere in the world. Live teaching sessions are held on weekends to accommodate your work schedule, while one-to-one mentorship sessions are scheduled flexibly based on each mentor's availability.</p>
+{% comment %}
+  Hub, not a form page. The faculty and volunteer forms each live on their own
+  page now (see the Get Involved dropdown in the header); this keeps the nav
+  parent clickable and every pre-existing /get-involved/ link working.
+{% endcomment %}
+<section class="section">
+  <div class="container">
+    <div class="grid-2">
+      <div class="card reveal">
+        <div class="card-icon">✳</div>
+        <h3>Join our Faculty</h3>
+        <p>Teach a session or mentor a founder. Facilitators deliver one or two 60-minute
+          weekend sessions per cohort; mentors walk with an entrepreneur through a
+          structured three-month journey.</p>
+        <p class="card-cta" style="margin-top:20px">
+          <a class="btn btn-primary" href="{% url 'core:join_faculty' %}">Join our Faculty →</a>
+        </p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">✳</div>
+        <h3>Volunteer with us</h3>
+        <p>Lend your skills in programme coordination, events, marketing, content,
+          technology, design, administration, or community engagement. Flexible, and mostly
+          remote — contribute from anywhere.</p>
+        <p class="card-cta" style="margin-top:20px">
+          <a class="btn btn-secondary" href="{% url 'core:volunteer' %}">Volunteer with us →</a>
+        </p>
+      </div>
     </div>
-    <div class="form-card reveal">
-      <h2 class="form-title">Join our faculty</h2>
-      <form method="post" action="{% url 'submissions:faculty' %}" class="form-grid" novalidate>
-        {% csrf_token %}
-        {% with form=faculty_form %}{% include "includes/form_fields.html" %}{% endwith %}
-        <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Apply to join the faculty</button></div>
-      </form>
-    </div>
-  </div>
-</section>
-
-<section class="section section-cream" id="volunteer">
-  <div class="container split" style="align-items:flex-start">
-    <div class="reveal">
-      <p class="eyebrow" style="color:var(--orange)">Volunteer</p>
-      <h2>Contribute your time, skills, and experience.</h2>
-      <p>Whether your expertise is in programme coordination, event management, marketing and communications, content creation, technology, design, administration, or community engagement — there are meaningful opportunities to support our mission.</p>
-      <p>As a volunteer, you'll become part of a passionate community committed to equipping young entrepreneurs with the knowledge, networks, and opportunities they need to build successful businesses. Most volunteer opportunities are flexible and remote, so you can contribute from anywhere in the world.</p>
-    </div>
-    <div class="form-card reveal">
-      <h2 class="form-title">Volunteer with us</h2>
-      <form method="post" action="{% url 'submissions:volunteer' %}" class="form-grid" novalidate>
-        {% csrf_token %}
-        {% with form=volunteer_form %}{% include "includes/form_fields.html" %}{% endwith %}
-        <div class="full"><button class="btn btn-secondary" type="submit" style="width:100%">Volunteer with us</button></div>
-      </form>
+    <div class="center" style="margin-top:52px">
+      <p style="color:var(--muted)">Looking to partner with us as an organisation instead?
+        <a href="{% url 'core:partner' %}">Partner with us</a>.</p>
     </div>
   </div>
 </section>

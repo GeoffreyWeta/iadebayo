@@ -316,13 +316,16 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .form-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 42px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-grid .full { grid-column: 1 / -1; }
+/* Pins a field to column 1 so the one after it sits alongside rather than
+   wrapping to the next row — see BaseStyledForm.ROW_START_FIELDS. */
+.form-grid .row-start { grid-column: 1; }
 .form-field label { display: block; font-weight: 700; font-size: .88rem; color: var(--ink); margin-bottom: 6px; }
 .form-input {
   width: 100%; padding: 13px 16px; border: 1.5px solid var(--line); border-radius: 8px;
   font: inherit; color: var(--text); background: #fff;
 }
 .form-input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(237,50,55,.15); }
-.form-textarea { min-height: 120px; resize: vertical; }
+.form-textarea { min-height: 84px; resize: vertical; }
 .form-help { font-size: .8rem; color: var(--muted); margin-top: 4px; }
 .recaptcha-slot { margin: 6px 0; }
 .newsletter-form { display: flex; gap: 10px; }
@@ -835,7 +838,9 @@ h2 { margin: 0 0 .5em; }
 
 /* v10 — nav decrowded: fewer items, roomier links; dropdown machinery retired */
 .main-nav a { padding: 10px 15px; font-size: .92rem; }
-.has-sub .sub, .caret, .translate-slot { display: none !important; }
+/* Translate widget retired. The dropdown machinery is back in use for
+   Get Involved (see v18) — do not fold .has-sub/.caret back in here. */
+.translate-slot { display: none !important; }
 @media (max-width: 1080px) { .main-nav a { padding: 10px 11px; font-size: .88rem; } }
 
 /* v11 — nav links never wrap to two lines */
@@ -1125,4 +1130,77 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 @media (min-width: 641px) and (max-width: 1139px) {
   .card-grid-5 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ============================================================
+   v18 — About: team group photo
+   Sits above the per-person grid on the dark section. Capped and
+   centred rather than spanning the full 1160px container, which
+   would tower over the profile tiles underneath it.
+   ============================================================ */
+.team-photo { max-width: 720px; margin: 0 auto 48px; }
+.team-photo + .people-grid { margin-top: 0; }
+@media (max-width: 640px) {
+  .team-photo { margin-bottom: 32px; }
+}
+
+/* ============================================================
+   v18 — Get Involved dropdown, calmer textareas, new layouts
+   ============================================================ */
+
+/* --- Nav dropdown (Get Involved → Join Faculty / Volunteer).
+   Un-retired in v10; re-stated here because the base rules predate the
+   current header colours. Keyboard path: focusing the parent link fires
+   :focus-within, which reveals the panel so Tab can reach inside it. */
+.has-sub > a { display: flex; align-items: center; gap: 6px; }
+.caret { font-size: .62em; opacity: .8; line-height: 1; }
+.has-sub .sub {
+  min-width: 208px; padding: 10px; gap: 2px;
+  border: 1px solid var(--line);
+}
+/* Bridges the gap between the parent link and the panel so the pointer
+   can travel down without the panel closing underneath it. */
+.has-sub::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%;
+  height: 10px; display: none;
+}
+.has-sub:hover::after { display: block; }
+.has-sub .sub a {
+  color: var(--ink); font-size: .9rem; padding: 9px 12px; border-radius: 6px;
+}
+.has-sub .sub a:hover, .has-sub .sub a:focus-visible {
+  background: var(--cream); color: var(--ink);
+}
+.has-sub > a[aria-haspopup]:hover .caret { transform: translateY(1px); }
+
+/* --- Stacked cards in one column (Facilitators / Mentors) */
+.grid-1-tight { display: grid; gap: 18px; }
+
+/* --- Long FAQ lists read better in two columns on desktop */
+@media (min-width: 961px) {
+  .faq-columns { columns: 2; column-gap: 44px; }
+  .faq-columns details { break-inside: avoid; }
+}
+.faq-columns summary { padding: 16px 8px; font-size: .98rem; }
+.on-dark .faq-columns summary, .section-dark .faq-columns summary { color: #fff; }
+.on-dark .faq-columns, .section-dark .faq-columns,
+.on-dark .faq-columns details, .section-dark .faq-columns details {
+  border-color: rgba(255,255,255,.2);
+}
+.on-dark .faq-columns .answer, .section-dark .faq-columns .answer {
+  color: rgba(255,255,255,.8);
+}
+.on-dark .faq-columns summary::after, .section-dark .faq-columns summary::after {
+  color: #fff;
+}
+
+/* --- Mobile: the dropdown is a plain indented sub-list, no hover needed */
+@media (max-width: 960px) {
+  .has-sub > a { justify-content: flex-start; }
+  .has-sub::after { display: none; }
+  .has-sub .sub { border: 0; padding: 0 0 0 18px; min-width: 0; }
+  .has-sub .sub a { color: rgba(255,255,255,.72); }
+  .has-sub .sub a:hover, .has-sub .sub a:focus-visible {
+    background: rgba(255,255,255,.1); color: #fff;
+  }
 }

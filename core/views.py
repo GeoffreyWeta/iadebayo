@@ -31,11 +31,57 @@ CURRICULUM = [
 ]
 
 FAQS = [
-    ("Where are the classes held?", "Classes are held online and mostly on weekends."),
-    ("Is participation free?", "Yes. The programme is completely free for all selected participants."),
-    ("Will I receive a certificate?", "Yes. Participants who complete the programme receive an official Certificate of Completion."),
-    ("Can I miss classes?", "Attendance is expected throughout the programme. Where unavoidable, participants must notify the Programme Coordinator at least 48 hours before a scheduled session."),
-    ("Can I choose my mentor?", "No. Mentors are assigned based on each participant's business sector and development needs."),
+    ("Is there a registration fee?",
+     "No. Embark Entrepreneurship Academy is 100% free. There are no application, "
+     "registration, tuition, or certification fees."),
+    ("Will I receive a certificate?",
+     "Yes. Participants who complete the programme and meet the attendance and "
+     "participation requirements will receive a Certificate of Completion at no cost."),
+    ("Are there any in-person classes?",
+     "No. All classes, mentorship sessions, and programme activities are conducted "
+     "entirely online. This allows participants, facilitators, and mentors from across "
+     "Africa and around the world to engage conveniently without the need to travel."),
+    ("When are classes and mentorship sessions held?",
+     "Live classes are held on weekends to accommodate participants' academic and work "
+     "schedules: Saturdays (morning) and Sundays (evening). Mentorship sessions are "
+     "scheduled separately at mutually convenient times between mentors and mentees."),
+    ("Who is eligible to apply?",
+     "The programme is open to undergraduates, recent graduates, and early-stage "
+     "entrepreneurs across Africa who are currently building or actively working on a "
+     "business."),
+    ("Do I need to have an existing business?",
+     "Yes. The programme is designed for aspiring and early-stage entrepreneurs who "
+     "already have a business idea they are validating or an existing business they are "
+     "actively growing."),
+    ("How long does the programme last?",
+     "The duration of each cohort may vary. Successful applicants will receive the "
+     "programme calendar and schedule before the cohort begins."),
+    ("How much time should I commit each week?",
+     "Participants are expected to attend the weekly live classes, actively engage with "
+     "mentors, complete assignments where applicable, and participate in programme "
+     "activities throughout the cohort."),
+    ("What will I learn?",
+     "The curriculum covers practical topics including entrepreneurial mindset, business "
+     "strategy, customer discovery, product development, marketing, sales, finance, legal "
+     "fundamentals, leadership, fundraising, productivity, and leveraging AI for business "
+     "growth."),
+    ("Will I be assigned a mentor?",
+     "Yes. Participants will be matched with experienced entrepreneurs and professionals "
+     "who will provide guidance, accountability, and practical support throughout the "
+     "mentorship programme."),
+    ("Can I participate while studying or working full-time?",
+     "Absolutely. The programme is intentionally designed with weekend classes and "
+     "flexible mentorship sessions to accommodate students and working professionals."),
+    ("How are participants selected?",
+     "Applications are reviewed based on eligibility, commitment, the potential of the "
+     "business or business idea, and the applicant's willingness to actively participate "
+     "throughout the programme."),
+    ("What happens after I submit my application?",
+     "Our team will review all applications. Shortlisted applicants will be contacted via "
+     "email with the next steps and important programme information."),
+    ("How can I stay updated about future cohorts?",
+     "Follow our social media channels and subscribe to our newsletter to receive updates "
+     "on applications, programme announcements, and upcoming events."),
 ]
 
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]
@@ -65,11 +111,13 @@ def about(request):
 
 
 def embark(request):
+    # No faculty grid here — faculty now live on their own Join Faculty page,
+    # and this slot carries the FAQ instead.
     return render(request, "core/embark.html", {
         "stats": ImpactStat.objects.all(),
         "components": PROGRAM_COMPONENTS,
         "curriculum": CURRICULUM,
-        "faculty": FacultyMember.objects.filter(is_active=True),
+        "faqs": FAQS,
         "testimonials": Testimonial.objects.all()[:6],
         "meta_title": "Embark Entrepreneurship Academy",
         "meta_description": "Embark Entrepreneurship Academy — the flagship programme of IADEBAYO Foundation, building entrepreneurs who build Africa.",
@@ -112,12 +160,39 @@ def partner(request):
 
 
 def get_involved(request):
+    """Hub page. The two ways in each have their own page; this keeps the nav
+    parent and every existing /get-involved/ link pointing somewhere useful."""
     return render(request, "core/get_involved.html", {
-        "faculty_form": f.FacultyApplicationForm(),
-        "volunteer_form": f.VolunteerApplicationForm(),
         "meta_title": "Get Involved",
         "meta_description": "Join our faculty as a facilitator or mentor, or volunteer with IADEBAYO Foundation.",
     })
+
+
+def join_faculty_context(form=None):
+    return {
+        "form": form if form is not None else f.FacultyApplicationForm(),
+        "faculty": FacultyMember.objects.filter(is_active=True),
+        "meta_title": "Join Our Faculty",
+        "meta_description": "Share your expertise as an Embark facilitator or mentor and help "
+                            "early-stage African entrepreneurs build resilient businesses.",
+    }
+
+
+def join_faculty(request):
+    return render(request, "core/join_faculty.html", join_faculty_context())
+
+
+def volunteer_context(form=None):
+    return {
+        "form": form if form is not None else f.VolunteerApplicationForm(),
+        "meta_title": "Volunteer With Us",
+        "meta_description": "Lend your skills to IADEBAYO Foundation — flexible, mostly remote "
+                            "volunteer roles supporting young African entrepreneurs.",
+    }
+
+
+def volunteer(request):
+    return render(request, "core/volunteer.html", volunteer_context())
 
 
 def resources(request):
