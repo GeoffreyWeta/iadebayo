@@ -140,8 +140,19 @@ required, run `reboot`, wait a minute, and SSH back in.
 ### 2.3 Firewall
 
     ufw allow OpenSSH
-    ufw allow 'Nginx Full'         # opens 80 and 443 (Nginx installs in Phase 4)
+    ufw allow 80/tcp               # http
+    ufw allow 443/tcp              # https
     ufw enable                     # answer y
+
+Use the raw port numbers, not `ufw allow 'Nginx Full'`. UFW application profiles
+live in `/etc/ufw/applications.d/` and are installed *by* the package that defines
+them, so the `Nginx Full` profile does not exist until Phase 3 installs nginx —
+running it here fails with `ERROR: Could not find a profile matching 'Nginx Full'`.
+`Nginx Full` is only a friendly alias for 80,443/tcp, so opening the ports
+directly is equivalent and has no ordering dependency.
+
+The OpenSSH rule goes first deliberately: `ufw enable` warns that it may disrupt
+existing SSH connections, and that rule is what makes answering `y` safe.
 
 ### 2.4 Swap file (important on a 1 GB droplet)
 
