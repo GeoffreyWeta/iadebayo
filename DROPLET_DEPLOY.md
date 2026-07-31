@@ -415,7 +415,10 @@ Paste:
         listen 80;
         server_name iadebayo.foundation www.iadebayo.foundation;
 
-        client_max_body_size 20M;          # admin image uploads
+        # Embark applicants upload a one-minute video, capped at 64 MB by
+        # submissions/models.py. Anything smaller here and nginx rejects the
+        # application with a bare 413 before Django ever sees it.
+        client_max_body_size 80M;
 
         location = /favicon.ico { access_log off; log_not_found off; }
 
@@ -425,10 +428,31 @@ Paste:
             access_log off;
         }
 
+        # The site's press page lives at /media/ AND uploads are served from
+        # /media/ — an exact-match location beats the prefix one below, so the
+        # page keeps working. Without this, /media/ is a 403 directory listing.
+        location = /media/ {
+            proxy_pass http://127.0.0.1:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
         location /media/ {
             alias /srv/iadebayo/media/;
             expires 30d;
             access_log off;
+        }
+
+        # The public gallery is at /gallery/, NOT /media/ — this prefix belongs to
+        # MEDIA_URL. Keep any Django page off it: a request for a bare /media/
+        # matches the block above, Nginx tries to list the uploads directory,
+        # autoindex is off, and the visitor gets 403 without Django ever seeing it.
+        # This exact-match redirect rescues old /media/ links (= beats a prefix
+        # match in Nginx, so it does not disturb /media/<file> above).
+        location = /media/ {
+            return 301 /gallery/;
         }
 
         # Applicant videos are personal data. Longest-prefix wins, so this
@@ -557,8 +581,16 @@ Then:
 - Open an Embark application that has a video → the **⬇ Download video** button
   saves the file. Opening `https://iadebayo.foundation/media/applications/…`
   directly returns 404 — that's the point.
+- The **Media** page at `/media/` loads (not a 403 — see the exact-match block
+  in 7.1).
+- **Submit a real Embark application with a ~50 MB video.** This is the one form
+  that can fail purely on infrastructure: too small a `client_max_body_size` and
+  nginx returns a bare `413` before Django sees it.
 - Submit one form on the live site and confirm the notification email arrives at
-  `hello@iadebayo.foundation`.
+  `hello@iadebayo.foundation`. **Test this, don't assume it** — in production
+  `send_mail` runs with `fail_silently=True`, so wrong SMTP credentials lose the
+  notification without an error anywhere. The submission itself is still saved to
+  the admin, so nothing is lost, but nobody gets told about it.
 - `https://iadebayo.foundation/sitemap.xml` renders.
 
 ---
@@ -657,7 +689,12 @@ commit `static/js/islands.js` **before** pushing — the droplet does not build 
 | **CSRF verification failed** on a form | `DJANGO_CSRF_TRUSTED_ORIGINS` must list the exact `https://…` origins, and Nginx must send `X-Forwarded-Proto` (Phase 7.1). |
 | **Infinite redirect loop** | `SECURE_SSL_REDIRECT` is on but Nginx isn't passing `X-Forwarded-Proto $scheme`. Check the proxy headers. |
 | **Site loads unstyled** | `collectstatic` not run, or the `/static/` alias path is wrong. `ls /srv/iadebayo/staticfiles/css/`. |
+| **A page under `/media/` returns 403** | `MEDIA_URL` owns that prefix, so Nginx answers before Django and refuses to list the uploads directory. Move the page (the gallery lives at `/gallery/`), or add the `location = /media/` block from Phase 7.1. |
 | **Uploaded images 404** | The `media/` folder wasn't copied across (it's gitignored), or `/srv/iadebayo` isn't group-readable by `www-data`. Re-run Phase 5.7. |
+| **`413 Request Entity Too Large`** when applying | The applicant's video is bigger than `client_max_body_size`. Raise it in Phase 7.1 and reload nginx. |
+| **`/media/` press page is 403 Forbidden** | The exact-match `location = /media/` block is missing, so nginx tried to list the uploads directory. Add it (Phase 7.1). |
+| **Forms save but no email arrives** | Wrong SMTP host/password. Production swallows the error — test by hand: `.venv/bin/python manage.py shell -c "from django.core.mail import send_mail; send_mail('t','b',None,['hello@iadebayo.foundation'],fail_silently=False)"` and read the traceback. |
+| **Every form says "couldn't verify that you're human"** | `RECAPTCHA_SECRET_KEY` is set but `RECAPTCHA_SITE_KEY` isn't (so no widget renders), or the keys are from different reCAPTCHA sites. Set both, or clear both to disable. |
 | **Video download saves a 0-byte file** | `X_ACCEL_REDIRECT=True` but the `internal` `/protected-media/` location is missing from the Nginx config. Add it (Phase 7.1), or set `X_ACCEL_REDIRECT=False` to let Django stream instead. |
 | **`permission denied for schema public`** | You skipped the `GRANT ALL ON SCHEMA public` in Phase 4.1. |
 | **Certbot: "challenge failed"** | DNS hasn't propagated, or port 80 is closed. Re-check Phase 8.3 and `sudo ufw status`. |

@@ -11,7 +11,7 @@ class StaticPagesSitemap(Sitemap):
     def items(self):
         # "core:resources" is deliberately absent while the footer link is hidden —
         # no point advertising the page to search engines before it is announced.
-        return ["core:home", "core:about", "core:embark", "core:apply", "core:media",
+        return ["core:home", "core:about", "core:embark", "core:apply", "core:gallery",
                 "core:partner", "core:get_involved", "core:contact",
                 "core:privacy", "core:terms", "blog:list"]
 

@@ -53,11 +53,16 @@ Python applications on your plan — then use Option B or C if not.
    `/static/ → /home/youruser/iadebayo/staticfiles/` and
    `/media/  → /home/youruser/iadebayo/media/`.
 
-   Then block the applicant videos from that public mapping — they are
-   personal data, and staff download them through the admin's button
-   instead. Create `media/applications/.htaccess` containing:
+   Two things to watch with that `/media/` mapping:
 
-       Require all denied
+   - The site's **press page also lives at `/media/`**. Map the uploads
+     folder in a way that leaves the bare `/media/` URL reaching Django,
+     or the Media page becomes a directory listing / 403.
+   - **Block the applicant videos** from the public mapping — they are
+     personal data, and staff download them through the admin's button
+     instead. Create `media/applications/.htaccess` containing:
+
+         Require all denied
 9. **SSL.** cPanel → SSL/TLS Status → run AutoSSL for the domain.
 10. **Restart the app** (button in Setup Python App). Done.
 

@@ -4,10 +4,12 @@ import tempfile
 import zipfile
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from . import models
 from .models import EmbarkApplication
 
 MEDIA_ROOT = tempfile.mkdtemp()
@@ -124,3 +126,138 @@ class EmbarkAdminTests(TestCase):
             {"action": "download_videos_zip",
              "_selected_action": [self.without_video.pk]}, follow=True)
         self.assertContains(response, "None of the selected applications has a video.")
+
+
+def video(name="clip.mp4"):
+    return SimpleUploadedFile(name, b"pretend-video-bytes", content_type="video/mp4")
+
+
+CONTACT = {"name": "Ada Lovelace", "email": "ada@example.com",
+           "subject": "Speaking invitation", "message": "Would you speak at our event?"}
+
+EMBARK = {
+    "name": "Chidi Okafor", "gender": "male", "applicant_status": "undergraduate",
+    "email": "chidi@example.com", "phone_code": "+234", "phone": "8012345678",
+    "date_of_birth": "1999-04-12", "institution": "University of Lagos",
+    "city": "Lagos", "state": "Lagos", "country": "Nigeria",
+    "business_name": "Okafor Farms", "year_established": "2023",
+    "major_challenge": "Cold-chain logistics; we partnered with a local courier.",
+    "growth_limits": ["funding", "customers"],
+    "device": "laptop", "will_participate": "yes", "reliable_internet": "yes",
+    "heard_about": "linkedin", "media_consent": "on",
+}
+
+FACULTY = {"name": "Ngozi Eze", "phone_code": "+234", "phone": "8022222222",
+           "email": "ngozi@example.com", "faculty_option": "mentor",
+           "country": "Nigeria", "city": "Abuja",
+           "motivation": "I want to give back to young founders.",
+           "about": "Fifteen years in consumer goods."}
+
+VOLUNTEER = {"name": "Tunde Bello", "phone_code": "+234", "phone": "8033333333",
+             "email": "tunde@example.com", "skills": "Video editing, design",
+             "country": "Nigeria", "city": "Ibadan", "area": "content",
+             "motivation": "I believe in the mission.",
+             "about": "Freelance editor for six years."}
+
+PARTNER = {"name": "Amaka Obi", "phone_code": "+234", "phone": "8044444444",
+           "email": "amaka@example.com", "organization": "Lagos Business Hub",
+           "website": "https://example.com", "country": "Nigeria", "city": "Lagos",
+           "proposal": "We would like to co-host a pitch day."}
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
+class PublicFormTests(TestCase):
+    """All six public forms, end to end: POST → row saved → emails queued."""
+
+    def submit(self, name, data, **extra):
+        payload = dict(data, **extra)
+        return self.client.post(reverse(f"submissions:{name}"), payload, follow=True)
+
+    # ------------------------------------------------------------- the pages
+    def test_every_form_page_renders(self):
+        for page in ["contact", "apply", "join_faculty", "volunteer", "partner", "home"]:
+            with self.subTest(page=page):
+                response = self.client.get(reverse(f"core:{page}"))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "csrfmiddlewaretoken")
+
+    # -------------------------------------------------------- happy paths
+    def test_contact_form_saves_and_emails(self):
+        response = self.submit("contact", CONTACT)
+        self.assertEqual(models.ContactMessage.objects.count(), 1)
+        self.assertContains(response, "Thank you!")
+        self.assertEqual(len(mail.outbox), 2)          # team + acknowledgement
+        self.assertIn("hello@iadebayo.foundation", mail.outbox[0].to)
+        self.assertIn("ada@example.com", mail.outbox[1].to)
+
+    def test_newsletter_subscribes_once(self):
+        self.submit("newsletter", {"email": "reader@example.com"})
+        self.assertEqual(models.NewsletterSubscriber.objects.count(), 1)
+        response = self.submit("newsletter", {"email": "reader@example.com"})
+        self.assertEqual(models.NewsletterSubscriber.objects.count(), 1)
+        self.assertContains(response, "already subscribed")
+
+    def test_embark_application_saves_with_its_video(self):
+        response = self.submit("apply", EMBARK, business_video=video())
+        self.assertContains(response, "Thank you!")
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.growth_limits, "funding,customers")
+        self.assertTrue(application.business_video.name.startswith("applications/videos/"))
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_faculty_application_saves(self):
+        self.assertContains(self.submit("faculty", FACULTY), "Thank you!")
+        self.assertEqual(models.FacultyApplication.objects.count(), 1)
+
+    def test_volunteer_application_saves(self):
+        self.assertContains(self.submit("volunteer", VOLUNTEER), "Thank you!")
+        self.assertEqual(models.VolunteerApplication.objects.count(), 1)
+
+    def test_partnership_inquiry_saves(self):
+        self.assertContains(self.submit("partner", PARTNER), "Thank you!")
+        self.assertEqual(models.PartnershipInquiry.objects.count(), 1)
+
+    # --------------------------------------------------------- rejections
+    def test_honeypot_blocks_the_submission(self):
+        self.submit("contact", CONTACT, website_url="http://spam.example")
+        self.assertEqual(models.ContactMessage.objects.count(), 0)
+
+    def test_missing_required_field_is_reported_not_saved(self):
+        response = self.submit("faculty", dict(FACULTY, email=""))
+        self.assertEqual(models.FacultyApplication.objects.count(), 0)
+        self.assertContains(response, "This field is required")
+
+    def test_embark_rejects_an_applicant_who_will_not_participate(self):
+        response = self.submit("apply", dict(EMBARK, will_participate="no"),
+                               business_video=video())
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "commitment-based programme")
+
+    def test_embark_rejects_a_non_video_upload(self):
+        response = self.submit(
+            "apply", EMBARK,
+            business_video=SimpleUploadedFile("cv.pdf", b"%PDF-", content_type="application/pdf"))
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "Please upload a video file")
+
+    def test_embark_keeps_typed_answers_when_validation_fails(self):
+        response = self.submit("apply", dict(EMBARK, institution=""),
+                               business_video=video())
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "Okafor Farms")   # re-rendered, not thrown away
+
+    @override_settings(RECAPTCHA_SECRET_KEY="a-key-that-turns-verification-on")
+    def test_recaptcha_blocks_a_submission_with_no_token(self):
+        response = self.submit("contact", CONTACT)
+        self.assertEqual(models.ContactMessage.objects.count(), 0)
+        self.assertContains(response, "couldn&#x27;t verify that you&#x27;re human")
+
+    @override_settings(RECAPTCHA_SITE_KEY="a-site-key")
+    def test_every_form_page_shows_the_widget_once_keys_are_set(self):
+        """Guards the day the keys go into .env: a form whose template forgot
+        the widget would start rejecting every real visitor, silently."""
+        for page in ["contact", "apply", "join_faculty", "volunteer", "partner"]:
+            with self.subTest(page=page):
+                response = self.client.get(reverse(f"core:{page}"))
+                self.assertContains(response, 'class="g-recaptcha"')
+                self.assertContains(response, "recaptcha/api.js")

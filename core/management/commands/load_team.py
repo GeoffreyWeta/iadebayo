@@ -1,6 +1,8 @@
 """Seed the team roster from the OUR TEAM banner supplied on 2026-07-27.
 
-Names are taken from the banner exactly as printed there. Roles are left blank
+Names follow the banner, with one correction: it prints "WETTA" but the About
+page copy and the repo's own git author both spell it "Weta". If the banner is
+right, fix it here and in templates/core/about.html together. Roles are left blank
 on purpose — the banner does not state them and inventing a job title for a real
 colleague is worse than an empty field. Fill them in under Team members.
 
@@ -17,7 +19,7 @@ from core.models import TeamMember
 # Order matches left-to-right on the banner, so the grid reads the same way.
 TEAM = [
     ("Temitope Olamoyegun", ""),
-    ("Geoffrey Wetta", ""),
+    ("Geoffrey Weta", ""),
     ("Favour Odedele", ""),
     ("Dare Adebayo", "Founder"),
     ("Mercy Oisewemen", ""),

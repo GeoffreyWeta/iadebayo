@@ -26,7 +26,9 @@ if settings.DEBUG:
 elif getattr(settings, "SERVE_MEDIA", False):
     # Demo hosts without a media server (Render free tier). Django's static()
     # helper refuses to run with DEBUG off, so mount the view directly.
-    urlpatterns += [re_path(r"^media/(?P<path>.*)$", media_serve,
-                            {"document_root": settings.MEDIA_ROOT})]
+    # Derived from MEDIA_URL rather than hardcoding "media/": the two drifting
+    # apart is exactly how uploads start 404ing on the demo hosts.
+    urlpatterns += [re_path(rf"^{settings.MEDIA_URL.lstrip('/')}(?P<path>.*)$",
+                            media_serve, {"document_root": settings.MEDIA_ROOT})]
 
 handler404 = "core.views.page_not_found"

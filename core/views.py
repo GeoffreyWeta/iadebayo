@@ -157,8 +157,8 @@ def apply(request):
     return render(request, "core/apply.html", apply_context())
 
 
-def media_page(request):
-    return render(request, "core/media.html", {
+def gallery(request):
+    return render(request, "core/gallery.html", {
         "videos": SpotlightVideo.objects.all(),
         "gallery": GalleryImage.objects.all(),
         "meta_title": "Media",
