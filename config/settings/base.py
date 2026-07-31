@@ -205,3 +205,14 @@ STORAGES = {
 # serve /media/ when SERVE_MEDIA=True. Real production should use the host's
 # static/media mapping instead.
 SERVE_MEDIA = env_bool("SERVE_MEDIA", False)
+
+# Applicant uploads are personal data, so /media/applications/ should be blocked
+# at the web server (see DROPLET_DEPLOY.md) and reached only through the
+# staff-only view submissions.views.download_application_video.
+#
+# That view streams the file through Gunicorn, which parks a worker for the
+# length of a 60 MB download. Set X_ACCEL_REDIRECT=True behind nginx and the
+# view hands the transfer over to nginx instead, via the `internal` location
+# below. Leave it off locally and anywhere without that location configured.
+X_ACCEL_REDIRECT = env_bool("X_ACCEL_REDIRECT", False)
+X_ACCEL_MEDIA_PREFIX = env("X_ACCEL_MEDIA_PREFIX", "/protected-media/")

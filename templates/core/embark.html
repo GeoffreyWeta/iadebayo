@@ -1,5 +1,4 @@
-{% extends "base.html" %}
-{% block body_class %}theme-embark{% endblock %}
+{% extends "embark_base.html" %}
 {% load static %}
 {% block content %}
 <section class="hero" style="min-height:70vh">
@@ -24,7 +23,7 @@
       Use this block form whenever a note needs more than one line.
     {% endcomment %}
     <h1 class="hero-headline" style="margin-top:20px">Become the Entrepreneur&nbsp;who<span class="rotator">
-      <span class="rotator-ghost" aria-hidden="true">thinks like a CEO, not just a&nbsp;founder</span>
+      <span class="accent rotator-ghost" aria-hidden="true">thinks like a CEO, not just a&nbsp;founder</span>
       <span class="accent accent-orange rotator-live" data-island="rotate-words"
         data-words="grows with confidence, not&nbsp;guesswork|scales with&nbsp;confidence|grows with strategy, not&nbsp;luck|thinks like a CEO, not just a&nbsp;founder|builds systems that&nbsp;scale|grows beyond today&#39;s&nbsp;revenue">grows with confidence, not&nbsp;guesswork</span>
     </span></h1>
@@ -64,22 +63,7 @@
   <div class="container">
     <p class="eyebrow">Academy impact</p>
     <h2>Two years of empowering <span class="accent accent-light">African entrepreneurs.</span></h2>
-    <div class="impact-grid" data-island="counters">
-      {% for s in stats %}
-      <div>
-        <div class="impact-num"><span data-count="{{ s.value }}">{{ s.value }}</span><span class="suffix">{{ s.suffix }}</span></div>
-        <div class="impact-label">{{ s.label }}</div>
-      </div>
-      {% empty %}
-      {# Fallback if the Impact stats table is empty — run `manage.py sync_impact_stats` #}
-      <div><div class="impact-num"><span data-count="2">2</span></div><div class="impact-label">Years</div></div>
-      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
-      <div><div class="impact-num"><span data-count="70">70</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
-      <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">African Countries</div></div>
-      <div><div class="impact-num"><span data-count="80">80</span><span class="suffix">+</span></div><div class="impact-label">Live Sessions</div></div>
-      <div><div class="impact-num"><span data-count="42">42</span><span class="suffix">+</span></div><div class="impact-label">Facilitators &amp; Mentors</div></div>
-      {% endfor %}
-    </div>
+    {% include "includes/impact_grid.html" %}
   </div>
 </section>
 
@@ -151,7 +135,7 @@
     <div class="testimonial-grid">
       {% for t in testimonials %}
         {% if t.kind == "video" %}
-          <div class="video-embed"><iframe loading="lazy" src="{{ t.youtube_embed_url }}" title="{{ t.name }} — alumni story" allowfullscreen></iframe></div>
+          {% include "includes/video_embed.html" with video=t label=t.name %}
         {% else %}
           <div class="testimonial">
             <blockquote>“{{ t.quote }}”</blockquote>
@@ -163,6 +147,9 @@
     {% else %}
     <p style="color:var(--muted)">Alumni testimonials appear here — add them in the admin under <strong>Testimonials</strong>.</p>
     {% endif %}
+    <div class="center" style="margin-top:44px">
+      <a class="btn btn-outline" href="{% url 'core:alumni' %}">Meet all our alumni →</a>
+    </div>
   </div>
 </section>
 

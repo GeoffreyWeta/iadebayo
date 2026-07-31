@@ -1,0 +1,70 @@
+{% extends "embark_base.html" %}
+{% load static %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <p class="eyebrow">Embark alumni</p>
+    <h1>Journeys that started <span class="accent accent-light">at Embark.</span></h1>
+    <p class="lead">Founders who came through the Academy, in their own words — what they
+      are building, what changed, and where to find them.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if alumni %}
+    <div class="alumni-list">
+      {% for a in alumni %}
+      <article class="alumnus reveal">
+        <div class="alumnus-media">
+          {% if a.youtube_embed_url %}
+            {% include "includes/video_embed.html" with video=a label=a.name %}
+          {% elif a.photo %}
+            <div class="media-frame"><img src="{{ a.photo.url }}" alt="{{ a.name }}" loading="lazy"></div>
+          {% endif %}
+        </div>
+        <div class="alumnus-body">
+          <div class="alumnus-head">
+            {# Photo doubles as the avatar when the video carries the main frame. #}
+            {% if a.photo and a.youtube_embed_url %}
+              <img class="alumnus-photo" src="{{ a.photo.url }}" alt="" loading="lazy">
+            {% endif %}
+            <div>
+              <h2 class="alumnus-name">{{ a.name }}</h2>
+              {% if a.business %}<span class="alumnus-venture">{{ a.business }}</span>{% endif %}
+            </div>
+          </div>
+          {% if a.cohort %}<span class="alumnus-cohort">{{ a.cohort }}</span>{% endif %}
+          <div class="alumnus-story">
+            {% for para in a.story_paragraphs %}<p>{{ para }}</p>{% endfor %}
+          </div>
+          {% if a.quote %}<blockquote class="alumnus-quote">“{{ a.quote }}”</blockquote>{% endif %}
+          {% if a.link %}
+            <a class="alumnus-link" href="{{ a.link }}" target="_blank" rel="noopener">{{ a.link_text }} →</a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% comment %}
+      Empty for one of two reasons: nothing added yet, or entries exist but
+      media release consent has not been recorded (see published_testimonials).
+    {% endcomment %}
+    <p style="color:var(--muted)">Alumni stories appear here — add them in the admin under
+      <strong>Testimonials</strong>, tick <strong>Media release consent on file</strong>, and
+      they will show on this page.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section-cream cta-band">
+  <div class="container center">
+    <p class="eyebrow" style="color:var(--orange);justify-content:center">Your turn</p>
+    <h2>The next story on this page <span class="accent accent-primary">could be yours.</span></h2>
+    <div style="margin-top:28px">
+      <a class="btn btn-orange" href="{% url 'core:apply' %}">Apply to the Academy</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

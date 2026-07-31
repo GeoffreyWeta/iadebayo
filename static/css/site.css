@@ -828,13 +828,56 @@ h2 { margin: 0 0 .5em; }
 /* v8 — hamburger: stack the bars (flex defaults to row, oops) */
 .nav-toggle { flex-direction: column; }
 
-/* v9 — topbar/footer are Foundation chrome on every page, theme never touches them */
+/* ============================================================
+   v19 — EMBARK CHROME (supersedes v9, which kept the Foundation
+   red header/footer on every page).
+
+   Embark pages now carry their own header and footer: charcoal
+   instead of red, orange instead of gold, and the Embark lockup
+   in place of the Foundation one (see embark_base.html). Nav and
+   footer *structure* stay identical site-wide, so the sub-brand
+   reads as a section of the site, not a different website.
+
+   Header uses --em-dark and the footer the darker --em-dark-2,
+   mirroring the Foundation's lighter-bar/darker-footer pairing.
+   ============================================================ */
+.theme-embark .site-header {
+  background: var(--em-dark);
+  border-bottom: 1px solid rgba(255,255,255,.08);   /* page-head is the same charcoal — keep the bar legible */
+}
 .theme-embark .site-header a, .theme-embark .site-header .brand-word { color: rgba(255,255,255,.88); }
-.theme-embark .site-header a:hover { color: #fff; }
-.theme-embark .site-header .has-sub .sub a { color: var(--ink); }
-.theme-embark .site-header .has-sub .sub a:hover { color: var(--ink); }
+.theme-embark .site-header a:hover, .theme-embark .site-header a:focus-visible { color: #fff; }
+.theme-embark .main-nav a:hover, .theme-embark .main-nav a:focus-visible { background: rgba(241,89,44,.22); }
+.theme-embark .brand-word em { color: var(--em-orange-soft); }   /* never gold on Embark */
+
+/* Desktop dropdown panel: white card, charcoal type (not the red-black ink) */
+.theme-embark .site-header .has-sub .sub a { color: var(--em-dark); }
+.theme-embark .site-header .has-sub .sub a:hover { background: var(--em-cream); color: var(--em-dark); }
+
+/* Embark lockup: one wide horizontal mark, so it replaces mark + wordmark */
+.brand-logo-embark { height: 32px; }
+.footer-logo-embark { height: 44px; }
+
+.theme-embark .site-footer { background: var(--em-dark-2); }
+/* .theme-embark h3 paints headings charcoal for light sections — same-specificity
+   as .footer-col h3 and declared later, so it was winning here and rendering the
+   column headings charcoal-on-charcoal. The footer is dark: keep them white. */
+.theme-embark .footer-col h3 { color: #fff; }
 .theme-embark .site-footer a { color: rgba(255,255,255,.78); }
-.theme-embark .site-footer a:hover { color: var(--gold); }
+.theme-embark .site-footer a:hover, .theme-embark .footer-col a:hover,
+.theme-embark .footer-bottom a:hover { color: var(--em-orange-soft); }
+.theme-embark .social a:hover { background: var(--em-orange); border-color: var(--em-orange); }
+
+/* Sub-brand attribution under the footer lockup */
+.footer-subbrand { font-size: .92rem; color: rgba(255,255,255,.62); margin-top: -.4em; }
+.footer-subbrand a { text-decoration: underline; text-underline-offset: 2px; }
+.theme-embark .footer-subbrand a { color: var(--em-orange-soft); }
+
+@media (max-width: 960px) {
+  /* Slide-in mobile menu panel — red by default, charcoal here */
+  .theme-embark .main-nav { background: var(--em-dark); }
+  .brand-logo-embark { height: 28px; }
+}
 
 /* v10 — nav decrowded: fewer items, roomier links; dropdown machinery retired */
 .main-nav a { padding: 10px 15px; font-size: .92rem; }
@@ -918,17 +961,21 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
    text drags that text around on every swap.
 
    So .rotator is a block on its own line. Inside it, a hidden
-   ghost holding the longest phrase reserves the height (which is
-   why it must stay in sync with the longest data-words entry) and
-   the live phrase is absolutely positioned over it. Height is
-   therefore correct at any width, for one-line or two-line
-   phrases, with no per-page magic numbers.
+   ghost holding the longest phrase reserves the height, and the
+   live phrase sits in the same grid cell — the row is then as
+   tall as the taller of the two, so a phrase can never spill onto
+   the paragraph below even if the ghost drifts out of sync with
+   the longest data-words entry.
+
+   The ghost must carry the same .accent typography as the live
+   span: measuring Archivo to reserve room for Fraunces italic
+   reserves the wrong height and the phrase overlaps the lead.
    ============================================================ */
 .hero h1.hero-headline { max-width: 30ch; }          /* Embark: long phrases */
 .hero h1.hero-headline-compact { max-width: 21ch; }  /* home: single words */
-.rotator { display: block; position: relative; margin-top: .08em; min-height: 1.15em; }
-.rotator-ghost { display: block; visibility: hidden; }
-.rotator-live { position: absolute; left: 0; top: 0; right: 0; }
+.rotator { display: grid; margin-top: .08em; }
+.rotator-ghost, .rotator-live { grid-area: 1 / 1; }
+.rotator-ghost { visibility: hidden; }
 @media (max-width: 640px) {
   .hero h1.hero-headline { max-width: 22ch; }
   .hero h1.hero-headline-compact { max-width: 18ch; }
@@ -1138,10 +1185,23 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
    centred rather than spanning the full 1160px container, which
    would tower over the profile tiles underneath it.
    ============================================================ */
-.team-photo { max-width: 720px; margin: 0 auto 48px; }
+/* OUR TEAM banner. 16:9 and full container width — the previous 720px cap put
+   eight faces at ~90px each, which made the names printed on the artwork
+   unreadable. Matted on white because the artwork's own background is near-white
+   and needs to read as a deliberate inset panel on the red section, not a slab. */
+.team-photo {
+  max-width: 100%; margin: 0 auto 48px;
+  background: #fff; padding: 14px; border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+/* Deliberately NOT wrapped in .media-frame: that class forces `aspect-ratio: 4/3`
+   with `object-fit: cover`, which centre-crops a 16:9 banner and slices off the
+   first and last person — their faces and names sit flush with the edges. The
+   matte below is what .media-frame would have provided. */
+.team-photo img { width: 100%; height: auto; border-radius: 4px; }
 .team-photo + .people-grid { margin-top: 0; }
 @media (max-width: 640px) {
-  .team-photo { margin-bottom: 32px; }
+  .team-photo { margin-bottom: 32px; padding: 8px; }
 }
 
 /* ============================================================
@@ -1203,4 +1263,73 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
   .has-sub .sub a:hover, .has-sub .sub a:focus-visible {
     background: rgba(255,255,255,.1); color: #fff;
   }
+}
+
+/* ============================================================
+   v19 — Alumni spotlight: video posters, portrait clips, story cards
+   ============================================================ */
+
+/* --- Click-to-play poster. The box keeps its aspect ratio whether it holds
+   the thumbnail or the swapped-in iframe, so nothing jumps on click. */
+.video-facade {
+  position: absolute; inset: 0; display: block; cursor: pointer;
+  background: var(--ink-2); text-decoration: none;
+}
+.video-embed { position: relative; }
+.video-facade img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s ease, opacity .3s ease;
+}
+.video-facade:hover img { transform: scale(1.04); opacity: .82; }
+.video-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 66px; height: 66px; border-radius: 50%;
+  background: var(--secondary); box-shadow: 0 8px 26px rgba(0,0,0,.4);
+  transition: transform .2s ease, background .2s ease;
+}
+/* Play triangle, drawn with borders so there is no icon font or SVG to load */
+.video-play::after {
+  content: ""; position: absolute; top: 50%; left: 54%;
+  transform: translate(-50%, -50%);
+  border-style: solid; border-width: 11px 0 11px 18px;
+  border-color: transparent transparent transparent #fff;
+}
+.video-facade:hover .video-play { transform: translate(-50%, -50%) scale(1.1); }
+.video-facade:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+/* --- Vertical clips (Shorts). Capped so a 9:16 frame cannot tower over the
+   text beside it; centred because it is narrower than its grid cell. */
+.video-embed-portrait { aspect-ratio: 9 / 16; max-width: 320px; margin-inline: auto; }
+
+/* --- Alumni spotlight entries: video one side, story the other, alternating */
+.alumni-list { display: grid; gap: 72px; }
+.alumnus { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 44px; align-items: center; }
+.alumnus:nth-child(even) .alumnus-media { order: 2; }
+.alumnus-name { margin-bottom: 4px; }
+.alumnus-venture {
+  display: block; font-family: var(--accent-serif); font-style: italic;
+  font-size: 1.15rem; color: var(--secondary); margin-bottom: 6px;
+}
+.alumnus-cohort {
+  display: inline-block; font-size: .74rem; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; margin-bottom: 18px;
+}
+.alumnus-story p { color: var(--muted); }
+.alumnus-quote {
+  border-left: 3px solid var(--gold); padding-left: 18px; margin: 20px 0;
+  font-family: var(--accent-serif); font-style: italic; font-size: 1.14rem; color: var(--ink);
+}
+.alumnus-link { font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--gold); }
+.alumnus-photo {
+  width: 66px; height: 66px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--gold);
+}
+.alumnus-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+
+@media (max-width: 860px) {
+  .alumni-list { gap: 56px; }
+  .alumnus { grid-template-columns: 1fr; gap: 24px; }
+  /* Media always leads on a phone, so the alternating order must not apply. */
+  .alumnus:nth-child(even) .alumnus-media { order: 0; }
 }

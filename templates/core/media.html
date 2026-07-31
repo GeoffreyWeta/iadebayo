@@ -12,7 +12,7 @@
     {% if videos %}
     <div class="video-grid">
       {% for v in videos %}
-      <div class="video-embed"><iframe loading="lazy" src="{{ v.youtube_embed_url }}" title="{{ v.title }}" allowfullscreen></iframe></div>
+      {% include "includes/video_embed.html" with video=v label=v.title %}
       {% endfor %}
     </div>
     {% else %}

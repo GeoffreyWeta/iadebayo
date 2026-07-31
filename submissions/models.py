@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.text import slugify
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".avi", ".mkv"}
 VIDEO_MAX_BYTES = 64 * 1024 * 1024  # 64 MB — ample for a phone-shot minute
@@ -125,7 +126,8 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
         help_text="Up to one minute: what your business does, the problem it solves, "
                   "and its impact or value proposition.")
     year_established = models.PositiveSmallIntegerField(
-        "Year the business was established", null=True, blank=True)
+        "How old is the business?", null=True, blank=True,
+        help_text="Year the business was established.")
     revenue_last_year = models.CharField("Approximate revenue generated last year",
                                          max_length=80, blank=True)
     revenue_this_year = models.CharField("Approximate revenue generated this year",
@@ -162,6 +164,18 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
 
     def __str__(self):
         return f"{self.name} — {self.business_name}"
+
+    @property
+    def video_download_name(self):
+        """Filename the team gets when they download the video.
+
+        Applicants upload things called `IMG_2453.mp4`, which is useless in a
+        folder of eighty of them — name the copy after the person and business
+        instead. The pk keeps it unique inside a bulk ZIP when two applicants
+        slugify the same.
+        """
+        stem = slugify(f"{self.name} {self.business_name}") or "embark-application"
+        return f"{stem}-{self.pk}{Path(self.business_video.name).suffix.lower()}"
 
     @property
     def growth_limits_display(self):

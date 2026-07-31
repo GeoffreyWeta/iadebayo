@@ -28,9 +28,44 @@ class FacultyMemberAdmin(admin.ModelAdmin):
 
 @admin.register(models.Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):
-    list_display = ("name", "kind", "business", "featured", "order")
-    list_editable = ("featured", "order")
-    list_filter = ("kind", "featured")
+    list_display = ("name", "kind", "business", "cohort", "media_consent",
+                    "on_spotlight", "featured", "order")
+    list_editable = ("media_consent", "on_spotlight", "featured", "order")
+    list_filter = ("media_consent", "kind", "on_spotlight", "featured", "cohort")
+    search_fields = ("name", "business", "story", "quote")
+    readonly_fields = ("video_preview",)
+    fieldsets = (
+        ("Who", {"fields": ("name", "business", "cohort", "photo")}),
+        ("Their story", {
+            "description": "The write-up shown on the Alumni Spotlight page. "
+                           "Leave a blank line between paragraphs.",
+            "fields": ("story", "quote", "link", "link_label"),
+        }),
+        ("Video", {
+            "description": "Paste any YouTube link — watch page, youtu.be, or a Short. "
+                           "Shorts are detected and framed vertically.",
+            "fields": ("kind", "youtube_url", "orientation", "video_preview"),
+        }),
+        ("Where it appears", {
+            "description": "Nothing shows on the public site until media release consent "
+                           "is ticked.",
+            "fields": ("media_consent", "on_spotlight", "featured", "order"),
+        }),
+    )
+
+    @admin.display(description="Resolved embed")
+    def video_preview(self, obj):
+        """Shows what the pasted link actually resolves to.
+
+        Makes a typo or an unsupported link obvious in the admin rather than as
+        a blank box on the live page.
+        """
+        if not obj.youtube_url:
+            return "—"
+        if not obj.youtube_embed_url:
+            return "Could not read a video id from that link — check the URL."
+        shape = "vertical (9:16)" if obj.is_portrait else "landscape (16:9)"
+        return f"{obj.youtube_embed_url}  ·  {shape}"
 
 
 @admin.register(models.GalleryImage)

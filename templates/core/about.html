@@ -9,8 +9,8 @@
 </section>
 
 <section class="section">
-  <div class="container split">
-    <div class="reveal">
+  <div class="container">
+    <div class="reveal" style="max-width:760px">
       <p class="eyebrow">Our story</p>
       <h2>Talent isn't the problem. Access is.</h2>
       <p>IADEBAYO Foundation was born from one entrepreneur's conviction that building a
@@ -38,12 +38,6 @@
         its journey with the guidance, knowledge, and support that many founders only wish they
         had from day one.</p>
     </div>
-    <div class="reveal">
-      <div class="media-frame">
-        <img src="{% static 'img/about-founder.webp' %}" width="1200" height="900"
-             alt="A young African furniture maker at work in his workshop (stand-in until the founder photo is provided)" loading="lazy">
-      </div>
-    </div>
   </div>
 </section>
 
@@ -57,6 +51,14 @@
       <p class="eyebrow">Mission</p>
       <p class="statement" style="border:none;padding:0">Provide a platform to inspire, groom, empower, and mentor young people to acquire skills, become creative, innovative, and enterprising.</p>
     </div>
+  </div>
+</section>
+
+<section class="section section-dark on-dark impact">
+  <div class="container">
+    <p class="eyebrow">Our impact</p>
+    <h2>The story so far, <span class="accent accent-light">in numbers.</span></h2>
+    {% include "includes/impact_grid.html" %}
   </div>
 </section>
 
@@ -91,27 +93,32 @@
       <p class="lead">With diverse expertise across business, education, technology, operations, and leadership, we are dedicated to supporting young entrepreneurs with the knowledge, mentorship, and opportunities they need to succeed.</p>
     </div>
     {% comment %}
-      Group shot stands in until the real team photo is supplied. Swap the
-      file at static/img/about-team.webp (4:3) to replace it — the per-person
-      grid below is separate and fills from Team members in the admin.
+      The OUR TEAM banner. Swap static/img/about-team.webp to replace it — 16:9,
+      and it carries its own names, so it is matted on white: the artwork is
+      near-white and would otherwise read as a slab dropped on the red section.
+
+      Names baked into artwork can't reflow, so they get small on a narrow
+      screen. The per-person grid below is the responsive, screen-readable
+      version and appears as soon as individual headshots are uploaded.
     {% endcomment %}
-    <div class="media-frame team-photo reveal">
-      <img src="{% static 'img/about-team.webp' %}" width="1280" height="960"
-           alt="The IADEBAYO Foundation team (stand-in until the team photo is provided)" loading="lazy">
+    <div class="team-photo reveal">
+      <img src="{% static 'img/about-team.webp' %}" width="1920" height="1080"
+           alt="The IADEBAYO Foundation team: Temitope Olamoyegun, Geoffrey Weta, Favour Odedele, Dare Adebayo, Mercy Oisewemen, Feranmi Makinde, Daniel Makinde, and Abigail Banjo"
+           loading="lazy">
     </div>
 
     {% if team %}
     <div class="people-grid">
       {% for m in team %}
       <div class="person reveal">
+        {# Guarded: photo is blank-able, and .photo.url on an empty field raises
+           ValueError, which Django does not silence — it would 500 the page. #}
         <div class="person-photo">{% if m.photo %}<img src="{{ m.photo.url }}" alt="{{ m.name }}" loading="lazy">{% endif %}</div>
         <h3 style="color:#fff">{{ m.name }}</h3>
-        <span class="role" style="color:rgba(255,255,255,.75)">{{ m.role }}</span>
+        {% if m.role %}<span class="role" style="color:rgba(255,255,255,.75)">{{ m.role }}</span>{% endif %}
       </div>
       {% endfor %}
     </div>
-    {% else %}
-    <p style="color:rgba(255,255,255,.75)">Individual profiles appear here — add them in the admin under <strong>Team members</strong>.</p>
     {% endif %}
   </div>
 </section>

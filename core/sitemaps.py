@@ -9,8 +9,10 @@ class StaticPagesSitemap(Sitemap):
     priority = 0.8
 
     def items(self):
+        # "core:resources" is deliberately absent while the footer link is hidden —
+        # no point advertising the page to search engines before it is announced.
         return ["core:home", "core:about", "core:embark", "core:apply", "core:media",
-                "core:partner", "core:get_involved", "core:resources", "core:contact",
+                "core:partner", "core:get_involved", "core:contact",
                 "core:privacy", "core:terms", "blog:list"]
 
     def location(self, item):

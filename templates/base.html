@@ -38,11 +38,18 @@
 
 <header class="site-header" id="site-header">
   <div class="container header-inner">
+    {% comment %}
+      Sub-brands override header_brand/footer_brand to fly their own lockup —
+      see embark_base.html. Everything else in the chrome is shared markup and
+      is re-skinned with CSS off the body class.
+    {% endcomment %}
+    {% block header_brand %}
     <a class="brand" href="{% url 'core:home' %}" aria-label="IADEBAYO Foundation — home">
       <img src="{% static 'img/mark-white.png' %}" alt="" class="brand-logo"
            onerror="this.style.display='none'">
       <span class="brand-word">iAdebayo <em>Foundation</em></span>
     </a>
+    {% endblock %}
     <nav class="main-nav" id="main-nav" aria-label="Main">
       <ul>
         <li><a href="{% url 'core:home' %}">Home</a></li>
@@ -84,14 +91,16 @@
 <footer class="site-footer">
   <div class="container footer-grid">
     <div class="footer-brand">
+      {% block footer_brand %}
       <img src="{% static 'img/logo-white.png' %}" alt="IADEBAYO Foundation" class="footer-logo"
            onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
       <span class="brand-word brand-word-light" style="display:none">IADEBAYO<em>Foundation</em></span>
       <p>Empowering Africa's next generation of entrepreneurs through education, mentorship, and community.</p>
+      {% endblock %}
       <ul class="social" aria-label="Social media">
-        <li><a href="https://www.linkedin.com/" aria-label="LinkedIn">in</a></li>
+        <li><a href="https://www.linkedin.com/company/embarkea/" aria-label="LinkedIn">in</a></li>
         <li><a href="https://www.facebook.com/" aria-label="Facebook">f</a></li>
-        <li><a href="https://www.instagram.com/" aria-label="Instagram">ig</a></li>
+        <li><a href="https://www.instagram.com/embarkea/" aria-label="Instagram">ig</a></li>
         <li><a href="https://www.youtube.com/" aria-label="YouTube">yt</a></li>
       </ul>
     </div>
@@ -103,7 +112,7 @@
         {# Faculty moved off the Embark page onto its own page — that anchor is gone. #}
         <li><a href="{% url 'core:join_faculty' %}">Join Faculty</a></li>
         <li><a href="{% url 'core:volunteer' %}">Volunteer</a></li>
-        <li><a href="{% url 'core:embark' %}#alumni">Alumni</a></li>
+        <li><a href="{% url 'core:alumni' %}">Embark Alumni</a></li>
         <li><a href="{% url 'core:apply' %}">Apply</a></li>
         <li><a href="{% url 'blog:list' %}">Blog</a></li>
       </ul>
@@ -115,7 +124,8 @@
         <li><a href="{% url 'core:contact' %}">Contact us</a></li>
         <li><a href="{% url 'core:partner' %}">Partner with us</a></li>
         <li><a href="{% url 'core:get_involved' %}">Get involved</a></li>
-        <li><a href="{% url 'core:resources' %}">Resources</a></li>
+        {# Resources hidden until there is material to download — page and route still live. #}
+        {# <li><a href="{% url 'core:resources' %}">Resources</a></li> #}
       </ul>
     </div>
     <div class="footer-col footer-news">

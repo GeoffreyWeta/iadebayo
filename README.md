@@ -52,7 +52,7 @@ place (same name, same aspect ratio) and the page picks it up:
     static/img/embark-hero.webp                       (Embark page hero, 16:9)
     static/img/embark-band.webp                       (Embark quote band, 2.5:1)
     static/img/home-what-we-do.webp                   (home, programme photo, 4:3)
-    static/img/about-founder.webp                     (about page, 4:3)
+    static/img/about-team.webp                        (about page, team photo, 4:3)
     static/img/blog-cover-1.webp  blog-cover-2.webp   (demo post covers, 16:9)
     static/img/gallery/sample-1..6.webp               (demo gallery, 4:3)
 

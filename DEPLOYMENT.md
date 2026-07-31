@@ -52,6 +52,12 @@ Python applications on your plan — then use Option B or C if not.
    the Python App screen add static file mappings:
    `/static/ → /home/youruser/iadebayo/staticfiles/` and
    `/media/  → /home/youruser/iadebayo/media/`.
+
+   Then block the applicant videos from that public mapping — they are
+   personal data, and staff download them through the admin's button
+   instead. Create `media/applications/.htaccess` containing:
+
+       Require all denied
 9. **SSL.** cPanel → SSL/TLS Status → run AutoSSL for the domain.
 10. **Restart the app** (button in Setup Python App). Done.
 
@@ -71,9 +77,11 @@ Python applications on your plan — then use Option B or C if not.
    `hello@iadebayo.foundation` mailboxes stay there; use those SMTP
    details in `.env`.
 
-## Option C — Small VPS (~$4–6/month, most headroom)
+## Option C — Small VPS (~$6/month, most headroom)
 
-Ubuntu server + Nginx + Gunicorn is the classic setup:
+**See [DROPLET_DEPLOY.md](DROPLET_DEPLOY.md) for the full step-by-step version
+of this option** (DigitalOcean droplet, domain at Namecheap). The sketch below
+is the shape of it:
 
     apt install python3-venv nginx
     git clone <repo> /srv/iadebayo && cd /srv/iadebayo

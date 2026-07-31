@@ -1,0 +1,30 @@
+{% comment %}
+  A YouTube video as a click-to-play poster.
+
+  Expects `video` — anything with the YouTubeEmbedMixin (Testimonial,
+  SpotlightVideo) — and `label`, the accessible name for the play button.
+
+  Pass `label` explicitly. The two models name their headline field differently
+  (name vs title), and a `default:` chain across the missing one raises: Django
+  swallows a failed lookup in a plain variable node but re-raises it when it is
+  a filter argument.
+
+  Why a poster and not an iframe: each live YouTube iframe pulls well over a
+  megabyte of player code before anyone presses play, so a page with six of
+  them is unusable on a phone. Here the browser loads one ~15 KB JPEG and
+  site.js swaps in the real iframe on click.
+
+  With JavaScript off, the poster is a plain link to YouTube — still watchable.
+{% endcomment %}
+{% if video.youtube_embed_url %}
+<div class="video-embed{% if video.is_portrait %} video-embed-portrait{% endif %}"
+     data-video-facade
+     data-embed="{{ video.youtube_embed_url }}&autoplay=1"
+     data-title="{{ label|default:'Video' }}">
+  <a class="video-facade" href="{{ video.youtube_watch_url }}"
+     aria-label="Play: {{ label|default:'Video' }}">
+    <img src="{{ video.youtube_thumbnail_url }}" alt="" loading="lazy" decoding="async">
+    <span class="video-play" aria-hidden="true"></span>
+  </a>
+</div>
+{% endif %}

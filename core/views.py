@@ -87,11 +87,22 @@ FAQS = [
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]
 
 
+def published_testimonials():
+    """Testimonials cleared for the public site.
+
+    The meeting on 2026-07-24 asked for media release consent before any
+    alumnus's photo or video is used, so consent is a filter here rather than a
+    note in the admin someone has to remember. Untick nothing and a new entry
+    simply stays invisible until the paperwork is recorded.
+    """
+    return Testimonial.objects.filter(media_consent=True)
+
+
 def home(request):
     return render(request, "core/home.html", {
         "stats": ImpactStat.objects.all(),
         "components": PROGRAM_COMPONENTS,
-        "testimonials": Testimonial.objects.filter(featured=True)[:6],
+        "testimonials": published_testimonials().filter(featured=True)[:3],
         "latest_posts": Post.objects.filter(published=True)[:3],
         "gallery_strip": GalleryImage.objects.all()[:6],
         "milestones": Milestone.objects.all()[:5],
@@ -103,8 +114,12 @@ def home(request):
 
 def about(request):
     return render(request, "core/about.html", {
-        "team": TeamMember.objects.all(),
+        # Only members with a headshot: the group banner above the grid already
+        # names everyone, so a grid of empty circles would just repeat it.
+        "team": TeamMember.objects.exclude(photo=""),
+        "team_size": TeamMember.objects.count(),
         "values": CORE_VALUES,
+        "stats": ImpactStat.objects.all(),
         "meta_title": "About Us",
         "meta_description": "The story, vision, mission, and team behind IADEBAYO Foundation.",
     })
@@ -118,7 +133,7 @@ def embark(request):
         "components": PROGRAM_COMPONENTS,
         "curriculum": CURRICULUM,
         "faqs": FAQS,
-        "testimonials": Testimonial.objects.all()[:6],
+        "testimonials": published_testimonials().filter(on_spotlight=True)[:3],
         "meta_title": "Embark Entrepreneurship Academy",
         "meta_description": "Embark Entrepreneurship Academy — the flagship programme of IADEBAYO Foundation, building entrepreneurs who build Africa.",
     })
@@ -156,6 +171,16 @@ def partner(request):
         "form": f.PartnershipInquiryForm(),
         "meta_title": "Partner With Us",
         "meta_description": "Partner with IADEBAYO Foundation — universities, corporations, hubs, foundations, NGOs, and ecosystem partners.",
+    })
+
+
+def alumni(request):
+    """The alumni spotlight: one entry per graduate, video plus their story."""
+    return render(request, "core/alumni.html", {
+        "alumni": published_testimonials().filter(on_spotlight=True),
+        "meta_title": "Embark Alumni",
+        "meta_description": "Meet Embark Entrepreneurship Academy alumni — the ventures "
+                            "they are building across Africa, in their own words.",
     })
 
 

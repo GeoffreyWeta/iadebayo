@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load static %}
+{% comment %}
+  Layout for Embark Academy pages (Embark + Apply).
+
+  Embark is a sub-brand: its own charcoal/cream/orange palette and its own
+  lockup, but the same nav and footer structure as the rest of the site, so a
+  visitor never feels dropped onto a different website. Anything visual lives
+  in the v19 block in site.css, keyed off .theme-embark — this file only swaps
+  the two brand lockups.
+
+  The header mark points at the Embark page rather than the Foundation home:
+  on these pages Embark *is* the section home, and the nav keeps an explicit
+  "Home" link, so the Foundation is still one click away.
+{% endcomment %}
+{% block body_class %}theme-embark{% endblock %}
+
+{% block header_brand %}
+<a class="brand brand-embark" href="{% url 'core:embark' %}"
+   aria-label="Embark Entrepreneurship Academy — programme home">
+  <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy"
+       class="brand-logo brand-logo-embark" width="792" height="160">
+</a>
+{% endblock %}
+
+{% block footer_brand %}
+<img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy"
+     class="footer-logo footer-logo-embark" width="792" height="160">
+<p>Free entrepreneurship education, mentorship, and community for students,
+  graduates, and early-stage founders across Africa.</p>
+<p class="footer-subbrand">The flagship programme of
+  <a href="{% url 'core:home' %}">IADEBAYO&nbsp;Foundation</a>.</p>
+{% endblock %}

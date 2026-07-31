@@ -1,0 +1,24 @@
+{% comment %}
+  The impact numbers, shared by Home, Embark, and About so the figures can
+  never drift apart between pages. Feed it `stats` (ImpactStat rows) from the
+  view — see core.views.
+
+  The fallback mirrors CANONICAL_IMPACT_STATS and only shows if the table is
+  empty; `manage.py sync_impact_stats` populates it. Keep the two in step, and
+  edit real numbers in the admin rather than here.
+{% endcomment %}
+<div class="impact-grid" data-island="counters">
+  {% for s in stats %}
+  <div>
+    <div class="impact-num"><span data-count="{{ s.value }}">{{ s.value }}</span><span class="suffix">{{ s.suffix }}</span></div>
+    <div class="impact-label">{{ s.label }}</div>
+  </div>
+  {% empty %}
+  <div><div class="impact-num"><span data-count="2">2</span></div><div class="impact-label">Years</div></div>
+  <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">Cohorts</div></div>
+  <div><div class="impact-num"><span data-count="70">70</span></div><div class="impact-label">Entrepreneurs Empowered</div></div>
+  <div><div class="impact-num"><span data-count="4">4</span></div><div class="impact-label">African Countries</div></div>
+  <div><div class="impact-num"><span data-count="80">80</span><span class="suffix">+</span></div><div class="impact-label">Live Sessions</div></div>
+  <div><div class="impact-num"><span data-count="42">42</span><span class="suffix">+</span></div><div class="impact-label">Facilitators &amp; Mentors</div></div>
+  {% endfor %}
+</div>

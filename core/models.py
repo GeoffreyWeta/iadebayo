@@ -1,6 +1,8 @@
 """Content the Foundation team manages themselves via Django admin."""
 from django.db import models
 
+from . import youtube
+
 
 # The agreed impact numbers, in display order. Single source of truth for the
 # seed command, `manage.py sync_impact_stats`, and the template fallbacks.
@@ -12,6 +14,40 @@ CANONICAL_IMPACT_STATS = [
     ("Live Sessions", 80, "+"),
     ("Facilitators & Mentors", 42, "+"),
 ]
+
+
+class YouTubeEmbedMixin:
+    """Embed/poster URLs derived from whatever YouTube link was pasted in.
+
+    See core.youtube — every shape reduces to a video id first, so Shorts and
+    share links carrying ?si=… work the same as a plain watch URL.
+    """
+
+    @property
+    def youtube_embed_url(self):
+        return youtube.embed_url(self.youtube_url)
+
+    @property
+    def youtube_thumbnail_url(self):
+        return youtube.thumbnail_url(self.youtube_url)
+
+    @property
+    def youtube_watch_url(self):
+        return youtube.watch_url(self.youtube_url)
+
+    @property
+    def is_portrait(self):
+        """Vertical video, so the frame must be 9:16 instead of 16:9.
+
+        `orientation` is the manual override for a vertical clip that was
+        uploaded as a normal video rather than as a Short.
+        """
+        setting = getattr(self, "orientation", "auto")
+        if setting == "portrait":
+            return True
+        if setting == "landscape":
+            return False
+        return youtube.is_short(self.youtube_url)
 
 
 class ImpactStat(models.Model):
@@ -50,7 +86,9 @@ class ImpactStat(models.Model):
 
 class TeamMember(models.Model):
     name = models.CharField(max_length=120)
-    role = models.CharField(max_length=120)
+    # Blank-able so a roster can be seeded from a group photo before job titles
+    # are confirmed; the template omits an empty role rather than showing a gap.
+    role = models.CharField(max_length=120, blank=True)
     photo = models.ImageField(upload_to="team/", blank=True)
     bio = models.TextField(blank=True)
     linkedin_url = models.URLField(blank=True)
@@ -81,15 +119,45 @@ class FacultyMember(models.Model):
         return self.name
 
 
-class Testimonial(models.Model):
+class Testimonial(YouTubeEmbedMixin, models.Model):
     KIND_CHOICES = [("text", "Picture & text"), ("video", "Video (YouTube)")]
     kind = models.CharField(max_length=10, choices=KIND_CHOICES, default="text")
     name = models.CharField(max_length=120)
     business = models.CharField(max_length=160, blank=True, help_text="Venture / country, e.g. 'AgroLink, Ghana'")
     quote = models.TextField(blank=True, help_text="For text testimonials")
     photo = models.ImageField(upload_to="alumni/", blank=True)
-    youtube_url = models.URLField(blank=True, help_text="For video testimonials: full YouTube link")
+    youtube_url = models.URLField(
+        blank=True, help_text="Paste any YouTube link — watch page, youtu.be, or a Short")
+    ORIENTATION_CHOICES = [
+        ("auto", "Detect automatically (Shorts are treated as vertical)"),
+        ("landscape", "Landscape — 16:9"),
+        ("portrait", "Vertical — 9:16"),
+    ]
+    orientation = models.CharField(
+        max_length=10, choices=ORIENTATION_CHOICES, default="auto",
+        help_text="Only change this if a vertical clip was uploaded as a normal video.")
+
+    # ------------------------------------------- Alumni spotlight page fields
+    cohort = models.CharField(max_length=60, blank=True, help_text="e.g. 'Cohort 2, 2025'")
+    story = models.TextField(
+        blank=True,
+        help_text="The write-up for the alumni spotlight page: what they build and the "
+                  "impact it has had. A few short paragraphs; blank lines start a new one.")
+    link = models.URLField(
+        blank=True, help_text="Their website or social page — linked from the spotlight page")
+    link_label = models.CharField(
+        max_length=60, blank=True,
+        help_text="What to call that link, e.g. 'Instagram' or 'agrolink.co'. "
+                  "Defaults to the domain.")
+
     featured = models.BooleanField(default=False, help_text="Show on the home page")
+    on_spotlight = models.BooleanField(
+        "Show on the Alumni Spotlight page", default=True,
+        help_text="Untick to keep an entry out of the spotlight page.")
+    media_consent = models.BooleanField(
+        "Media release consent on file", default=False,
+        help_text="Tick only once this alumnus has agreed their photo and video may be "
+                  "used. Entries without it are hidden from the public site.")
     order = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
@@ -99,14 +167,17 @@ class Testimonial(models.Model):
         return f"{self.name} ({self.get_kind_display()})"
 
     @property
-    def youtube_embed_url(self):
-        """Turn any pasted YouTube URL into an embeddable one."""
-        url = self.youtube_url
-        if "watch?v=" in url:
-            return url.replace("watch?v=", "embed/").split("&")[0]
-        if "youtu.be/" in url:
-            return url.replace("youtu.be/", "www.youtube.com/embed/")
-        return url
+    def story_paragraphs(self):
+        """The write-up split on blank lines, so the template can emit <p>s."""
+        return [p.strip() for p in self.story.split("\n\n") if p.strip()]
+
+    @property
+    def link_text(self):
+        """Label for `link`, falling back to the bare domain."""
+        if self.link_label:
+            return self.link_label
+        from urllib.parse import urlparse
+        return urlparse(self.link).netloc.removeprefix("www.") or self.link
 
 
 class GalleryImage(models.Model):
@@ -122,7 +193,7 @@ class GalleryImage(models.Model):
         return self.caption or f"Image #{self.pk}"
 
 
-class SpotlightVideo(models.Model):
+class SpotlightVideo(YouTubeEmbedMixin, models.Model):
     """Spotlight Show extracts from the Embark YouTube channel (Media page)."""
     title = models.CharField(max_length=200)
     youtube_url = models.URLField()
@@ -133,15 +204,6 @@ class SpotlightVideo(models.Model):
 
     def __str__(self):
         return self.title
-
-    @property
-    def youtube_embed_url(self):
-        url = self.youtube_url
-        if "watch?v=" in url:
-            return url.replace("watch?v=", "embed/").split("&")[0]
-        if "youtu.be/" in url:
-            return url.replace("youtu.be/", "www.youtube.com/embed/")
-        return url
 
 
 class Resource(models.Model):
