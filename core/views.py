@@ -4,8 +4,8 @@ from django.shortcuts import render
 from blog.models import Post
 from submissions import forms as f
 
-from .models import (FacultyMember, GalleryImage, ImpactStat, Milestone,
-                     Resource, SpotlightVideo, TeamMember, Testimonial)
+from .models import (FacultyMember, GalleryImage, ImpactStat, Resource,
+                     SpotlightVideo, TeamMember, Testimonial)
 
 # Program model cards used on Home + Embark pages
 PROGRAM_COMPONENTS = [
@@ -105,7 +105,6 @@ def home(request):
         "testimonials": published_testimonials().filter(featured=True)[:3],
         "latest_posts": Post.objects.filter(published=True)[:3],
         "gallery_strip": GalleryImage.objects.all()[:6],
-        "milestones": Milestone.objects.all()[:5],
         "newsletter_form": f.NewsletterForm(),
         "meta_title": "Empowering Africa's Next Generation of Entrepreneurs",
         "meta_description": "IADEBAYO Foundation equips young Africans with entrepreneurial education, mentorship, and community to build sustainable businesses.",

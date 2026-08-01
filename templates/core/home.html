@@ -34,11 +34,13 @@
       <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark</a>
       <a class="btn btn-ghost" href="{% url 'core:about' %}">Our story</a>
     </div>
-    {% if milestones %}
-    <div class="hero-timeline">
-      {% for m in milestones %}<div><span class="yr">{{ m.year }}</span><span class="tx">{{ m.text }}</span></div>{% endfor %}
-    </div>
-    {% else %}<div class="hero-rule"></div>{% endif %}
+    {% comment %}
+      The milestone timeline that used to sit here was dropped from the hero.
+      Milestones are still a model and still editable in the admin, so this can
+      come back — but nothing renders them now. The rule below was already the
+      designed empty state for this slot.
+    {% endcomment %}
+    <div class="hero-rule"></div>
   </div>
 </section>
 

@@ -111,8 +111,10 @@
     <div class="people-grid">
       {% for m in team %}
       <div class="person reveal">
-        {# Guarded: photo is blank-able, and .photo.url on an empty field raises
-           ValueError, which Django does not silence — it would 500 the page. #}
+        {% comment %}
+          Guarded: photo is blank-able, and .photo.url on an empty field raises
+          ValueError, which Django does not silence — it would 500 the page.
+        {% endcomment %}
         <div class="person-photo">{% if m.photo %}<img src="{{ m.photo.url }}" alt="{{ m.name }}" loading="lazy">{% endif %}</div>
         <h3 style="color:#fff">{{ m.name }}</h3>
         {% if m.role %}<span class="role" style="color:rgba(255,255,255,.75)">{{ m.role }}</span>{% endif %}
