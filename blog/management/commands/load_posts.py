@@ -20,8 +20,11 @@ rhythmic lines ("Later, when revenue improves.") are written as separate
 paragraphs — joining them with single newlines would collapse them into one
 run-on line in the browser.
 """
+import shutil
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -451,6 +454,29 @@ Because sustainable businesses do not scale through control. They scale through 
 # Check here instead, before anything is written.
 LIMITS = {"excerpt": 300, "seo_title": 70, "seo_description": 160}
 
+# Cover images, slug -> filename under static/img/blog/.
+#
+# Shipped in static/ (tracked by git) and copied into MEDIA_ROOT on load, the
+# same trick seed_demo uses for the gallery: cover_image is an ImageField, so it
+# has to resolve under MEDIA_ROOT, but a file only in media/ would not survive a
+# fresh deploy. Sources and licence are recorded in static/img/blog/CREDITS.md.
+#
+# These are stock stand-ins chosen to match the subject of each piece. Swap any
+# of them by dropping a new 16:9 file in and re-running with --refresh-covers.
+COVERS = {
+    "roi-of-learning-and-development-for-smbs": "learning-and-development.webp",
+    "lessons-entrepreneurs-can-learn-from-great-teachers": "great-teachers.webp",
+    "the-real-measure-of-scale-is-impact-not-size": "impact-not-size.webp",
+    "the-difference-between-chasing-traction-and-building-value": "traction-vs-value.webp",
+    "what-founders-learn-too-late-about-delegation-and-trust": "delegation-and-trust.webp",
+}
+
+# seed_demo's two placeholder articles. Matched on slug *and* the stub author, so
+# if someone has since rewritten the post at one of these slugs into something
+# real, it is left alone rather than deleted.
+DEMO_SLUGS = ["why-learn-entrepreneurship", "ai-for-founders-2026"]
+DEMO_AUTHOR = "IADEBAYO Foundation"
+
 
 class Command(BaseCommand):
     help = "Create the five long-form blog posts supplied on 2026-07-31."
@@ -459,6 +485,47 @@ class Command(BaseCommand):
         parser.add_argument(
             "--draft", action="store_true",
             help="Create them unpublished, so they can be reviewed in the admin first.")
+        parser.add_argument(
+            "--refresh-covers", action="store_true",
+            help="Re-copy the cover images even for posts that already exist. Use "
+                 "after swapping a file in static/img/blog/.")
+        parser.add_argument(
+            "--drop-demo", action="store_true",
+            help="Delete seed_demo's two placeholder articles. Irreversible — only "
+                 "touches those slugs, and only while they still carry the stub author.")
+
+    def attach_covers(self, refresh):
+        """Copy static/img/blog/*.webp into MEDIA_ROOT and point the posts at them.
+
+        Only fills a blank cover_image unless --refresh-covers is passed, so a
+        cover uploaded through the admin is never silently overwritten.
+        """
+        blog_dir = Path(settings.MEDIA_ROOT) / "blog"
+        blog_dir.mkdir(parents=True, exist_ok=True)
+        attached = missing = 0
+        for slug, filename in COVERS.items():
+            src = Path(settings.BASE_DIR) / "static" / "img" / "blog" / filename
+            if not src.exists():
+                self.stderr.write(self.style.WARNING(
+                    f"  ! cover missing from static/img/blog/: {filename}"))
+                missing += 1
+                continue
+            posts = Post.objects.filter(slug=slug)
+            if not refresh:
+                posts = posts.filter(cover_image="")
+            if not posts.exists():
+                continue
+            shutil.copy(src, blog_dir / filename)
+            attached += posts.update(cover_image=f"blog/{filename}")
+        return attached, missing
+
+    def drop_demo_posts(self):
+        """Remove seed_demo's placeholders, guarded on the stub author."""
+        doomed = Post.objects.filter(slug__in=DEMO_SLUGS, author_name=DEMO_AUTHOR)
+        titles = list(doomed.values_list("title", flat=True))
+        doomed.delete()
+        kept = Post.objects.filter(slug__in=DEMO_SLUGS)
+        return titles, list(kept.values_list("slug", flat=True))
 
     def handle(self, *args, **options):
         for entry in POSTS:
@@ -496,9 +563,28 @@ class Command(BaseCommand):
             else:
                 skipped += 1
 
+        attached, missing = self.attach_covers(options["refresh_covers"])
+        if attached:
+            self.stdout.write(f"  {attached} cover image(s) attached")
+
         state = "published" if publish else "as drafts"
         self.stdout.write(self.style.SUCCESS(
             f"\n{created} created {state}, {skipped} already present."))
+
+        if options["drop_demo"]:
+            removed, kept = self.drop_demo_posts()
+            for title in removed:
+                self.stdout.write(f"  - removed placeholder: {title}")
+            if not removed:
+                self.stdout.write("  no placeholder articles found to remove")
+            for slug in kept:
+                self.stdout.write(self.style.WARNING(
+                    f"  ! kept {slug} — author is no longer \"{DEMO_AUTHOR}\", so it "
+                    f"looks rewritten. Delete it in the admin if it really is a stub."))
+        elif Post.objects.filter(slug__in=DEMO_SLUGS, author_name=DEMO_AUTHOR).exists():
+            self.stdout.write(self.style.WARNING(
+                "\n  seed_demo's two placeholder articles are still published. "
+                "Re-run with --drop-demo to remove them."))
 
         if created:
             self.stdout.write(self.style.WARNING(

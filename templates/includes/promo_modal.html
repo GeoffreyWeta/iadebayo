@@ -1,0 +1,32 @@
+{% comment %}
+  Campaign flier, shown once per visitor. Managed in the admin under
+  Promo popups — see core.models.PromoPopup.
+
+  Rendered hidden and revealed by JS. Doing it the other way round would flash
+  the flier over the page on every load before the "already dismissed" check
+  could run, including for people who closed it days ago.
+
+  data-promo-key is what the browser remembers; it carries the version, so
+  bumping that field re-shows the popup to everyone.
+
+  Both the artwork and the button go to promo.link_href, which is the Embark
+  application unless the admin deliberately overrode it.
+{% endcomment %}
+<div class="promo-backdrop" id="promo-modal" data-island="promo"
+     data-promo-key="{{ promo.dismiss_key }}" hidden>
+  <div class="promo-dialog" role="dialog" aria-modal="true"
+       aria-labelledby="promo-title" tabindex="-1">
+    <h2 class="visually-hidden" id="promo-title">{{ promo.title }}</h2>
+    <button type="button" class="promo-close" data-promo-close
+            aria-label="Close announcement">&times;</button>
+
+    <a class="promo-art" href="{{ promo.link_href }}">
+      <img src="{{ promo.image.url }}" alt="{{ promo.image_alt }}">
+    </a>
+
+    <div class="promo-actions">
+      <a class="btn btn-primary promo-cta" href="{{ promo.link_href }}">{{ promo.link_label }}</a>
+      <button type="button" class="promo-dismiss" data-promo-close>Maybe later</button>
+    </div>
+  </div>
+</div>

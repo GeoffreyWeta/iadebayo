@@ -249,3 +249,88 @@ class PageMeta(models.Model):
 
     def __str__(self):
         return self.path
+
+
+class PromoPopup(models.Model):
+    """A flier shown once, in a modal, to a visitor who hasn't seen it yet.
+
+    Admin-managed rather than hardcoded so the team can raise and drop a
+    campaign — "Cohort 5 applications are open" — without a deploy, and so the
+    artwork is uploaded rather than committed. Only one is ever shown: the most
+    recently updated row that is ticked active and inside its date window.
+    """
+    title = models.CharField(
+        max_length=140,
+        help_text="Internal label, and the modal's accessible name. e.g. “Embark Cohort 5 — applications open”")
+    image = models.ImageField(
+        upload_to="promos/",
+        help_text="The flier itself. Portrait or square reads best; it is shown at up to "
+                  "460px wide and scales down on phones.")
+    image_alt = models.CharField(
+        max_length=250,
+        help_text="What the flier SAYS, for screen readers and when images fail to load. "
+                  "The artwork carries the message, so repeat it here in words.")
+    link_url = models.CharField(
+        "Button link", max_length=200, blank=True,
+        help_text="Leave blank to send people to the Embark application, which is almost "
+                  "always what you want. Override only to point somewhere else — a path "
+                  "like /get-involved/faculty/ or a full https:// URL.")
+    link_label = models.CharField("Button text", max_length=60, default="Apply now")
+
+    is_active = models.BooleanField(
+        default=False, help_text="Untick to pull the popup immediately, site-wide.")
+    starts_at = models.DateTimeField(
+        null=True, blank=True, help_text="Optional. Leave blank to start as soon as it is active.")
+    ends_at = models.DateTimeField(
+        null=True, blank=True, help_text="Optional. Leave blank to run until you untick Active.")
+    version = models.PositiveSmallIntegerField(
+        default=1,
+        help_text="Dismissal is remembered per version. Bump this to show the popup again "
+                  "to people who already closed it.")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Promo popup"
+        verbose_name_plural = "Promo popups"
+
+    def __str__(self):
+        return f"{self.title} ({'active' if self.is_live() else 'off'})"
+
+    @property
+    def link_href(self):
+        """Where the flier and its button point.
+
+        Blank means the Embark application, resolved through the URL config so a
+        route change can never leave the campaign pointing at a dead path.
+        """
+        from django.urls import reverse
+        return self.link_url.strip() or reverse("core:apply")
+
+    @property
+    def dismiss_key(self):
+        """What the browser stores once this has been closed.
+
+        Includes the version so bumping it re-shows the popup to everyone,
+        and the pk so a different campaign is never mistaken for this one.
+        """
+        return f"iadebayo-promo-{self.pk}-v{self.version}"
+
+    def is_live(self, now=None):
+        from django.utils import timezone
+        now = now or timezone.now()
+        if not self.is_active:
+            return False
+        if self.starts_at and now < self.starts_at:
+            return False
+        if self.ends_at and now > self.ends_at:
+            return False
+        return True
+
+    @classmethod
+    def current(cls):
+        """The one popup to show, or None. Ordering makes the newest edit win."""
+        for promo in cls.objects.filter(is_active=True):
+            if promo.is_live():
+                return promo
+        return None

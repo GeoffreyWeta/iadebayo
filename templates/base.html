@@ -55,7 +55,8 @@
         <li><a href="{% url 'core:home' %}">Home</a></li>
         <li><a href="{% url 'core:about' %}">About</a></li>
         <li><a href="{% url 'core:embark' %}">Embark</a></li>
-        <li><a href="{% url 'core:gallery' %}">Media</a></li>
+        {# Media hidden until the gallery is refreshed — page and route still live. #}
+        {# <li><a href="{% url 'core:gallery' %}">Media</a></li> #}
         <li><a href="{% url 'blog:list' %}">Blog</a></li>
         {% comment %}
           Dropdown: hover/focus on desktop, always-expanded sub-list on mobile.
@@ -149,6 +150,8 @@
 
 <button class="spark-top" id="spark-top" aria-label="Back to top">✳</button>
 <a class="sticky-apply" href="{% url 'core:apply' %}">Apply&nbsp;→</a>
+
+{% if promo %}{% include "includes/promo_modal.html" %}{% endif %}
 
 <script src="{% static 'js/site.js' %}" defer></script>
 <script src="{% static 'js/islands.js' %}" defer></script>

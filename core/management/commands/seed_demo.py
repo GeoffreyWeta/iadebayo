@@ -24,12 +24,14 @@ class Command(BaseCommand):
         ImpactStat.sync_canonical()
 
         TeamMember.objects.create(name="Dare Adebayo", role="Founder", order=0)
+        # No "Celebrating two years of impact" milestone: the impact section sits
+        # directly below the hero and its heading already says it, over a grid
+        # that carries the same figures (CANONICAL_IMPACT_STATS).
         for i, (year, text) in enumerate([
             ("2024", "IADEBAYO Foundation is born"),
             ("Cohort 1", "Embark Entrepreneurship Academy launches"),
             ("2025", "Alumni ventures span four African countries"),
             ("Cohort 4", "70 entrepreneurs empowered"),
-            ("2026", "Celebrating two years of impact"),
         ]):
             Milestone.objects.create(year=year, text=text, order=i)
         FacultyMember.objects.create(

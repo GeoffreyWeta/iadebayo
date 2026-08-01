@@ -43,6 +43,14 @@ fi
 "$PY" manage.py migrate --noinput
 "$PY" manage.py collectstatic --noinput
 
+# The five long-form articles, their cover images, and the removal of seed_demo's
+# two placeholder posts. Safe to run every deploy: creation is get_or_create on
+# slug so it never duplicates or overwrites admin edits, covers only fill a blank
+# cover_image, and --drop-demo touches the two demo slugs only while they still
+# carry the stub author. Self-healing — if seed_demo is ever run again on this
+# box, the next deploy takes the placeholders back out.
+"$PY" manage.py load_posts --drop-demo
+
 # Config sanity *before* the restart, so a broken .env leaves the currently
 # running workers untouched and the site up on the old code.
 "$PY" manage.py check --deploy

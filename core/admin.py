@@ -96,3 +96,34 @@ class MilestoneAdmin(admin.ModelAdmin):
 class PageMetaAdmin(admin.ModelAdmin):
     list_display = ("path", "title", "description")
     search_fields = ("path", "title")
+
+
+@admin.register(models.PromoPopup)
+class PromoPopupAdmin(admin.ModelAdmin):
+    list_display = ("title", "live_now", "is_active", "starts_at", "ends_at",
+                    "version", "updated_at")
+    list_filter = ("is_active",)
+    readonly_fields = ("updated_at", "dismiss_key")
+    fieldsets = (
+        ("The flier", {
+            "fields": ("title", "image", "image_alt"),
+        }),
+        ("Button", {
+            "description": "Leave the link blank to send people to the Embark application.",
+            "fields": ("link_label", "link_url"),
+        }),
+        ("When it shows", {
+            "description": "Untick Active to pull it immediately. Dates are optional.",
+            "fields": ("is_active", "starts_at", "ends_at"),
+        }),
+        ("Re-showing it", {
+            "description": "Someone who closes the popup does not see it again. Bump the "
+                           "version to show it to everyone once more.",
+            "fields": ("version", "dismiss_key", "updated_at"),
+        }),
+    )
+
+    @admin.display(boolean=True, description="Showing now")
+    def live_now(self, obj):
+        """Active AND inside its date window — the dates catch people out."""
+        return obj.is_live()

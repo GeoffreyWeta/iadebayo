@@ -1,5 +1,24 @@
 from django.conf import settings
+from django.urls import reverse
+
 from submissions.forms import NewsletterForm
+
+
+def _promo_for(request):
+    """The campaign popup, unless this page is the wrong place for it.
+
+    Suppressed on the application form (the visitor is already doing the thing
+    the flier asks for) and anywhere in the admin (staff, not audience).
+    """
+    from core.models import PromoPopup
+
+    path = request.path
+    if path.startswith("/admin/") or path == reverse("core:apply"):
+        return None
+    try:
+        return PromoPopup.current()
+    except Exception:  # during migrations / before the table exists
+        return None
 
 
 def site_meta(request):
@@ -13,6 +32,7 @@ def site_meta(request):
         pass
     return {
         **override,
+        "promo": _promo_for(request),
         "GA_MEASUREMENT_ID": getattr(settings, "GA_MEASUREMENT_ID", ""),
         "SITE_NAME": settings.SITE_NAME,
         "SITE_BASE_URL": settings.SITE_BASE_URL,
