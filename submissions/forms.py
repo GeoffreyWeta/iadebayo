@@ -184,8 +184,9 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
           "date_of_birth", "institution", "city", "state", "country", "social_handle"]),
         ("Section B — Business information",
          "Now the venture itself. The one-minute video matters as much as the "
-         "written answers — filmed on a phone is perfectly fine.",
-         ["business_name", "business_video", "year_established", "revenue_last_year",
+         "written answers — filmed on a phone is perfectly fine. Upload it to "
+         "Google Drive and share the link; do not email the file.",
+         ["business_name", "business_video_url", "year_established", "revenue_last_year",
           "revenue_this_year", "major_challenge", "growth_limits", "growth_limits_other"]),
         ("Commitment",
          "Embark runs on live sessions, assignments, mentorship, networking, and a "
@@ -197,7 +198,7 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     REQUIRED = {
         "name", "gender", "applicant_status", "email", "phone", "date_of_birth",
         "institution", "city", "country",
-        "business_name", "business_video", "year_established", "major_challenge",
+        "business_name", "business_video_url", "year_established", "major_challenge",
         "growth_limits",
         "device", "will_participate", "reliable_internet", "heard_about", "media_consent",
     }
@@ -216,13 +217,15 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         fields = [
             "name", "gender", "applicant_status", "email", "phone_code", "phone",
             "date_of_birth", "institution", "city", "state", "country", "social_handle",
-            "business_name", "business_video", "year_established", "revenue_last_year",
+            "business_name", "business_video_url", "year_established", "revenue_last_year",
             "revenue_this_year", "major_challenge", "growth_limits", "growth_limits_other",
             "device", "will_participate", "reliable_internet", "heard_about",
             "heard_about_other", "media_consent",
         ]
         widgets = {
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
+            "business_video_url": forms.URLInput(attrs={
+                "placeholder": "https://drive.google.com/file/d/.../view?usp=sharing"}),
             "year_established": forms.NumberInput(attrs={"min": 1950}),
             "device": forms.RadioSelect,
             "will_participate": forms.RadioSelect,
@@ -263,6 +266,25 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         if year and year > date.today().year:
             raise forms.ValidationError("That year is in the future.")
         return year
+
+    def clean_business_video_url(self):
+        """Catch the Drive links that are never a video.
+
+        Restricted sharing is the most common mistake and is indistinguishable
+        from a working link without fetching it, so that stays a warning in the
+        help text. These two are detectable and cover most of the rest: the
+        applicant pastes their Drive home page, or the folder holding the clip,
+        instead of the file itself.
+        """
+        url = (self.cleaned_data.get("business_video_url") or "").strip()
+        if not url:
+            return url
+        lowered = url.lower().rstrip("/")
+        if "drive.google.com/drive" in lowered or lowered.endswith("drive.google.com"):
+            raise forms.ValidationError(
+                "That links to your Drive, not to the video. Open the video itself, "
+                "choose Share, set it to “Anyone with the link”, then copy that link.")
+        return url
 
     def clean(self):
         cleaned = super().clean()

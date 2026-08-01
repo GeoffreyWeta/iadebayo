@@ -15,8 +15,18 @@ from .models import EmbarkApplication
 MEDIA_ROOT = tempfile.mkdtemp()
 PASSWORD = "pw-for-tests-only"
 
+# The test client speaks plain http. In production DEBUG is off, which turns on
+# SECURE_SSL_REDIRECT, and SecurityMiddleware then answers every request with a
+# 301 to https. `follow=True` re-issues a redirected POST as a GET, so each
+# @require_POST submission view rejects it with 405 and roughly thirty
+# assertions fail — but only when the suite happens to run with DEBUG=False.
+# Pinning it here keeps the result the same on a developer's machine, in CI, and
+# against a production-shaped .env.
+SSL_REDIRECT_OFF = override_settings(SECURE_SSL_REDIRECT=False)
+
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
+@SSL_REDIRECT_OFF
 class ApplicationVideoDownloadTests(TestCase):
     """The video download is the app's only access-controlled endpoint."""
 
@@ -78,6 +88,7 @@ class ApplicationVideoDownloadTests(TestCase):
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
+@SSL_REDIRECT_OFF
 class EmbarkAdminTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -128,11 +139,7 @@ class EmbarkAdminTests(TestCase):
         self.assertContains(response, "None of the selected applications has a video.")
 
 
-def video(name="clip.mp4"):
-    return SimpleUploadedFile(name, b"pretend-video-bytes", content_type="video/mp4")
-
-
-CONTACT = {"name": "Ada Lovelace", "email": "ada@example.com",
+CONTACT ={"name": "Ada Lovelace", "email": "ada@example.com",
            "subject": "Speaking invitation", "message": "Would you speak at our event?"}
 
 EMBARK = {
@@ -141,6 +148,7 @@ EMBARK = {
     "date_of_birth": "1999-04-12", "institution": "University of Lagos",
     "city": "Lagos", "state": "Lagos", "country": "Nigeria",
     "business_name": "Okafor Farms", "year_established": "2023",
+    "business_video_url": "https://drive.google.com/file/d/1AbCdEf/view?usp=sharing",
     "major_challenge": "Cold-chain logistics; we partnered with a local courier.",
     "growth_limits": ["funding", "customers"],
     "device": "laptop", "will_participate": "yes", "reliable_internet": "yes",
@@ -166,6 +174,7 @@ PARTNER = {"name": "Amaka Obi", "phone_code": "+234", "phone": "8044444444",
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
+@SSL_REDIRECT_OFF
 class PublicFormTests(TestCase):
     """All six public forms, end to end: POST → row saved → emails queued."""
 
@@ -197,12 +206,13 @@ class PublicFormTests(TestCase):
         self.assertEqual(models.NewsletterSubscriber.objects.count(), 1)
         self.assertContains(response, "already subscribed")
 
-    def test_embark_application_saves_with_its_video(self):
-        response = self.submit("apply", EMBARK, business_video=video())
+    def test_embark_application_saves_with_its_video_link(self):
+        response = self.submit("apply", EMBARK)
         self.assertContains(response, "Thank you!")
         application = models.EmbarkApplication.objects.get()
         self.assertEqual(application.growth_limits, "funding,customers")
-        self.assertTrue(application.business_video.name.startswith("applications/videos/"))
+        self.assertEqual(application.business_video_url,
+                         "https://drive.google.com/file/d/1AbCdEf/view?usp=sharing")
         self.assertEqual(len(mail.outbox), 2)
 
     def test_faculty_application_saves(self):
@@ -228,21 +238,23 @@ class PublicFormTests(TestCase):
         self.assertContains(response, "This field is required")
 
     def test_embark_rejects_an_applicant_who_will_not_participate(self):
-        response = self.submit("apply", dict(EMBARK, will_participate="no"),
-                               business_video=video())
+        response = self.submit("apply", dict(EMBARK, will_participate="no"))
         self.assertEqual(models.EmbarkApplication.objects.count(), 0)
         self.assertContains(response, "commitment-based programme")
 
-    def test_embark_rejects_a_non_video_upload(self):
-        response = self.submit(
-            "apply", EMBARK,
-            business_video=SimpleUploadedFile("cv.pdf", b"%PDF-", content_type="application/pdf"))
+    def test_embark_requires_a_video_link(self):
+        response = self.submit("apply", dict(EMBARK, business_video_url=""))
         self.assertEqual(models.EmbarkApplication.objects.count(), 0)
-        self.assertContains(response, "Please upload a video file")
+        self.assertContains(response, "This field is required")
+
+    def test_embark_rejects_a_link_to_the_drive_rather_than_the_video(self):
+        response = self.submit(
+            "apply", dict(EMBARK, business_video_url="https://drive.google.com/drive/my-drive"))
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "links to your Drive, not to the video")
 
     def test_embark_keeps_typed_answers_when_validation_fails(self):
-        response = self.submit("apply", dict(EMBARK, institution=""),
-                               business_video=video())
+        response = self.submit("apply", dict(EMBARK, institution=""))
         self.assertEqual(models.EmbarkApplication.objects.count(), 0)
         self.assertContains(response, "Okafor Farms")   # re-rendered, not thrown away
 

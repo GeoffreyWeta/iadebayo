@@ -1,0 +1,156 @@
+name: CI / Deploy
+
+# Every push to master runs the tests and, only if they pass, deploys to the
+# droplet. Pull requests run the tests alone. "Run workflow" in the Actions tab
+# lets you re-deploy the current master without pushing anything.
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+# One deploy at a time. Never cancel a running one: it may be part-way through
+# a migration, and killing it there leaves the database in a state no later run
+# can reason about.
+concurrency:
+  group: deploy-master
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    env:
+      # Real values live in the droplet's .env. These only need to be valid
+      # enough to import settings and build a throwaway SQLite test database.
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+      DJANGO_DEBUG: "False"
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.12 is what Ubuntu 24.04 ships, so CI matches the droplet.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django system checks
+        run: python manage.py check
+
+      # The check that would have caught the business_video_url column going
+      # missing. A model edited without its migration deploys "successfully"
+      # and then 500s on the first write, so this must gate the deploy.
+      - name: Models and migrations agree
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Test suite
+        run: python manage.py test --verbosity 2
+
+      - name: Static files collect cleanly
+        run: python manage.py collectstatic --noinput
+
+  frontend:
+    name: Islands build is current
+    runs-on: ubuntu-latest
+    # Advisory. The droplet does not run vite, so static/js/islands.js is
+    # committed by hand and can silently go stale. Vite output is not always
+    # byte-identical across environments, so a mismatch is reported rather than
+    # blocking the deploy — if it proves reliable for you, drop this line and
+    # let it gate like the others.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: Compare against the committed bundle
+        run: |
+          if ! git diff --quiet -- static/js/islands.js; then
+            echo "::warning::static/js/islands.js is out of date."
+            echo "Run 'npm run build' in frontend/ and commit the result."
+            git diff --stat -- static/js/islands.js
+            exit 1
+          fi
+          echo "Committed bundle matches a fresh build."
+
+  deploy:
+    name: Deploy to droplet
+    needs: test
+    # Pull requests must never deploy, and neither must a fork's push.
+    if: github.event_name != 'pull_request' && github.repository_owner == 'GeoffreyWeta'
+    runs-on: ubuntu-latest
+    env:
+      # Lifted to job level because the `secrets` context is not available in a
+      # step's `if:` — only github, env, needs and friends are. The health check
+      # tests env.HEALTHCHECK_URL instead, so leaving the secret unset simply
+      # skips that step rather than failing the workflow.
+      HEALTHCHECK_URL: ${{ secrets.DEPLOY_HEALTHCHECK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Open an SSH session to the droplet
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          if [ -n "${KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            # Trust-on-first-use. Works, but a machine-in-the-middle on the
+            # first connection would go unnoticed — set DEPLOY_KNOWN_HOSTS.
+            echo "::warning::DEPLOY_KNOWN_HOSTS is not set; falling back to ssh-keyscan."
+            ssh-keyscan -p "$PORT" -H "$HOST" > ~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      # The script is piped from this checkout rather than run from the server's
+      # copy. The deploy resets the working tree to origin/master, which would
+      # rewrite a script the shell is still reading; feeding it over stdin means
+      # the running script cannot be edited underneath itself.
+      - name: Run the deploy
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+              -o BatchMode=yes -o ConnectTimeout=15 \
+              "$USER@$HOST" 'bash -s' < deploy/deploy.sh
+
+      - name: Check the public site answers
+        if: env.HEALTHCHECK_URL != ''
+        run: |
+          set -euo pipefail
+          url="$HEALTHCHECK_URL"
+          for attempt in 1 2 3 4 5; do
+            code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 20 "$url" || true)
+            if [ "$code" = "200" ]; then
+              echo "$url -> 200"
+              exit 0
+            fi
+            echo "attempt $attempt: $url -> ${code:-no response}"
+            sleep 5
+          done
+          echo "::error::$url never returned 200 after the deploy."
+          exit 1

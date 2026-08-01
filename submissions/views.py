@@ -47,8 +47,17 @@ def _handle(request, form_class, ack_text, notify_subject, redirect_to, on_inval
 
 
 def _staff_download_url(obj):
-    """Absolute link to the one uploaded file the forms accept, or None."""
-    if isinstance(obj, models.EmbarkApplication) and obj.pk and obj.business_video:
+    """Link to the applicant's video for the team's notification email, or None.
+
+    Applications now carry a Drive link the applicant shared, so that is what the
+    team follows. Applications submitted before 2026-08-01 uploaded the file
+    itself and still go through the staff-only download view.
+    """
+    if not isinstance(obj, models.EmbarkApplication) or not obj.pk:
+        return None
+    if obj.business_video_url:
+        return obj.business_video_url
+    if obj.business_video:
         return (settings.SITE_BASE_URL.rstrip("/")
                 + reverse("submissions:download_video", args=[obj.pk]))
     return None

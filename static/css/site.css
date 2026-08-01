@@ -1137,18 +1137,44 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 .hero h1, .hero .lead { text-shadow: 0 1px 18px rgba(20,6,8,.45); }
 
 /* Phones: the scrim goes full-width — there is no side room for the
-   subject once the copy spans the viewport. */
+   subject once the copy spans the viewport. But full-width previously also
+   meant *everywhere*: the lightest stop was .46, so under .hero-veil's
+   multiply pass the photo sat at roughly a tenth of its brightness across the
+   whole hero and read as a flat maroon block. Desktop keeps a window (veil-2
+   reaches full transparency at 80% of its 100deg sweep); phones get the same
+   courtesy turned ninety degrees — clear at the top, heavy at the bottom
+   where the copy actually is. .hero is align-items: flex-end, so the window
+   costs no legibility: the measurements above were taken in the headline box,
+   which still sits under .88–.72. */
 @media (max-width: 640px) {
+  .hero-veil {
+    background: linear-gradient(15deg, rgba(62,64,149,.44) 0%,
+                                       rgba(237,50,55,.52) 45%,
+                                       rgba(55,12,15,.58) 100%);
+  }
   .hero-veil-2 {
-    background: linear-gradient(to top, rgba(55,12,15,.84) 0%,
-                                        rgba(55,12,15,.46) 62%,
-                                        rgba(55,12,15,.50) 100%);
+    background: linear-gradient(to top, rgba(55,12,15,.88) 0%,
+                                        rgba(55,12,15,.72) 30%,
+                                        rgba(55,12,15,.28) 66%,
+                                        rgba(55,12,15,.04) 100%);
+  }
+  .theme-embark .hero-veil {
+    background: linear-gradient(15deg, rgba(241,89,44,.46) 0%,
+                                       rgba(35,31,32,.56) 55%,
+                                       rgba(27,23,24,.62) 100%);
   }
   .theme-embark .hero-veil-2 {
-    background: linear-gradient(to top, rgba(27,23,24,.84) 0%,
-                                        rgba(27,23,24,.46) 62%,
-                                        rgba(27,23,24,.50) 100%);
+    background: linear-gradient(to top, rgba(27,23,24,.88) 0%,
+                                        rgba(27,23,24,.72) 30%,
+                                        rgba(27,23,24,.28) 66%,
+                                        rgba(27,23,24,.04) 100%);
   }
+  /* The photo now reaches up behind the kicker, so the copy carries a little
+     more of its own scrim rather than leaning entirely on the veils. */
+  .hero h1, .hero .lead {
+    text-shadow: 0 1px 16px rgba(20,6,8,.72), 0 1px 3px rgba(20,6,8,.5);
+  }
+  .hero-kicker { text-shadow: 0 1px 12px rgba(20,6,8,.6); }
 }
 
 /* ============================================================

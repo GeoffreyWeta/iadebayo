@@ -120,11 +120,11 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
 
     # ------------------------------------- Section B: business information
     business_name = models.CharField(max_length=160)
-    business_video = models.FileField(
-        "One-minute business video", upload_to="applications/videos/", blank=True,
-        validators=[validate_application_video],
-        help_text="Up to one minute: what your business does, the problem it solves, "
-                  "and its impact or value proposition.")
+    business_video_url = models.URLField(
+        "Link to your one-minute business video", max_length=500, blank=True,
+        help_text="Upload the clip to Google Drive, then set sharing to “Anyone with "
+                  "the link” and paste that link here. An unlisted YouTube, Vimeo or "
+                  "Dropbox link works too. A private link cannot be reviewed.")
     year_established = models.PositiveSmallIntegerField(
         "How old is the business?", null=True, blank=True,
         help_text="Year the business was established.")
@@ -157,6 +157,18 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
                   "used by the Foundation.")
 
     # ------------------- Legacy fields from the 2025 form, kept for history
+    #
+    # `business_video` held the clip itself until 2026-08-01, when the 10 GB
+    # droplet made storing 64 MB per applicant untenable — roughly seventy
+    # applications would have filled the disk, and a full disk stops SQLite
+    # writing at all. Applicants now paste a Drive link into
+    # `business_video_url` instead. The column, the staff download view and the
+    # ZIP action stay so applications submitted before the switch are still
+    # readable; nothing new is ever written here.
+    business_video = models.FileField(
+        "One-minute business video (uploaded, pre-2026-08)", upload_to="applications/videos/",
+        blank=True, validators=[validate_application_video],
+        help_text="Legacy — superseded by the video link.")
     business_description = models.TextField(blank=True, help_text="Legacy — superseded by the video")
     business_sector = models.CharField(max_length=120, blank=True, help_text="Legacy")
     motivation = models.TextField("Why do you want to join Embark?", blank=True,

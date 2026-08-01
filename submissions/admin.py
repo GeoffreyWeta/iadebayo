@@ -31,7 +31,8 @@ class EmbarkAdmin(SubmissionAdmin):
                     "video_link", "created_at", "reviewed")
     list_filter = ("reviewed", "applicant_status", "gender", "device",
                    "reliable_internet", "heard_about", "country", "created_at")
-    readonly_fields = ("created_at", "limiting_factors", "video_download")
+    readonly_fields = ("created_at", "limiting_factors", "video_link_display",
+                       "video_download")
     actions = ["download_videos_zip"]
     fieldsets = (
         ("Section A — About the applicant", {
@@ -41,10 +42,11 @@ class EmbarkAdmin(SubmissionAdmin):
                        "social_handle"),
         }),
         ("Section B — Business information", {
-            "description": "The video downloads through the button below. The "
-                           "“Currently” link on the upload box is deliberately "
-                           "blocked — applicant videos aren’t public files.",
-            "fields": ("business_name", "video_download", "business_video",
+            "description": "Applicants link their video from Google Drive rather than "
+                           "uploading it. If the link below does not open for you, the "
+                           "applicant left sharing restricted and needs an email asking "
+                           "them to set it to “Anyone with the link”.",
+            "fields": ("business_name", "video_link_display", "business_video_url",
                        "year_established",
                        ("revenue_last_year", "revenue_this_year"), "major_challenge",
                        "limiting_factors", "growth_limits", "growth_limits_other"),
@@ -54,9 +56,13 @@ class EmbarkAdmin(SubmissionAdmin):
                        "heard_about", "heard_about_other", "media_consent"),
         }),
         ("Review", {"fields": ("reviewed", "created_at")}),
-        ("Legacy answers (2025 form)", {
+        ("Legacy answers (earlier forms)", {
             "classes": ("collapse",),
-            "fields": ("business_description", "business_sector", "motivation"),
+            "description": "Applications submitted before 2026-08-01 uploaded the video "
+                           "itself. Those files are still here and still download through "
+                           "the button — nothing new is written to this section.",
+            "fields": ("video_download", "business_video",
+                       "business_description", "business_sector", "motivation"),
         }),
     )
 
@@ -64,7 +70,16 @@ class EmbarkAdmin(SubmissionAdmin):
     def limiting_factors(self, obj):
         return obj.growth_limits_display or "—"
 
-    # ------------------------------------------------------- video downloads
+    # ------------------------------------------------------------ video links
+    @admin.display(description="Applicant video")
+    def video_link_display(self, obj):
+        if not obj.business_video_url:
+            return "— no link supplied —"
+        return format_html(
+            '<a class="button" href="{}" target="_blank" rel="noopener">▶ Open video</a>',
+            obj.business_video_url)
+
+    # ------------------------------- video downloads (pre-2026-08 uploads only)
     @admin.display(description="Applicant video")
     def video_download(self, obj):
         if not obj.pk or not obj.business_video:
@@ -83,10 +98,13 @@ class EmbarkAdmin(SubmissionAdmin):
 
     @admin.display(description="Video")
     def video_link(self, obj):
-        if not obj.business_video:
-            return "—"
-        return format_html('<a href="{}">Download</a>',
-                           reverse("submissions:download_video", args=[obj.pk]))
+        if obj.business_video_url:
+            return format_html('<a href="{}" target="_blank" rel="noopener">Open</a>',
+                               obj.business_video_url)
+        if obj.business_video:
+            return format_html('<a href="{}">Download</a>',
+                               reverse("submissions:download_video", args=[obj.pk]))
+        return "—"
 
     @admin.action(description="Download videos for selected applications (ZIP)")
     def download_videos_zip(self, request, queryset):

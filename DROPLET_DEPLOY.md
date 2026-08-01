@@ -646,37 +646,129 @@ nothing and document the alternative.
 
 ---
 
-## Shipping updates later
+## Shipping updates later — automatic deploy on push
 
-Create a deploy script once:
+`.github/workflows/deploy.yml` runs the tests on every push to `master` and, only
+if they pass, SSHes into the droplet and runs `deploy/deploy.sh`. Both files are
+in the repo, so the pipeline is version-controlled with the code it ships.
 
-    nano /srv/iadebayo/deploy.sh
+Once the four steps below are done, a release is just:
 
-Contents:
-
-    #!/usr/bin/env bash
-    set -o errexit
-    cd /srv/iadebayo
-    git pull origin master
-    .venv/bin/pip install -r requirements.txt
-    .venv/bin/python manage.py migrate --noinput
-    .venv/bin/python manage.py collectstatic --noinput
-    sudo systemctl restart iadebayo
-    echo "Deployed: $(git rev-parse --short HEAD)"
-
-Make it executable:
-
-    chmod +x /srv/iadebayo/deploy.sh
-
-From then on, every release is:
-
-    # on Windows
     git push origin master
-    # then
-    ssh deploy@YOUR_IP "/srv/iadebayo/deploy.sh"
 
-If you edited the React islands, run `npm run build` in `frontend/` locally and
-commit `static/js/islands.js` **before** pushing — the droplet does not build it.
+Watch it in the repo's **Actions** tab. A red test job means nothing was
+deployed — the site keeps running the previous commit.
+
+### 11.1 Give the deploy its own SSH key
+
+Do **not** reuse your personal key. On your Windows machine:
+
+    ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\iadebayo_deploy -C "github-actions" -N '""'
+
+Authorise the public half on the droplet:
+
+    # prints the public key — copy it
+    type $env:USERPROFILE\.ssh\iadebayo_deploy.pub
+
+    # on the droplet, as the deploy user
+    mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    nano ~/.ssh/authorized_keys        # paste the key on its own line
+    chmod 600 ~/.ssh/authorized_keys
+
+### 11.2 Let the deploy user restart the service without a password
+
+Without this the deploy hangs at a hidden password prompt and times out.
+Confirm where `systemctl` lives first — the path must be exact:
+
+    command -v systemctl journalctl      # expect /usr/bin/...
+
+Then:
+
+    sudo visudo -f /etc/sudoers.d/iadebayo-deploy
+
+Paste (adjust the paths if the previous command disagreed):
+
+    deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart iadebayo
+    deploy ALL=(root) NOPASSWD: /usr/bin/journalctl -u iadebayo -n 40 --no-pager
+
+`visudo` refuses to save a file with a syntax error, which is why it is used
+here rather than `nano` — a broken sudoers file locks everyone out of `sudo`.
+
+Check it works, with no password prompt:
+
+    sudo -n systemctl restart iadebayo && echo OK
+
+### 11.3 Add the repository secrets
+
+**Settings → Secrets and variables → Actions → New repository secret:**
+
+| Secret | Value | Required |
+|---|---|---|
+| `DEPLOY_HOST` | the droplet's IP or hostname | yes |
+| `DEPLOY_USER` | `deploy` | yes |
+| `DEPLOY_SSH_KEY` | the **entire** private key file, `iadebayo_deploy` — including the `BEGIN`/`END` lines | yes |
+| `DEPLOY_KNOWN_HOSTS` | output of `ssh-keyscan -H YOUR_IP` | strongly recommended |
+| `DEPLOY_HEALTHCHECK_URL` | `https://iadebayo.foundation/` | recommended |
+| `DEPLOY_PORT` | only if SSH is not on 22 | no |
+
+Without `DEPLOY_KNOWN_HOSTS` the workflow falls back to `ssh-keyscan` at run
+time and logs a warning: it will work, but the first connection trusts whatever
+answers, so a machine-in-the-middle would go unnoticed. Set it.
+
+`DEPLOY_HEALTHCHECK_URL` is what turns "the command exited 0" into "the site is
+actually serving pages". If it is unset that step is skipped.
+
+### 11.4 If the GitHub repo is private
+
+Phase 5 clones over HTTPS, which is fine for a public repo. If yours is private,
+the droplet needs its own read access or `git fetch` will fail during deploy:
+
+    # on the droplet
+    ssh-keygen -t ed25519 -f ~/.ssh/github_readonly -N ""
+    cat ~/.ssh/github_readonly.pub
+
+Add that key to the repo under **Settings → Deploy keys** (read-only), point git
+at SSH, and confirm:
+
+    cd /srv/iadebayo
+    git remote set-url origin git@github.com:GeoffreyWeta/iadebayo.git
+    ssh -T git@github.com                  # accept the fingerprint once
+    git fetch origin
+
+### What the deploy actually does
+
+`deploy/deploy.sh`, in order: `git reset --hard origin/master` (not `pull` — the
+server's tree must match origin exactly, and a pull can stop on a conflict from
+someone's quick edit on the box), install requirements, `migrate`,
+`collectstatic`, `check --deploy`, restart Gunicorn, then poll
+`127.0.0.1:8000` until it returns 200.
+
+The config check runs **before** the restart on purpose: a broken `.env` fails
+there, leaving the running workers untouched and the site up.
+
+**There is no automatic rollback.** By the time a restart can fail, the
+migrations have already been applied, and checking out older code against a
+newer schema is how a bad deploy becomes a bad database. On failure the script
+prints the last 40 log lines and the exact command to go back, for you to run
+once you have read them.
+
+### Deploying by hand
+
+The workflow pipes the script over SSH rather than running the server's copy —
+the `reset --hard` rewrites the working tree, and a script edited while bash is
+still reading it fails in confusing ways. Do the same by hand:
+
+    ssh deploy@YOUR_IP 'bash -s' < deploy/deploy.sh
+
+Or use **Actions → CI / Deploy → Run workflow** to redeploy `master` untouched.
+
+### The React islands
+
+If you edited anything under `frontend/src/`, run `npm run build` in `frontend/`
+and commit the updated `static/js/islands.js` **before** pushing — the droplet
+does not run vite. CI rebuilds the bundle and warns if the committed copy has
+drifted, but that check is advisory: vite output is not always byte-identical
+across machines, so it reports rather than blocks.
 
 ---
 
