@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render
+from django.utils.text import slugify
 
 from blog.models import Post
 from submissions import forms as f
@@ -50,9 +51,8 @@ FAQS = [
      "entrepreneurs across Africa who are currently building or actively working on a "
      "business."),
     ("Do I need to have an existing business?",
-     "Yes. The programme is designed for aspiring and early-stage entrepreneurs who "
-     "already have a business idea they are validating or an existing business they are "
-     "actively growing."),
+     "Yes, the programme is designed for early-stage entrepreneurs who already have a "
+     "business they are actively growing."),
     ("How long does the programme last?",
      "The duration of each cohort may vary. Successful applicants will receive the "
      "programme calendar and schedule before the cohort begins."),
@@ -83,6 +83,38 @@ FAQS = [
      "Follow our social media channels and subscribe to our newsletter to receive updates "
      "on applications, programme announcements, and upcoming events."),
 ]
+
+# Cohort 5 runs Oct 2026 - Mar 2027. Held as data rather than markup because it
+# appears on two pages, and because the whole table is rewritten each cohort —
+# one edit here moves both.
+COHORT = {"name": "Cohort 5"}
+COHORT_MONTHS = [
+    ("Oct. 2026", ["Orientation", "Live Classes"]),
+    ("Nov. 2026", ["Live Classes", "Spotlight Show"]),
+    ("Dec. 2026", ["Live Classes", "Spotlight Show"]),
+    ("Jan. 2027", ["Live Classes", "Spotlight Show", "Mentorship"]),
+    ("Feb. 2027", ["Live Classes", "Spotlight Show", "Mentorship", "Capstone"]),
+    ("Mar. 2027", ["Live Classes", "Spotlight Show", "Mentorship", "Pitch Competition"]),
+]
+
+
+def cohort_schedule():
+    """The month-by-month plan, annotated so the template stays declarative.
+
+    `starts_here` marks the first month an activity appears. Six near-identical
+    lists are genuinely hard to read; flagging where each strand joins is what
+    makes the shape legible at a glance — mentorship arriving in January, the
+    capstone in February, the pitch in March.
+    """
+    seen, months = set(), []
+    for step, (label, activities) in enumerate(COHORT_MONTHS, start=1):
+        items = []
+        for name in activities:
+            items.append({"name": name, "slug": slugify(name), "starts_here": name not in seen})
+            seen.add(name)
+        months.append({"step": step, "label": label, "activities": items})
+    return {**COHORT, "months": months}
+
 
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]
 
@@ -132,6 +164,7 @@ def embark(request):
         "components": PROGRAM_COMPONENTS,
         "curriculum": CURRICULUM,
         "faqs": FAQS,
+        "schedule": cohort_schedule(),
         "testimonials": published_testimonials().filter(on_spotlight=True)[:3],
         "meta_title": "Embark Entrepreneurship Academy",
         "meta_description": "Embark Entrepreneurship Academy — the flagship programme of IADEBAYO Foundation, building entrepreneurs who build Africa.",
@@ -144,6 +177,10 @@ def apply_context(form=None):
     return {
         "form": form if form is not None else f.EmbarkApplicationForm(),
         "faqs": FAQS,
+        # Shown above the form: the Commitment questions ask whether the
+        # applicant can see the programme through, which is a fairer question
+        # once they can see how long it runs and what lands when.
+        "schedule": cohort_schedule(),
         # Optional: the "what Embark does" explainer shown above the form.
         # Set EMBARK_INTRO_VIDEO_URL once the clip is live on YouTube.
         "embark_intro_video": settings.EMBARK_INTRO_VIDEO_URL,

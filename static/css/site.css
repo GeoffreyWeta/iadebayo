@@ -1437,3 +1437,82 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
   .promo-backdrop, .promo-dialog { transition: none; }
   .promo-dialog { transform: none; }
 }
+
+/* ============================================================
+   v21 — Cohort schedule timeline (Embark + Apply)
+   Six month-columns strung on a rail. The rail is a pseudo-element
+   on the list, inset by half a column so it starts and ends at the
+   first and last node centres rather than the container edges.
+   ============================================================ */
+.schedule {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0 16px;
+  position: relative;
+}
+.schedule::before {
+  content: ""; position: absolute; z-index: 0;
+  left: 8.333%; right: 8.333%;      /* half of 1/6 — lands on the node centres */
+  top: 22px; height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  opacity: .5;
+}
+.schedule-month { position: relative; z-index: 1; text-align: center; }
+
+.schedule-step {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  /* Opaque, so the rail passes behind the node instead of through it. */
+  background: var(--surface-dark);
+  border: 2px solid var(--orange);
+  color: #fff; font-weight: 800; font-size: .95rem; line-height: 1;
+}
+.schedule-when {
+  display: block; margin-top: 12px;
+  font-weight: 800; font-size: .8rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold);
+}
+
+.schedule-items { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.schedule-item {
+  font-size: .82rem; font-weight: 600; line-height: 1.35;
+  padding: 9px 8px; border-radius: 9px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.13);
+  color: rgba(255,255,255,.82);
+}
+/* The month a strand joins — the thing worth seeing in six similar lists. */
+.schedule-item.starts-here {
+  background: rgba(241,89,44,.2);
+  border-color: var(--orange);
+  color: #fff;
+}
+.schedule-item.starts-here::before {
+  content: "✳"; color: var(--gold); margin-right: 5px; font-size: .9em;
+}
+
+.schedule-legend {
+  margin: 34px 0 0; text-align: center;
+  font-size: .84rem; color: rgba(255,255,255,.6);
+}
+.schedule-legend span { color: var(--gold); }
+
+/* Two rows of three. The rail assumes one row, so it goes. */
+@media (max-width: 1080px) and (min-width: 741px) {
+  .schedule { grid-template-columns: repeat(3, 1fr); gap: 40px 18px; }
+  .schedule::before { display: none; }
+}
+
+/* Stacked: the rail turns vertical and runs down through the nodes. */
+@media (max-width: 740px) {
+  .schedule { grid-template-columns: 1fr; gap: 0; }
+  .schedule::before {
+    left: 21px; right: auto; top: 10px; bottom: 26px;
+    width: 2px; height: auto;
+    background: linear-gradient(180deg, var(--gold), var(--orange));
+  }
+  .schedule-month { text-align: left; padding-bottom: 26px; }
+  .schedule-head { display: flex; align-items: center; gap: 14px; }
+  .schedule-when { margin-top: 0; }
+  .schedule-items { margin-left: 58px; margin-top: 10px; }
+  .schedule-item { font-size: .86rem; padding: 10px 12px; }
+}
