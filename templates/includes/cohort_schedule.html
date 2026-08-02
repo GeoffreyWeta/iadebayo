@@ -10,6 +10,12 @@
       <h2>{{ schedule.months|length }} months of <span class="accent accent-orange">hands-on sessions.</span></h2>
     </div>
 
+    <ul class="key-dates">
+      {% for label, when in schedule.key_dates %}
+      <li><span class="key-date-label">{{ label }}</span><span class="key-date-when">{{ when }}</span></li>
+      {% endfor %}
+    </ul>
+
     <div class="strands" style="--cols: {{ schedule.months|length }}">
       <div class="strands-head" aria-hidden="true">
         <span></span>
@@ -30,10 +36,5 @@
       </ul>
     </div>
 
-    <ul class="key-dates">
-      {% for label, when in schedule.key_dates %}
-      <li><span class="key-date-label">{{ label }}</span><span class="key-date-when">{{ when }}</span></li>
-      {% endfor %}
-    </ul>
   </div>
 </section>

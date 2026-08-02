@@ -354,7 +354,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .social a:hover { background: var(--accent); border-color: var(--accent); }
 .footer-bottom {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
-  border-top: 1px solid rgba(255,255,255,.14); padding-top: 26px; padding-bottom: 34px; font-size: .88rem;
+  border-bottom: 1px solid rgba(255,255,255,.14); padding-top: 26px; padding-bottom: 34px; font-size: .88rem;
 }
 .footer-bottom ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
 .footer-bottom a { color: rgba(255,255,255,.75); }
@@ -1564,8 +1564,8 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
 
 
 .key-dates {
-  list-style: none; margin: 28px 0 0; padding: 22px 0 0;
-  border-top: 1px solid rgba(255,255,255,.14);
+  list-style: none; margin: 0 0 28px; padding: 0 0 22px;
+  border-bottom: 1px solid rgba(255,255,255,.14);
   display: flex; flex-wrap: wrap; gap: 12px 40px;
 }
 .key-dates li { display: flex; flex-direction: column; gap: 4px; }

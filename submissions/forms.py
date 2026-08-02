@@ -218,8 +218,9 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         fields = [
             "name", "gender", "applicant_status", "email", "phone_code", "phone",
             "date_of_birth", "institution", "city", "state", "country", "social_handle",
-            "business_name", "business_video_url", "year_established", "revenue_last_year",
-            "revenue_this_year", "major_challenge", "growth_limits", "growth_limits_other",
+            "business_name", "business_sector", "business_video_url", "year_established",
+            "revenue_last_year", "revenue_this_year", "major_challenge",
+            "growth_limits", "growth_limits_other", "entrepreneurship_view",
             "device", "will_participate", "reliable_internet", "heard_about",
             "heard_about_other", "media_consent",
         ]
