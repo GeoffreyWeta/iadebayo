@@ -1,5 +1,17 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% comment %}
+  The first hero slide is the largest-contentful paint on this page and it is
+  a CSS background, so nothing discovers it until the style is resolved. On a
+  phone connection that is most of the wait. Preloading it — and only it, the
+  other two slides are swapped in later by the island — moves the fetch to
+  the top of the queue.
+{% endcomment %}
+{% block head %}
+<link rel="preload" as="image" href="{% static 'img/hero-1.webp' %}" fetchpriority="high">
+{% endblock %}
+
 {% block content %}
 
 {# ============ HERO — big scrolling slides (React island w/ static fallback) #}

@@ -13,6 +13,8 @@
   "Home" link, so the Foundation is still one click away.
 {% endcomment %}
 {% block body_class %}theme-embark{% endblock %}
+{# Browser chrome follows the sub-brand: charcoal here, Foundation red elsewhere. #}
+{% block theme_color %}#231F20{% endblock %}
 
 {% block header_brand %}
 <a class="brand brand-embark" href="{% url 'core:embark' %}"

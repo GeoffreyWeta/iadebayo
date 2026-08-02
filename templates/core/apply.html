@@ -1,5 +1,10 @@
 {% extends "embark_base.html" %}
 {% load static %}
+{% comment %}
+  page-apply hides the floating "Apply →" pill: it would cover the sticky
+  Back/Next bar on a phone, and it points at the form already on screen.
+{% endcomment %}
+{% block body_class %}theme-embark page-apply{% endblock %}
 {% block content %}
 <section class="page-head on-dark">
   <div class="container">
@@ -10,8 +15,14 @@
   </div>
 </section>
 
-{# Above the form on purpose: the Commitment questions are fairer once
-   the applicant can see how long the programme runs. #}
+{% comment %}
+  Above the form on purpose: the Commitment questions are fairer once the
+  applicant can see how long the programme runs.
+
+  Block form, not {# #}: Django's lexer is not DOTALL, so a hash comment that
+  spans a newline is not a comment token at all and prints on the page. This
+  one was doing exactly that, above the schedule band.
+{% endcomment %}
 {% include "includes/cohort_schedule.html" %}
 
 <section class="section section-cream">

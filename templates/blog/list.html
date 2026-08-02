@@ -4,10 +4,18 @@
   <div class="container">
     <p class="eyebrow">Blog</p>
     <h1>Ideas for <span class="accent accent-light">builders.</span></h1>
-    <div class="chip-row" style="margin-top:26px">
-      <a class="chip" href="{% url 'blog:list' %}" style="text-decoration:none;{% if not active_category %}background:var(--gold);border-color:var(--gold);color:var(--ink){% else %}background:transparent;color:#fff;border-color:rgba(255,255,255,.4){% endif %}">All</a>
+    {% comment %}
+      chip-rail: on a phone these filters wrapped to four rows and pushed the
+      first post under the fold, so below 640px the row becomes one swipeable
+      strip that runs edge to edge. The active/inactive colouring moved out of
+      inline styles into .chip-filter — see site.css v22.
+    {% endcomment %}
+    <div class="chip-row chip-rail" style="margin-top:26px">
+      <a class="chip chip-filter{% if not active_category %} is-active{% endif %}"
+         href="{% url 'blog:list' %}">All</a>
       {% for value, label in categories %}
-      <a class="chip" href="{% url 'blog:list' %}?category={{ value }}" style="text-decoration:none;{% if active_category == value %}background:var(--gold);border-color:var(--gold);color:var(--ink){% else %}background:transparent;color:#fff;border-color:rgba(255,255,255,.4){% endif %}">{{ label }}</a>
+      <a class="chip chip-filter{% if active_category == value %} is-active{% endif %}"
+         href="{% url 'blog:list' %}?category={{ value }}">{{ label }}</a>
       {% endfor %}
     </div>
   </div>

@@ -28,9 +28,23 @@
     if (steps[i].dataset.hasErrors) { current = i; break; }
   }
 
+  /* Restart the entrance animation on the section being revealed. The class
+     has to come off and go back on with a reflow in between, or the browser
+     sees no change and replays nothing. Skipped for the initial call — the
+     page has its own entrance and does not need the form sliding too. */
+  var settled = false;
+  function animateIn(step, goingBack) {
+    if (!settled) return;
+    step.classList.remove("is-entering", "is-entering-back");
+    void step.offsetWidth;
+    step.classList.add(goingBack ? "is-entering-back" : "is-entering");
+  }
+
   function show(index, focus) {
+    var previous = current;
     current = Math.max(0, Math.min(index, steps.length - 1));
     steps.forEach(function (s, i) { s.hidden = i !== current; });
+    animateIn(steps[current], current < previous);
     railItems.forEach(function (item, i) {
       item.classList.toggle("is-current", i === current);
       item.classList.toggle("is-done", i < current);
@@ -184,4 +198,5 @@
   });
 
   show(current, false);
+  settled = true;      // from here on, every move animates
 })();

@@ -2,7 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% comment %}
+    viewport-fit=cover lets the page paint into the notch/home-indicator area;
+    the safe-area insets in site.css keep the floating buttons and the footer
+    clear of it. Without cover those insets are always zero.
+  {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  {# Colours the browser chrome to match the header bar on Android/iOS. #}
+  <meta name="theme-color" content="{% block theme_color %}#A31A1E{% endblock %}">
+  <meta name="color-scheme" content="light">
+  {% comment %}
+    Inline and first: site.css hides the scroll-reveal start states only for
+    `html.js`, so this must land before the first paint. If scripting is off
+    the class never appears and the page renders fully visible.
+  {% endcomment %}
+  <script>document.documentElement.classList.add('js');</script>
   <title>{% if page_meta_title %}{{ page_meta_title }}{% elif meta_title %}{{ meta_title }} — {{ SITE_NAME }}{% else %}{{ SITE_NAME }}{% endif %}</title>
   <meta name="description" content="{% if page_meta_description %}{{ page_meta_description }}{% else %}{{ meta_description|default:'IADEBAYO Foundation empowers young African entrepreneurs through education, mentorship, and community.' }}{% endif %}">
   <link rel="canonical" href="{{ SITE_BASE_URL }}{{ request.path }}">
@@ -71,6 +85,16 @@
         </li>
         <li><a href="{% url 'core:contact' %}">Contact</a></li>
       </ul>
+      {% comment %}
+        The apply CTA sits in the header bar on desktop, but the bar has no
+        room for it on a phone — it used to disappear behind the hamburger
+        and only reappear as the floating pill after 340px of scrolling.
+        This copy rides inside the panel (phones only, see .nav-cta), so
+        opening the menu always surfaces the primary action.
+      {% endcomment %}
+      <div class="nav-cta">
+        <a class="btn btn-primary" href="{% url 'core:apply' %}">Apply to Embark</a>
+      </div>
     </nav>
     <div class="header-actions">
       <a class="btn btn-primary btn-apply" href="{% url 'core:apply' %}">Apply to Embark</a>

@@ -1,7 +1,20 @@
 {% extends "embark_base.html" %}
 {% load static %}
+
+{% comment %}
+  LCP image, and a CSS background — nothing finds it until the style resolves.
+  Preload moves the fetch to the front of the queue.
+{% endcomment %}
+{% block head %}
+<link rel="preload" as="image" href="{% static 'img/embark-hero.webp' %}" fetchpriority="high">
+{% endblock %}
+
 {% block content %}
-<section class="hero" style="min-height:70vh">
+{% comment %}
+  hero-compact, not an inline vh: `vh` is remeasured when the mobile URL bar
+  hides, which resized this hero mid-scroll. See .hero-compact in site.css.
+{% endcomment %}
+<section class="hero hero-compact">
   <div class="hero-media">
     {% comment %}
       One fixed photo, so it is set inline rather than via data-src: the
@@ -101,7 +114,8 @@
 
 <section class="image-band" style="background-image:url('{% static 'img/embark-band.webp' %}')">
   <div class="veil"></div>
-  <div class="container" style="padding:90px 24px">
+  {# padding-block only: the shorthand would wipe .container's own gutter. #}
+  <div class="container" style="padding-block:90px">
     <p class="band-quote">Sector-agnostic. Pan-African. Completely free for selected founders.</p>
   </div>
 </section>
