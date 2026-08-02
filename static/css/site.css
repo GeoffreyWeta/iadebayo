@@ -354,7 +354,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .social a:hover { background: var(--accent); border-color: var(--accent); }
 .footer-bottom {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
-  border-top: 1px solid rgba(255,255,255,.14); padding-top: 26px; padding-bottom: 34px; font-size: .88rem;
+  border-bottom: 1px solid rgba(255,255,255,.14); padding-top: 26px; padding-bottom: 34px; font-size: .88rem;
 }
 .footer-bottom ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
 .footer-bottom a { color: rgba(255,255,255,.75); }
@@ -1517,8 +1517,66 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
   .schedule-item { font-size: .86rem; padding: 10px 12px; }
 }
 
+
 /* ============================================================
-   v22 — MOBILE-FIRST POLISH & MOTION SYSTEM
+   v22 - Cohort strands (supersedes the v21 month-column timeline)
+   One row per activity; bar length is the information, which is
+   why there is no legend. --cols is set inline from the data.
+   ============================================================ */
+.strands { --label: 150px; }
+.strands-head,
+.strand-row {
+  display: grid;
+  grid-template-columns: var(--label) repeat(var(--cols), 1fr);
+  gap: 0 6px; align-items: center;
+}
+.strands-head { margin-bottom: 10px; }
+.strand-col {
+  text-align: center; font-size: .72rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--gold);
+}
+.strand-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.strand-name {
+  font-size: .86rem; font-weight: 700; line-height: 1.3;
+  color: rgba(255,255,255,.9); padding-right: 12px;
+}
+.strand-bar {
+  min-height: 40px; border-radius: 10px;
+  display: flex; align-items: center; padding: 0 14px;
+  background: rgba(241,89,44,.22);
+  border: 1px solid var(--orange);
+  color: #fff; font-size: .78rem; font-weight: 700;
+}
+.strand-bar.is-single {
+  justify-content: center; padding: 0 8px;
+  background: rgba(212,175,55,.18); border-color: var(--gold);
+}
+.strand-range { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 860px) {
+  .strands-head { display: none; }
+  .strand-row { display: flex; justify-content: space-between; align-items: baseline;
+                gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .strand-name { padding: 0; font-size: .95rem; }
+  .strand-bar { grid-column: auto !important; min-height: 0; border: 0; background: none;
+                padding: 0; color: var(--gold); font-size: .82rem; text-align: right; }
+  .strand-bar.is-single { background: none; }
+}
+
+
+.key-dates {
+  list-style: none; margin: 0 0 28px; padding: 0 0 22px;
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  display: flex; flex-wrap: wrap; gap: 12px 40px;
+}
+.key-dates li { display: flex; flex-direction: column; gap: 4px; }
+.key-date-label {
+  font-size: .7rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold);
+}
+.key-date-when { font-size: .95rem; font-weight: 700; color: #fff; }
+
+/* ============================================================
+   v23 — MOBILE-FIRST POLISH & MOTION SYSTEM
    (must stay last: it re-asserts a handful of earlier rules)
 
    Three jobs, in this order:
@@ -1897,19 +1955,26 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 .theme-embark .media-frame::after, .theme-embark .article-cover::after { background: var(--em-orange); }
 .media-frame.is-visible::after, .article-cover.is-visible::after { transform: scaleY(0); }
 
-/* Cohort timeline: the rail draws itself through the month nodes. */
-.schedule::before {
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 1.1s var(--ease-out-expo) .15s;
-}
-.schedule.is-visible::before { transform: scaleX(1); }
-@media (max-width: 740px) {
-  .schedule::before { transform: scaleY(0); transform-origin: top; }
-  .schedule.is-visible::before { transform: scaleY(1); }
-}
-.schedule-step { transition: transform var(--dur-2) var(--ease-spring), background var(--dur-2) ease; }
-@media (hover: hover) and (pointer: fine) {
-  .schedule-month:hover .schedule-step { transform: scale(1.12); }
+/* Cohort strands: each bar wipes in from the left, so what animates is the
+   thing the chart is actually saying — how long an activity runs.
+
+   clip-path rather than scaleX: scaling the bar would squash the date label
+   inside it. The row already carries .reveal (see cohort_schedule.html) and
+   inherits the --rv-delay site.js stamps on it, so the bars draw in the same
+   sequence their rows arrive, just behind them.
+
+   Above 860px only. Below that the theme drops the bar to plain right-aligned
+   text with no background, and there is nothing left to wipe.
+
+   (This replaced a rail-draw on .schedule — the v21 month-column timeline the
+   strands superseded. That markup is gone; the v21 block above it is now dead
+   too and can go whenever someone is in here.) */
+@media (min-width: 861px) {
+  .strand-row.reveal .strand-bar {
+    clip-path: inset(0 100% 0 0 round 10px);
+    transition: clip-path .8s var(--ease-out-expo) calc(var(--rv-delay, 0ms) + 140ms);
+  }
+  .strand-row.reveal.is-visible .strand-bar { clip-path: inset(0 0 0 0 round 10px); }
 }
 
 /* FAQ: the answer slides instead of appearing. Chromium and Safari
@@ -2067,7 +2132,8 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
   .article p { font-size: 1.02rem; }
   .article h2 { font-size: 1.28rem; }
   .promo-dialog { width: min(420px, 100%); }
-  .schedule-item { font-size: .88rem; }
+  /* Key dates stack rather than sitting in a sparse two-up row. */
+  .key-dates { gap: 14px 28px; margin-bottom: 24px; padding-bottom: 18px; }
   /* "✳ AN IADEBAYO FOUNDATION PROGRAMME" wrapped to two lines inside a pill,
      which reads as a mistake. Tightened to fit a 360px screen on one line. */
   .subbrand-note { font-size: .68rem; letter-spacing: .05em; padding: 7px 14px; }

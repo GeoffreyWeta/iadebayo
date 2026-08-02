@@ -3,7 +3,7 @@
    Everything here is additive: with the script blocked the page is the same
    server-rendered document it always was. The one thing CSS needs to know is
    whether we ran at all — base.html sets `html.js` inline in <head>, and the
-   v22 block in site.css unwinds every animation start state when that class
+   v23 block in site.css unwinds every animation start state when that class
    is missing, so a failed script can never leave content invisible.
 
    Sections: mobile nav · header on scroll · scroll reveals · floating
@@ -154,7 +154,7 @@
   ].join(",");
 
   // Elements whose CSS reacts to `.is-visible` on its own.
-  var EFFECTS = [".section-head", ".schedule", ".media-frame", ".article-cover"].join(",");
+  var EFFECTS = [".section-head", ".media-frame", ".article-cover"].join(",");
 
   function inViewport(el) {
     var r = el.getBoundingClientRect();
