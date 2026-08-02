@@ -98,6 +98,29 @@ COHORT_MONTHS = [
 ]
 
 
+def cohort_strands():
+    """The same schedule read the other way: one row per activity, spanning the
+    months it runs. Both readings come from COHORT_MONTHS, so they cannot drift.
+    Grid lines, not indices: +1 for 1-based, +1 again for the label column.
+    """
+    order, first, last = [], {}, {}
+    for i, (_label, activities) in enumerate(COHORT_MONTHS):
+        for name in activities:
+            if name not in first:
+                first[name] = i
+                order.append(name)
+            last[name] = i
+    return [{
+        "name": name,
+        "slug": slugify(name),
+        "col_start": first[name] + 2,
+        "col_end": last[name] + 3,
+        "months": last[name] - first[name] + 1,
+        "from_label": COHORT_MONTHS[first[name]][0],
+        "to_label": COHORT_MONTHS[last[name]][0],
+    } for name in order]
+
+
 def cohort_schedule():
     """The month-by-month plan, annotated so the template stays declarative.
 
@@ -113,7 +136,13 @@ def cohort_schedule():
             items.append({"name": name, "slug": slugify(name), "starts_here": name not in seen})
             seen.add(name)
         months.append({"step": step, "label": label, "activities": items})
-    return {**COHORT, "months": months}
+    return {**COHORT, "months": months,
+            "strands": cohort_strands(),
+            "month_labels": [label for label, _ in COHORT_MONTHS],
+            "key_dates": [
+                ("Applications open", "1 August \u2013 11 September 2026"),
+                ("Admission notifications", "14 \u2013 25 September 2026"),
+            ]}
 
 
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]

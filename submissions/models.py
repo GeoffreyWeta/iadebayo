@@ -82,6 +82,12 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
     applicant *must* answer is decided by EmbarkApplicationForm.REQUIRED.
     """
 
+    SECTOR_CHOICES = [(x.lower().replace(" ", "_"), x) for x in [
+        "Agriculture", "Beauty", "Construction", "Creative Arts", "Education",
+        "Energy", "Entertainment", "Events", "Fashion", "Finance", "Food",
+        "Healthcare", "Hospitality", "Logistics", "Manufacturing", "Media",
+        "Professional Services", "Real Estate", "Retail", "Social Enterprise",
+        "Sports", "Technology", "Tourism", "Other"]]
     STATUS_CHOICES = [("undergraduate", "Undergraduate"), ("graduate", "Graduate")]
     GENDER_CHOICES = [("male", "Male"), ("female", "Female")]
     DEVICE_CHOICES = [("laptop", "Laptop"), ("smartphone", "Smartphone"),
@@ -138,6 +144,9 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
         "Biggest factors limiting your growth right now", max_length=200, blank=True,
         help_text="Stored as comma-separated codes; set by the application form.")
     growth_limits_other = models.CharField("Other limiting factor", max_length=160, blank=True)
+    entrepreneurship_view = models.TextField(
+        "What do you think the goal of entrepreneurship is \u2014 impact or profit?",
+        blank=True, help_text="Explain briefly.")
 
     # ------------------------------------------------------ Commitment
     device = models.CharField("Device you will use for the programme", max_length=20,
@@ -170,7 +179,9 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
         blank=True, validators=[validate_application_video],
         help_text="Legacy — superseded by the video link.")
     business_description = models.TextField(blank=True, help_text="Legacy — superseded by the video")
-    business_sector = models.CharField(max_length=120, blank=True, help_text="Legacy")
+    business_sector = models.CharField(
+        "Which sector does your business operate in?", max_length=120,
+        choices=SECTOR_CHOICES, blank=True)
     motivation = models.TextField("Why do you want to join Embark?", blank=True,
                                   help_text="Legacy")
 

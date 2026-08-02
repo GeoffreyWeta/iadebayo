@@ -1,41 +1,39 @@
 {% comment %}
-  Cohort timeline, shown on the Embark page and above the application form.
-  Data comes from core.views.cohort_schedule(), so the two can never drift.
-
-  Every month lists its full set of activities, which is the honest reading of
-  the schedule — but six near-identical lists are hard to scan, so the month a
-  strand *joins* is marked. That is the shape worth seeing: classes throughout,
-  the Spotlight Show from November, mentorship from January, then the capstone
-  and the pitch. `starts_here` is computed in the view, not guessed here.
-
-  Ordered list, because the sequence is the meaning.
+  Cohort timeline as strands: one row per activity, spanning the months it runs.
+  Bar length carries the meaning, so no legend is needed. Grid columns come from
+  the view because they are data, not styling.
 {% endcomment %}
 <section class="section section-dark on-dark schedule-band" id="schedule">
   <div class="container">
     <div class="section-head">
       <p class="eyebrow">{{ schedule.name }} schedule</p>
-      {# Month count comes from the data, so adding a month updates the headline too. #}
       <h2>{{ schedule.months|length }} months of <span class="accent accent-orange">hands-on sessions.</span></h2>
     </div>
 
-    <ol class="schedule">
-      {% for month in schedule.months %}
-      <li class="schedule-month reveal">
-        <div class="schedule-head">
-          <span class="schedule-step" aria-hidden="true">{{ month.step }}</span>
-          <span class="schedule-when">{{ month.label }}</span>
-        </div>
-        <ul class="schedule-items">
-          {% for a in month.activities %}
-          <li class="schedule-item act-{{ a.slug }}{% if a.starts_here %} starts-here{% endif %}">
-            {{ a.name }}{% if a.starts_here %}<span class="visually-hidden"> — starts this month</span>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      </li>
-      {% endfor %}
-    </ol>
+    <div class="strands" style="--cols: {{ schedule.months|length }}">
+      <div class="strands-head" aria-hidden="true">
+        <span></span>
+        {% for label in schedule.month_labels %}<span class="strand-col">{{ label }}</span>{% endfor %}
+      </div>
 
-    <p class="schedule-legend"><span aria-hidden="true">✳</span> marks the month an activity starts.</p>
+      <ul class="strand-rows">
+        {% for s in schedule.strands %}
+        <li class="strand-row reveal">
+          <span class="strand-name">{{ s.name }}</span>
+          <span class="strand-bar act-{{ s.slug }}{% if s.months == 1 %} is-single{% endif %}"
+                style="grid-column: {{ s.col_start }} / {{ s.col_end }}">
+            <span class="strand-range" aria-hidden="true">{% if s.months == 1 %}{{ s.from_label }}{% else %}{{ s.from_label }} &ndash; {{ s.to_label }}{% endif %}</span>
+            <span class="visually-hidden">{% if s.months == 1 %}{{ s.from_label }} only{% else %}{{ s.from_label }} to {{ s.to_label }}, {{ s.months }} months{% endif %}</span>
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <ul class="key-dates">
+      {% for label, when in schedule.key_dates %}
+      <li><span class="key-date-label">{{ label }}</span><span class="key-date-when">{{ when }}</span></li>
+      {% endfor %}
+    </ul>
   </div>
 </section>

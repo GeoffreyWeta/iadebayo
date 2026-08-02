@@ -186,8 +186,9 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
          "Now the venture itself. The one-minute video matters as much as the "
          "written answers — filmed on a phone is perfectly fine. Upload it to "
          "Google Drive and share the link; do not email the file.",
-         ["business_name", "business_video_url", "year_established", "revenue_last_year",
-          "revenue_this_year", "major_challenge", "growth_limits", "growth_limits_other"]),
+         ["business_name", "business_sector", "business_video_url", "year_established",
+          "revenue_last_year", "revenue_this_year", "major_challenge",
+          "growth_limits", "growth_limits_other", "entrepreneurship_view"]),
         ("Commitment",
          "Embark runs on live sessions, assignments, mentorship, networking, and a "
          "capstone project. These answers tell us you can see it through.",
@@ -198,8 +199,8 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     REQUIRED = {
         "name", "gender", "applicant_status", "email", "phone", "date_of_birth",
         "institution", "city", "country",
-        "business_name", "business_video_url", "year_established", "major_challenge",
-        "growth_limits",
+        "business_name", "business_sector", "business_video_url", "year_established",
+        "major_challenge", "growth_limits", "entrepreneurship_view",
         "device", "will_participate", "reliable_internet", "heard_about", "media_consent",
     }
 
