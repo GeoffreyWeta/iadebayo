@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import urlparse
 
 from django import forms
 
@@ -21,6 +22,12 @@ class BaseStyledForm(forms.ModelForm):
     # happen to precede it.
     ROW_START_FIELDS = ("phone_code",)
 
+    # Fields that span both grid columns whatever their widget. Width by widget
+    # type is the right default, but it cannot know that one text input carries
+    # far more help text than the others — in a half-width column the video
+    # brief renders as a tall thin ribbon nobody reads.
+    FULL_WIDTH_FIELDS = ()
+
     @property
     def row_start_fields(self):
         return [n for n in self.ROW_START_FIELDS if n in self.fields]
@@ -33,7 +40,8 @@ class BaseStyledForm(forms.ModelForm):
         `includes/form_fields.html` just tests membership.
         """
         return [n for n, f in self.fields.items()
-                if isinstance(f.widget, self.WIDE_WIDGETS)]
+                if isinstance(f.widget, self.WIDE_WIDGETS)
+                or n in self.FULL_WIDTH_FIELDS]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -147,7 +155,7 @@ class SectionedFormMixin:
         widget = bound.field.widget
         return {
             "field": bound,
-            "full": isinstance(widget, self.WIDE_WIDGETS),
+            "full": isinstance(widget, self.WIDE_WIDGETS) or name in self.FULL_WIDTH_FIELDS,
             "choices": isinstance(widget, (forms.RadioSelect, forms.CheckboxSelectMultiple)),
             "single_check": isinstance(widget, forms.CheckboxInput),
             "row_start": name in self.ROW_START_FIELDS,
@@ -181,12 +189,14 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
          "Tell us who you are. Use an email address you check often; that is where "
          "every update about your application will go.",
          ["name", "gender", "applicant_status", "email", "phone_code", "phone",
-          "date_of_birth", "institution", "city", "state", "country", "social_handle"]),
+          "date_of_birth", "institution", "city", "state", "country",
+          "linkedin", "social_handle", "social_handle_2"]),
         ("Section B — Business information",
-         "Now the venture itself. The one-minute video matters as much as the "
-         "written answers — filmed on a phone is perfectly fine. Upload it to "
-         "Google Drive and share the link; do not email the file.",
-         ["business_name", "business_sector", "business_video_url", "year_established",
+         "Now the venture itself. Your video carries as much weight as the written "
+         "answers, so give it a minute of thought before you record — the brief is "
+         "under the link field. Filmed on a phone is perfectly fine.",
+         ["business_name", "business_sector", "business_video_url",
+          "business_website", "business_social_handle", "year_established",
           "revenue_last_year", "revenue_this_year", "major_challenge",
           "growth_limits", "growth_limits_other", "entrepreneurship_view"]),
         ("Commitment",
@@ -198,11 +208,15 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
 
     REQUIRED = {
         "name", "gender", "applicant_status", "email", "phone", "date_of_birth",
-        "institution", "city", "country",
+        "institution", "city", "country", "linkedin",
         "business_name", "business_sector", "business_video_url", "year_established",
         "major_challenge", "growth_limits", "entrepreneurship_view",
         "device", "will_participate", "reliable_internet", "heard_about", "media_consent",
     }
+
+    # The video link owns a full row: its help text is the three-part brief, and
+    # that is the instruction applicants most often miss.
+    FULL_WIDTH_FIELDS = ("business_video_url",)
 
     # Ticked checkboxes come in as a list and are stored comma-separated.
     growth_limits = forms.MultipleChoiceField(
@@ -217,8 +231,10 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         model = models.EmbarkApplication
         fields = [
             "name", "gender", "applicant_status", "email", "phone_code", "phone",
-            "date_of_birth", "institution", "city", "state", "country", "social_handle",
-            "business_name", "business_sector", "business_video_url", "year_established",
+            "date_of_birth", "institution", "city", "state", "country",
+            "linkedin", "social_handle", "social_handle_2",
+            "business_name", "business_sector", "business_video_url",
+            "business_website", "business_social_handle", "year_established",
             "revenue_last_year", "revenue_this_year", "major_challenge",
             "growth_limits", "growth_limits_other", "entrepreneurship_view",
             "device", "will_participate", "reliable_internet", "heard_about",
@@ -228,6 +244,12 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
             "business_video_url": forms.URLInput(attrs={
                 "placeholder": "https://drive.google.com/file/d/.../view?usp=sharing"}),
+            "linkedin": forms.URLInput(attrs={
+                "placeholder": "linkedin.com/in/your-profile"}),
+            "social_handle": forms.TextInput(attrs={"placeholder": "@yourhandle"}),
+            "social_handle_2": forms.TextInput(attrs={"placeholder": "@anotherhandle"}),
+            "business_website": forms.URLInput(attrs={"placeholder": "yourbusiness.com"}),
+            "business_social_handle": forms.TextInput(attrs={"placeholder": "@yourbusiness"}),
             "year_established": forms.NumberInput(attrs={"min": 1950}),
             "device": forms.RadioSelect,
             "will_participate": forms.RadioSelect,
@@ -241,6 +263,13 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
             "device": "Which device will you primarily use to participate?",
             "media_consent": "I agree that photos and video recorded during the programme "
                              "may be used by IADEBAYO Foundation.",
+        }
+        help_texts = {
+            "linkedin": "Required. Paste your profile URL — “linkedin.com/in/…” is enough.",
+            "social_handle": "Optional. Instagram, X, TikTok — whichever you actually use.",
+            "social_handle_2": "Optional. A second platform, if you have one.",
+            "business_website": "Optional — leave blank if the business has no site yet.",
+            "business_social_handle": "Optional. Where customers find the business.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -268,6 +297,25 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         if year and year > date.today().year:
             raise forms.ValidationError("That year is in the future.")
         return year
+
+    def clean_linkedin(self):
+        """Catch the other-platform paste.
+
+        LinkedIn is the one profile the form insists on, and the commonest way
+        that goes wrong is an Instagram or personal-site URL dropped into it —
+        perfectly valid as a URL, so URLField accepts it happily, and the review
+        panel only finds out weeks later. The two handle fields below exist
+        precisely so those links have somewhere else to go.
+        """
+        url = (self.cleaned_data.get("linkedin") or "").strip()
+        if not url:
+            return url
+        host = urlparse(url).netloc.lower().removeprefix("www.")
+        if host != "linkedin.com" and not host.endswith(".linkedin.com"):
+            raise forms.ValidationError(
+                "That is not a LinkedIn address. Paste your LinkedIn profile here — "
+                "any other platform goes in the handle fields below.")
+        return url
 
     def clean_business_video_url(self):
         """Catch the Drive links that are never a video.

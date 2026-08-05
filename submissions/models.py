@@ -121,16 +121,50 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
     city = models.CharField(max_length=80)
     state = models.CharField("State / region", max_length=80, blank=True)
     country = models.CharField(max_length=80)
-    social_handle = models.CharField("Business or personal social media handle",
-                                     max_length=160, blank=True)
+
+    # The applicant's own presence, kept separate from the business's below.
+    #
+    # LinkedIn is the only one the form requires (see
+    # EmbarkApplicationForm.REQUIRED): it is the profile a review panel can
+    # actually check a founder against, and it is the one platform where a
+    # missing account is a signal rather than a preference. The two free handles
+    # take whatever the applicant actually uses — Instagram, X, TikTok — so the
+    # form does not have to guess the platform list.
+    #
+    # `social_handle` predates the split and was labelled "Business or personal",
+    # so a handful of pre-2026-08 rows may hold a business handle in it. Nothing
+    # reads it as authoritative, so relabelling rather than migrating the values
+    # is the honest fix.
+    linkedin = models.URLField("LinkedIn profile", max_length=300, blank=True)
+    social_handle = models.CharField(
+        "Personal social media handle", max_length=160, blank=True)
+    social_handle_2 = models.CharField(
+        "Another personal handle", max_length=160, blank=True)
 
     # ------------------------------------- Section B: business information
     business_name = models.CharField(max_length=160)
+    # help_text carries markup: form_section.html renders it through |safe, and
+    # the three-part brief is the single most-missed instruction on the form, so
+    # it is worth a list the applicant can tick off rather than a paragraph they
+    # skim. Nothing user-supplied ever reaches here.
     business_video_url = models.URLField(
-        "Link to your one-minute business video", max_length=500, blank=True,
-        help_text="Upload the clip to Google Drive, then set sharing to “Anyone with "
-                  "the link” and paste that link here. An unlisted YouTube, Vimeo or "
-                  "Dropbox link works too. A private link cannot be reviewed.")
+        "Link to your one-minute video", max_length=500, blank=True,
+        help_text=
+        "<strong>Your video should answer three things:</strong>"
+        "<ol class='form-help-brief'>"
+        "<li><b>Who you are</b> — your name, where you are, what you study or studied.</li>"
+        "<li><b>What your business does</b> — what you sell, to whom, and how it is going.</li>"
+        "<li><b>Why you should be chosen</b> — what Embark would change for your venture.</li>"
+        "</ol>"
+        "About a minute is plenty, and filmed on a phone is perfectly fine — we are "
+        "listening to what you say, not judging the production. "
+        "<strong>How to share it:</strong> upload the clip to Google Drive, open it, "
+        "choose Share, set it to “Anyone with the link”, then paste that link here. "
+        "An unlisted YouTube, Vimeo or Dropbox link works too. A private link cannot "
+        "be reviewed, and an application we cannot watch cannot be assessed.")
+    business_website = models.URLField("Business website", max_length=300, blank=True)
+    business_social_handle = models.CharField(
+        "Business social media handle", max_length=160, blank=True)
     year_established = models.PositiveSmallIntegerField(
         "How old is the business?", null=True, blank=True,
         help_text="Year the business was established.")

@@ -11,6 +11,9 @@ from core.sitemaps import SITEMAPS
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Before core.urls: that include ends in specific paths, but keeping the
+    # staff area above the public site makes the precedence obvious.
+    path("staff/", include("core.staff_urls")),
     path("", include("core.urls")),
     path("blog/", include("blog.urls")),
     path("forms/", include("submissions.urls")),

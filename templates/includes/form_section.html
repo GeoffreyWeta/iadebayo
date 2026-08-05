@@ -22,7 +22,13 @@
           <label for="{{ row.field.id_for_label }}">{{ row.field.label }}{% if row.field.field.required %} *{% endif %}</label>
           {{ row.field }}
         {% endif %}
-        {% if row.field.help_text %}<div class="form-help">{{ row.field.help_text }}</div>{% endif %}
+        {% comment %}
+          |safe because help_text is authored in forms.py / models.py, never
+          user-supplied, and the video field's brief needs a real list rather
+          than one long escaped paragraph. Django renders help_text as HTML by
+          the same reasoning.
+        {% endcomment %}
+        {% if row.field.help_text %}<div class="form-help">{{ row.field.help_text|safe }}</div>{% endif %}
         {% for error in row.field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
       </div>
     {% endfor %}

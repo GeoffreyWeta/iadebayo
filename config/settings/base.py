@@ -141,12 +141,27 @@ else:
         }
     }
 
+# Applicants type "linkedin.com/in/me" and "yourbusiness.com" far more often than
+# they type a scheme. Django's URLField assumes one for scheme-less input; this
+# transitional setting makes that assumption https instead of http (which is also
+# the Django 6.0 default, so setting it now silences the deprecation warning).
+FORMS_URLFIELD_ASSUME_HTTPS = True
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# ------------------------------------------------------------------ staff area
+# The team signs in at /staff/login/ (core.staff), not at the admin's form — same
+# auth_user table and the same `is_staff` flag, just a page they recognise.
+# LOGIN_URL points there so every @staff_required view and the applicant-video
+# download bounce to the branded form.
+LOGIN_URL = "staff:login"
+LOGIN_REDIRECT_URL = "staff:analytics"
+LOGOUT_REDIRECT_URL = "staff:login"
 
 LANGUAGE_CODE = "en"
 TIME_ZONE = env("DJANGO_TIME_ZONE", "Africa/Lagos")

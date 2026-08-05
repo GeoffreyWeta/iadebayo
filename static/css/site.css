@@ -327,6 +327,34 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .form-input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(237,50,55,.15); }
 .form-textarea { min-height: 84px; resize: vertical; }
 .form-help { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+.form-help strong { color: var(--ink); font-weight: 800; }
+/* The video brief (see EmbarkApplication.business_video_url). Three numbered
+   points the applicant can tick off, rather than instructions buried in a
+   paragraph they will skim — this is the most-missed field on the form, so the
+   field also takes a full grid row (FULL_WIDTH_FIELDS) to give it the width.
+
+   Stacked at every size on purpose: the form card is roughly half the page on
+   desktop, so a three-across layout would be ~170px per column. */
+.form-help-brief {
+  list-style: none; counter-reset: brief;
+  margin: 9px 0 11px; padding: 13px 15px;
+  background: rgba(62, 64, 149, .05);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  display: grid; gap: 9px;
+}
+.form-help-brief li {
+  counter-increment: brief; line-height: 1.5;
+  position: relative; padding-left: 27px;
+}
+.form-help-brief li::before {
+  content: counter(brief);
+  position: absolute; left: 0; top: 1px;
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: .64rem; font-weight: 800; line-height: 19px; text-align: center;
+}
+.form-help-brief b { color: var(--ink); font-weight: 800; }
 .recaptcha-slot { margin: 6px 0; }
 .newsletter-form { display: flex; gap: 10px; }
 .newsletter-form .form-input { flex: 1; }

@@ -3,12 +3,13 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.db import models as db_models
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+
+from core.staff import staff_required
 
 from . import forms, models
 from .services import acknowledge, notify_team, verify_recaptcha
@@ -151,15 +152,16 @@ def partner(request):
 
 
 # --------------------------------------------------------- staff-only download
-@staff_member_required
+@staff_required
 def download_application_video(request, pk):
     """Hand an applicant's video to a signed-in staff member as a download.
 
     The only way to read an application video: /media/applications/ is blocked
     at the web server because these clips show the applicant's face and business
-    and the storage path is guessable. `staff_member_required` bounces anyone
-    else to the admin login rather than 403-ing, which is what a team member who
-    clicked a link from an email expects.
+    and the storage path is guessable. `staff_required` bounces anyone else to
+    the staff sign-in with `?next=` set, rather than 403-ing — a team member who
+    clicked a link in a notification email expects to sign in and land on the
+    file, not to be told off.
     """
     application = get_object_or_404(models.EmbarkApplication, pk=pk)
     if not application.business_video:

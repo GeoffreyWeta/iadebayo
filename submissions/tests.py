@@ -48,16 +48,19 @@ class ApplicationVideoDownloadTests(TestCase):
         User.objects.create_user(username, password=PASSWORD, **flags)
         self.client.login(username=username, password=PASSWORD)
 
-    def test_anonymous_visitor_is_sent_to_the_admin_login(self):
+    def test_anonymous_visitor_is_sent_to_the_staff_login(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/admin/login/", response["Location"])
+        self.assertIn("/staff/login/", response["Location"])
+        # ?next= carries the file, so signing in lands on the download rather
+        # than dumping the staffer on the dashboard.
+        self.assertIn(f"next={self.url}", response["Location"])
 
     def test_signed_in_non_staff_user_cannot_download(self):
         self.sign_in("member")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/admin/login/", response["Location"])
+        self.assertIn("/staff/login/", response["Location"])
 
     def test_staff_get_the_file_named_after_the_applicant(self):
         self.sign_in("staffer", is_staff=True)
@@ -147,10 +150,15 @@ EMBARK = {
     "email": "chidi@example.com", "phone_code": "+234", "phone": "8012345678",
     "date_of_birth": "1999-04-12", "institution": "University of Lagos",
     "city": "Lagos", "state": "Lagos", "country": "Nigeria",
+    "linkedin": "https://www.linkedin.com/in/chidi-okafor",
+    "social_handle": "@chidifarms", "social_handle_2": "@chidi",
     "business_name": "Okafor Farms", "year_established": "2023",
+    "business_website": "okaforfarms.ng", "business_social_handle": "@okaforfarms",
+    "business_sector": "agriculture",
     "business_video_url": "https://drive.google.com/file/d/1AbCdEf/view?usp=sharing",
     "major_challenge": "Cold-chain logistics; we partnered with a local courier.",
     "growth_limits": ["funding", "customers"],
+    "entrepreneurship_view": "Impact first — profit is what makes the impact repeatable.",
     "device": "laptop", "will_participate": "yes", "reliable_internet": "yes",
     "heard_about": "linkedin", "media_consent": "on",
 }
@@ -252,6 +260,59 @@ class PublicFormTests(TestCase):
             "apply", dict(EMBARK, business_video_url="https://drive.google.com/drive/my-drive"))
         self.assertEqual(models.EmbarkApplication.objects.count(), 0)
         self.assertContains(response, "links to your Drive, not to the video")
+
+    # -------------------------------------------- personal & business links
+    def test_embark_requires_linkedin(self):
+        """LinkedIn is the one profile the panel can check a founder against."""
+        response = self.submit("apply", dict(EMBARK, linkedin=""))
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "This field is required")
+
+    def test_embark_rejects_another_platform_in_the_linkedin_field(self):
+        response = self.submit(
+            "apply", dict(EMBARK, linkedin="https://instagram.com/chidi"))
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertContains(response, "not a LinkedIn address")
+
+    def test_embark_accepts_a_linkedin_url_without_a_scheme(self):
+        """Applicants type "linkedin.com/in/me" far more often than the scheme."""
+        self.submit("apply", dict(EMBARK, linkedin="linkedin.com/in/chidi-okafor"))
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.linkedin, "https://linkedin.com/in/chidi-okafor")
+
+    def test_embark_accepts_regional_linkedin_subdomains(self):
+        self.submit("apply", dict(EMBARK, linkedin="https://ng.linkedin.com/in/chidi"))
+        self.assertEqual(models.EmbarkApplication.objects.count(), 1)
+
+    def test_the_optional_link_fields_are_genuinely_optional(self):
+        """A business with no site and an applicant on one platform must still
+        be able to apply — only LinkedIn is compulsory."""
+        self.submit("apply", dict(EMBARK, social_handle="", social_handle_2="",
+                                  business_website="", business_social_handle=""))
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.business_website, "")
+        self.assertEqual(application.social_handle_2, "")
+
+    def test_both_personal_handles_and_business_links_are_stored(self):
+        self.submit("apply", EMBARK)
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.social_handle, "@chidifarms")
+        self.assertEqual(application.social_handle_2, "@chidi")
+        self.assertEqual(application.business_social_handle, "@okaforfarms")
+        # Scheme assumed for the bare domain, same as LinkedIn.
+        self.assertEqual(application.business_website, "https://okaforfarms.ng")
+
+    def test_the_video_brief_is_on_the_form(self):
+        """The three things the video must cover are the most-missed instruction
+        on the form, so they are asserted rather than trusted."""
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, "Who you are")
+        self.assertContains(response, "What your business does")
+        self.assertContains(response, "Why you should be chosen")
+        # Rendered as markup, not escaped into visible tags.
+        self.assertContains(response, "form-help-brief")
+        self.assertNotContains(response, "&lt;ol")
+        self.assertNotContains(response, "&lt;strong")
 
     def test_embark_keeps_typed_answers_when_validation_fails(self):
         response = self.submit("apply", dict(EMBARK, institution=""))

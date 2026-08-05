@@ -1,0 +1,68 @@
+{% extends "staff/base.html" %}
+{% load static %}
+{% block body_class %}staff-login-body{% endblock %}
+{% block content %}
+
+<section class="staff-login">
+  {% comment %}
+    Two panels: the form, and a plain statement of what is behind it. The second
+    one is not decoration — it is the only place a new team member is told that
+    signing in gives them applicants' personal data, which is the sort of thing
+    people should read before they have an account rather than after.
+  {% endcomment %}
+  <div class="staff-login-card reveal">
+    <img class="staff-login-mark" src="{% static 'img/logo.png' %}" alt="IADEBAYO Foundation"
+         onerror="this.style.display='none'">
+    <h1>Staff sign-in</h1>
+    <p class="staff-login-sub">Analytics and submissions for the Foundation team.</p>
+
+    <form method="post" novalidate class="staff-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="staff-form-error" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="staff-field">
+        <label for="{{ form.username.id_for_label }}">Username</label>
+        {{ form.username }}
+        {% for error in form.username.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="staff-field">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {# The reveal toggle is added by staff.js; without it this stays a plain password box. #}
+        <div class="staff-password" data-password-wrap>
+          {{ form.password }}
+        </div>
+        {% for error in form.password.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <button type="submit" class="staff-btn staff-btn-primary">Sign in</button>
+      {# LoginView puts the sanitised ?next= here; empty falls back to LOGIN_REDIRECT_URL. #}
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+
+    <p class="staff-login-help">
+      Accounts are created by an administrator in the Django admin — there is no
+      self-service sign-up. Lost your password? Ask an administrator to reset it.
+    </p>
+  </div>
+
+  <aside class="staff-login-aside reveal">
+    <p class="staff-eyebrow">Behind this sign-in</p>
+    <ul class="staff-login-list">
+      <li><strong>Applicant analytics</strong> — where applications come from, which
+        sectors and countries are represented, and how the review queue is moving.</li>
+      <li><strong>Personal data</strong> — names, contact details, and business videos
+        belonging to real applicants. Treat everything here as confidential.</li>
+      <li><strong>Your own account</strong> — never share it. Every action in the
+        admin is recorded against the signed-in user.</li>
+    </ul>
+    <a class="staff-login-back" href="{% url 'core:home' %}">← Back to the public site</a>
+  </aside>
+</section>
+
+{% endblock %}

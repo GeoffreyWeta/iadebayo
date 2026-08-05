@@ -5,6 +5,7 @@ from django.utils.text import slugify
 from blog.models import Post
 from submissions import forms as f
 
+from . import cohort
 from .models import (FacultyMember, GalleryImage, ImpactStat, Resource,
                      SpotlightVideo, TeamMember, Testimonial)
 
@@ -87,7 +88,9 @@ FAQS = [
 # Cohort 5 runs Oct 2026 - Mar 2027. Held as data rather than markup because it
 # appears on two pages, and because the whole table is rewritten each cohort —
 # one edit here moves both.
-COHORT = {"name": "Cohort 5"}
+#
+# The cohort *name* and the application dates live in core.cohort, because the
+# staff dashboard needs the same window as real dates to measure against.
 COHORT_MONTHS = [
     ("Oct. 2026", ["Orientation", "Live Classes"]),
     ("Nov. 2026", ["Live Classes", "Spotlight Show"]),
@@ -136,13 +139,10 @@ def cohort_schedule():
             items.append({"name": name, "slug": slugify(name), "starts_here": name not in seen})
             seen.add(name)
         months.append({"step": step, "label": label, "activities": items})
-    return {**COHORT, "months": months,
+    return {"name": cohort.NAME, "months": months,
             "strands": cohort_strands(),
             "month_labels": [label for label, _ in COHORT_MONTHS],
-            "key_dates": [
-                ("Applications open", "1 August \u2013 11 September 2026"),
-                ("Admission notifications", "14 \u2013 25 September 2026"),
-            ]}
+            "key_dates": cohort.key_dates()}
 
 
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]

@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /staff/
 Sitemap: {{ SITE_BASE_URL|default:"https://www.iadebayo.foundation" }}/sitemap.xml

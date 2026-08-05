@@ -39,17 +39,22 @@ class EmbarkAdmin(SubmissionAdmin):
             "fields": ("name", "gender", "applicant_status", "email",
                        ("phone_code", "phone"),
                        "date_of_birth", "institution", ("city", "state", "country"),
-                       "social_handle"),
+                       "linkedin", ("social_handle", "social_handle_2")),
         }),
         ("Section B — Business information", {
             "description": "Applicants link their video from Google Drive rather than "
-                           "uploading it. If the link below does not open for you, the "
-                           "applicant left sharing restricted and needs an email asking "
-                           "them to set it to “Anyone with the link”.",
-            "fields": ("business_name", "video_link_display", "business_video_url",
+                           "uploading it. The brief asks them to cover three things — who "
+                           "they are, what the business does, and why they should be "
+                           "chosen — so all three are fair to score. If the link does not "
+                           "open for you, the applicant left sharing restricted and needs "
+                           "an email asking them to set it to “Anyone with the link”.",
+            "fields": ("business_name", "business_sector",
+                       "video_link_display", "business_video_url",
+                       ("business_website", "business_social_handle"),
                        "year_established",
                        ("revenue_last_year", "revenue_this_year"), "major_challenge",
-                       "limiting_factors", "growth_limits", "growth_limits_other"),
+                       "limiting_factors", "growth_limits", "growth_limits_other",
+                       "entrepreneurship_view"),
         }),
         ("Commitment", {
             "fields": ("device", "will_participate", "reliable_internet",
@@ -62,7 +67,7 @@ class EmbarkAdmin(SubmissionAdmin):
                            "itself. Those files are still here and still download through "
                            "the button — nothing new is written to this section.",
             "fields": ("video_download", "business_video",
-                       "business_description", "business_sector", "motivation"),
+                       "business_description", "motivation"),
         }),
     )
 

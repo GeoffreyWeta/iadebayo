@@ -1,0 +1,317 @@
+{% extends "staff/base.html" %}
+{% block content %}
+
+<div class="staff-page">
+
+  {# ------------------------------------------------------- page head + filter #}
+  <header class="staff-head">
+    <div>
+      <p class="staff-eyebrow">{{ cohort_name }} · submissions</p>
+      <h1>Analytics</h1>
+      <p class="staff-head-sub">
+        {% if range.start %}{{ range.start|date:"j M Y" }} – {{ range.end|date:"j M Y" }}{% else %}Everything on record{% endif %}
+        · read at {{ today|date:"j M Y" }}
+      </p>
+    </div>
+
+    {% comment %}
+      Range presets as links, not a <select>: the choice is in the URL, so a
+      staffer can bookmark "this window" and the page needs no JavaScript to
+      change what it shows.
+    {% endcomment %}
+    <nav class="range-row" aria-label="Date range">
+      {% for opt in range.options %}
+      <a href="?range={{ opt.key }}" class="range-chip{% if opt.key == range.key %} is-on{% endif %}"
+         {% if opt.key == range.key %}aria-current="true"{% endif %}>{{ opt.label }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+
+  {# --------------------------------------------------------- window meter #}
+  {% comment %}
+    A single ratio against a limit, so it is a meter — not a two-slice pie. The
+    copy changes with the state because "0% elapsed" and "opens in 12 days" are
+    different facts and only one of them is true before the window starts.
+  {% endcomment %}
+  <section class="card window-card reveal" aria-labelledby="window-h">
+    <div class="window-copy">
+      <h2 id="window-h">Application window</h2>
+      {% if window.state == "open" %}
+      <p><b>Day {{ window.elapsed }}</b> of {{ window.total }} — {{ window.remaining }}
+        {{ window.remaining|pluralize:"day,days" }} left to apply.</p>
+      {% elif window.state == "upcoming" %}
+      <p>Opens in <b>{{ window.days_until_open }}</b> {{ window.days_until_open|pluralize:"day,days" }}.</p>
+      {% else %}
+      <p>Closed <b>{{ window.days_since_close }}</b> {{ window.days_since_close|pluralize:"day,days" }} ago.</p>
+      {% endif %}
+    </div>
+    <div class="meter" role="img"
+         aria-label="Application window {{ window.pct }} percent elapsed">
+      <div class="meter-track"><div class="meter-fill" style="--pct:{{ window.pct }}%"></div></div>
+      <p class="meter-cap"><span>{{ window.pct }}% elapsed</span><span>{{ window.total }}-day window</span></p>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------------- tiles #}
+  <section class="tile-row" aria-label="Submission totals">
+    {% for t in tiles %}
+    <article class="card tile reveal{% if forloop.first %} tile-hero{% endif %}">
+      <p class="tile-label">{{ t.label }}</p>
+      <p class="tile-value">{{ t.value }}</p>
+      <div class="tile-foot">
+        {% if t.delta %}
+        {# Direction is carried by the arrow and the sign, not by colour alone. #}
+        <span class="delta delta-{% if t.delta.value > 0 %}up{% elif t.delta.value < 0 %}down{% else %}flat{% endif %}">
+          <span aria-hidden="true">{% if t.delta.value > 0 %}▲{% elif t.delta.value < 0 %}▼{% else %}—{% endif %}</span>
+          {% if t.delta.value > 0 %}+{% endif %}{{ t.delta.value }}
+        </span>
+        <span class="delta-vs">was {{ t.delta.was }}</span>
+        {% else %}
+        <span class="delta delta-flat">{{ t.total }} all time</span>
+        {% endif %}
+      </div>
+      {% if t.spark.line %}
+      {# Decorative: the number above is the fact, this is only its shape. #}
+      <svg class="spark" viewBox="0 0 {{ t.spark.w }} {{ t.spark.h }}" aria-hidden="true"
+           preserveAspectRatio="none" focusable="false">
+        <path class="spark-area" d="{{ t.spark.area }}"/>
+        <path class="spark-line" d="{{ t.spark.line }}" pathLength="1"/>
+      </svg>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+
+  {# ------------------------------------------------- applications over time #}
+  <section class="card chart-card plot-card reveal" aria-labelledby="plot-h">
+    <div class="chart-head">
+      <div>
+        <h2 id="plot-h">Applications per day</h2>
+        <p class="chart-note">
+          Bars are single days; the dashed line is the trailing 7-day average.
+          Peak {{ plot.peak }} on one day.
+        </p>
+      </div>
+      <p class="chart-legend">
+        <span class="key key-series"></span> Per day
+        <span class="key key-mean"></span> 7-day average
+      </p>
+    </div>
+
+    {% comment %}
+      Server-rendered SVG. staff.js only adds the crosshair read-out; with
+      scripting off this is still the whole chart, same contract as site.js.
+    {% endcomment %}
+    <div class="plot-wrap" data-plot>
+      {# Uniform scaling (no preserveAspectRatio override) — "none" would stretch the labels. #}
+      <svg class="plot" viewBox="0 0 {{ plot.W }} {{ plot.H }}" role="img"
+           aria-label="Applications per day, {{ plot_from|date:'j M Y' }} to {{ plot_to|date:'j M Y' }}. Peak {{ plot.peak }} in one day. The table below this chart lists every day.">
+        <defs>
+          <linearGradient id="plot-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--viz-1)" stop-opacity=".26"/>
+            <stop offset="100%" stop-color="var(--viz-1)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        {% for g in plot.gridlines %}
+        <line class="plot-grid" x1="{{ plot.PAD_L }}" x2="{{ plot.W }}" y1="{{ g.y }}" y2="{{ g.y }}"
+              {% if g.label == 0 %}data-zero="1"{% endif %}/>
+        <text class="plot-ylab" x="{{ plot.PAD_L }}" y="{{ g.y }}" dx="-8" dy="3.5">{{ g.label }}</text>
+        {% endfor %}
+
+        {# pathLength="1" normalises the dash units so the draw-on in staff.css
+           works whatever the real path length is. #}
+        <path class="plot-area" d="{{ plot.area }}" fill="url(#plot-fill)"/>
+        <path class="plot-line" d="{{ plot.line }}" pathLength="1"/>
+        {% if plot.mean_line %}<path class="plot-mean" d="{{ plot.mean_line }}" pathLength="1"/>{% endif %}
+
+        {% for t in plot.xticks %}
+        <text class="plot-xlab" x="{{ t.x }}" y="{{ plot.H }}" dy="-6" text-anchor="{{ t.anchor }}">{{ t.label }}</text>
+        {% endfor %}
+
+        {# Hover layer: one full-height band per day, so the target is the column. #}
+        <g class="plot-hits">
+          {% for h in plot.hotspots %}
+          <rect class="plot-hit" x="{{ h.band_x }}" y="{{ plot.PAD_T }}" width="{{ h.band_w }}"
+                height="{{ plot.plot_h }}" data-x="{{ h.x }}" data-y="{{ h.y }}"
+                data-date="{{ h.date|date:'D j M Y' }}" data-value="{{ h.value }}"/>
+          {% endfor %}
+        </g>
+        <g class="plot-cursor" hidden>
+          <line class="plot-crosshair" y1="{{ plot.PAD_T }}" y2="{{ plot.PAD_T|add:plot.plot_h }}"/>
+          <circle class="plot-focus" r="4.5"/>
+        </g>
+      </svg>
+      <div class="plot-tip" data-tip hidden aria-hidden="true"></div>
+    </div>
+
+    <details class="chart-table">
+      <summary>Show data table</summary>
+      <table>
+        <caption>Applications received per day</caption>
+        <thead><tr><th scope="col">Day</th><th scope="col">Applications</th></tr></thead>
+        <tbody>
+          {% for p in series %}
+          <tr><th scope="row">{{ p.date|date:"D j M Y" }}</th><td>{{ p.value }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  {# ------------------------------------------------------- calendar heatmap #}
+  {% if heat.weeks %}
+  <section class="card chart-card reveal" aria-labelledby="heat-h">
+    <div class="chart-head">
+      <div>
+        <h2 id="heat-h">The rhythm of the window</h2>
+        <p class="chart-note">Same days, laid out as weeks — the shading is
+          relative to the busiest day ({{ heat.peak }}).</p>
+      </div>
+      <p class="chart-legend heat-legend">
+        Fewer
+        <span class="heat-cell heat-0"></span><span class="heat-cell heat-1"></span>
+        <span class="heat-cell heat-2"></span><span class="heat-cell heat-3"></span>
+        <span class="heat-cell heat-4"></span>
+        More
+      </p>
+    </div>
+    <div class="heat-scroll">
+      <div class="heat">
+        <div class="heat-days" aria-hidden="true">
+          {% for d in heat.weekdays %}<span>{{ d }}</span>{% endfor %}
+        </div>
+        {% for week in heat.weeks %}
+        <div class="heat-week" style="--i:{{ forloop.counter0 }}">
+          {% for day in week %}
+          {% if day %}
+          <span class="heat-cell heat-{{ day.level }}"
+                title="{{ day.date|date:'D j M Y' }} — {{ day.value }} application{{ day.value|pluralize }}"></span>
+          {% else %}
+          <span class="heat-cell heat-none" aria-hidden="true"></span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="chart-foot">The daily table above carries the same numbers.</p>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------- pipeline + consent #}
+  <div class="grid-2">
+    <section class="card chart-card reveal" aria-labelledby="funnel-h">
+      <h2 id="funnel-h">Review pipeline</h2>
+      <p class="chart-note">Ordered stages, so the shading runs light to dark
+        rather than changing hue. The gap between stages is the chase list.</p>
+      <ol class="funnel">
+        {% for s in funnel %}
+        <li class="funnel-step" style="--i:{{ forloop.counter0 }};--w:{{ s.pct }}%;--step:{{ forloop.counter0 }}">
+          <p class="funnel-top"><span>{{ s.label }}</span><b>{{ s.value }}</b></p>
+          <span class="funnel-track"><span class="funnel-fill"></span></span>
+          <p class="funnel-foot">
+            {{ s.pct }}% of applications
+            {% if s.drop %}<span class="funnel-drop">−{{ s.drop }} from the step above</span>{% endif %}
+          </p>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <section class="card chart-card reveal" aria-labelledby="ready-h">
+      <h2 id="ready-h">Programme readiness</h2>
+      {% comment %}
+        Connectivity means good → bad (no reliable connection means no live
+        classes), so it wears the reserved status scale, and every row carries a
+        written label and a shape — never colour on its own.
+      {% endcomment %}
+      <p class="chart-note">Reliable internet for live sessions —
+        {{ internet.answered }} answered.</p>
+      <ul class="status-list">
+        {% for r in internet.rows %}
+        <li class="status-row status-{{ r.status }}" style="--i:{{ forloop.counter0 }};--w:{{ r.pct }}%">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-label">{{ r.label }}</span>
+          <span class="status-track"><span class="status-fill"></span></span>
+          <span class="status-value"><b>{{ r.value }}</b><span class="bar-pct">{{ r.pct }}%</span></span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <div class="consent-meter">
+        <p class="consent-head"><span>Media release consent on file</span>
+          <b>{{ consent.pct }}%</b></p>
+        <div class="meter-track"><div class="meter-fill" style="--pct:{{ consent.pct }}%"></div></div>
+        <p class="chart-note">{{ consent.value }} of {{ consent.total }} applications.</p>
+      </div>
+    </section>
+  </div>
+
+  {# --------------------------------------------------------- who is applying #}
+  <h2 class="staff-section-h reveal">Who is applying</h2>
+  <div class="grid-2">
+    {% include "staff/_bars.html" with title="Countries" data=countries note="Top 8, rest folded into Other" %}
+    {% include "staff/_bars.html" with title="Sectors" data=sectors note="Top 8, rest folded into Other" %}
+    {% include "staff/_bars.html" with title="Academic status" data=status %}
+    {% include "staff/_bars.html" with title="Gender" data=gender %}
+    {% include "staff/_bars.html" with title="How old the business is" data=business_age ordinal="yes" note="Ordered bands" %}
+    {% include "staff/_bars.html" with title="Device they will use" data=devices %}
+  </div>
+
+  {# --------------------------------------------------------------- reach #}
+  <h2 class="staff-section-h reveal">Reach and obstacles</h2>
+  <div class="grid-2">
+    {% include "staff/_bars.html" with title="How they heard about Embark" data=referrals %}
+    {% include "staff/_bars.html" with title="What is limiting their growth" data=blockers note="Applicants could pick more than one, so shares add past 100%" %}
+  </div>
+
+  {# ------------------------------------------------------------------ recent #}
+  <section class="card chart-card reveal" aria-labelledby="recent-h">
+    <div class="chart-head">
+      <div>
+        <h2 id="recent-h">Latest applications</h2>
+        <p class="chart-note">Newest first. Open one in the admin to review it.</p>
+      </div>
+      <a class="staff-btn staff-btn-quiet"
+         href="{% url 'admin:submissions_embarkapplication_changelist' %}">All in admin →</a>
+    </div>
+    {% if recent %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr><th scope="col">Applicant</th><th scope="col">Business</th>
+              <th scope="col">Where</th><th scope="col">Received</th><th scope="col">Status</th></tr>
+        </thead>
+        <tbody>
+          {% for a in recent %}
+          <tr>
+            <th scope="row">
+              <a href="{% url 'admin:submissions_embarkapplication_change' a.pk %}">{{ a.name }}</a>
+            </th>
+            <td>{{ a.business_name }}</td>
+            <td>{{ a.city }}{% if a.country %}, {{ a.country }}{% endif %}</td>
+            <td>{{ a.created_at|date:"j M, H:i" }}</td>
+            <td>
+              {% if a.reviewed %}<span class="pill pill-good">Reviewed</span>
+              {% else %}<span class="pill pill-wait">Awaiting review</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="chart-empty">No applications in this window yet.</p>
+    {% endif %}
+  </section>
+
+  <p class="staff-foot">
+    Every number here is read straight from the submission tables at page load —
+    there is no separate analytics store to fall out of step. Percentages are of
+    the applicants who answered that question, not of everyone, because most
+    fields have been optional since the 2025 form.
+  </p>
+</div>
+
+{% endblock %}

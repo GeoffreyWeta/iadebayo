@@ -1,0 +1,53 @@
+{% comment %}
+  One horizontal bar list, plus the table view of the same numbers.
+
+  Params: title, data (from analytics.breakdown / multi_breakdown), note (opt),
+          unit (opt, default "applicants"), ordinal (opt — "yes" draws the
+          one-hue ramp in band order instead of a single hue).
+
+  Every bar is direct-labelled with its count and share. That is not decoration:
+  it is the relief channel the palette gate requires, and it means the chart is
+  still readable to someone who cannot separate the fill from the track.
+
+  Bars are scaled to the largest row, not to the total — see analytics._as_bars
+  for why — so the printed % and the bar length answer different questions. The
+  caption says which is which.
+{% endcomment %}
+<figure class="chart chart-bars reveal{% if ordinal %} chart-ordinal{% endif %}">
+  <figcaption>
+    <h3>{{ title }}</h3>
+    {% if data.answered %}
+    <p class="chart-note">
+      {% if note %}{{ note }} · {% endif %}{{ data.answered }} of these {{ unit|default:"applicants" }} answered
+    </p>
+    {% endif %}
+  </figcaption>
+
+  {% if data.rows %}
+  <ul class="bars">
+    {% for r in data.rows %}
+    <li class="bar-row" style="--i:{{ forloop.counter0 }};--w:{{ r.width }}%;--step:{{ forloop.counter0 }}">
+      <span class="bar-label" title="{{ r.label }}">{{ r.label }}</span>
+      <span class="bar-track"><span class="bar-fill"></span></span>
+      <span class="bar-value"><b>{{ r.value }}</b><span class="bar-pct">{{ r.pct }}%</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <details class="chart-table">
+    <summary>Show data table</summary>
+    <table>
+      <caption>{{ title }} — bar length is relative to the largest row; the
+        percentage is the share of the {{ data.answered }} who answered.</caption>
+      <thead><tr><th scope="col">{{ title }}</th><th scope="col">Count</th><th scope="col">Share</th></tr></thead>
+      <tbody>
+        {% for r in data.rows %}
+        <tr><th scope="row">{{ r.label }}</th><td>{{ r.value }}</td><td>{{ r.pct }}%</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% else %}
+  <p class="chart-empty">No answers to this question yet.</p>
+  {% endif %}
+</figure>

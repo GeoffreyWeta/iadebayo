@@ -1,0 +1,719 @@
+/* ============================================================
+   IADEBAYO Foundation — staff area (sign-in + analytics)
+
+   Loads AFTER site.css and every rule is scoped under `.staff-body`. Both
+   halves of that matter: the scope keeps `.card`, `.grid-2` and friends from
+   colliding with the marketing site's versions of the same names (site.css has
+   26 `.card` rules), and it guarantees nothing here can leak the other way.
+
+   Brand tokens, type and the scroll-reveal machinery all come from site.css —
+   this file adds the dashboard layer and the chart palette.
+
+   ------------------------------------------------------------
+   CHART PALETTE — derived from the brand hues, then validated.
+
+   Not eyeballed. The categorical slots and the ordinal ramp were run through
+   the six colour checks (OKLab CVD separation under protanopia/deuteranopia,
+   lightness band, chroma floor, contrast vs this surface) against white:
+
+     slot 1  #565ac2   brand blue  #3E4095, lifted to OKLCH L .52
+     slot 2  #ef5c31   brand orange #F1592C, held
+     slot 3  #029393   teal, for the rare third series
+
+   All three clear the *all-pairs* gate in both directions (worst CVD ΔE 13.0,
+   worst normal-vision ΔE 19.6) and all three sit above 3:1 on white. There is
+   deliberately no fourth slot: a brand-gold fourth measured 2.14:1 on white and
+   put yellow beside orange, which is the one pair that reliably collapses under
+   deuteranopia. Anything needing a fourth series folds into "Other" instead.
+
+   The ordinal ramp is one hue — the brand blue — in monotone lightness steps,
+   used wherever the categories are *ordered* (funnel stages, age bands, heatmap
+   density). Ordered data gets one ramp so the reader sees the order in the
+   colour; unordered bars all get slot 1, because colouring nominal bars by
+   their value spends the identity channel re-encoding what length already says.
+
+   Status is the reserved four-step scale and never doubles as a series colour.
+   Every status row ships a written label and a dot, never colour alone.
+   ============================================================ */
+
+.staff-body {
+  /* series */
+  --viz-1: #565ac2;
+  --viz-2: #ef5c31;
+  --viz-3: #029393;
+
+  /* ordinal / sequential ramp — brand-blue hue, light to dark */
+  --viz-r1: #a0abfe;
+  --viz-r2: #818af7;
+  --viz-r3: #676ed8;
+  --viz-r4: #5052ba;
+  --viz-r5: #2f288e;
+
+  /* status (reserved) */
+  --viz-good: #0ca30c;
+  --viz-warn: #fab219;
+  --viz-crit: #d03b3b;
+
+  /* chart chrome — warm neutrals, to sit with the brand's cream/red world */
+  --plane: #F6F4F1;
+  --surface: #FFFFFF;
+  --viz-track: #ECEAF4;
+  --viz-grid: #E7E5E0;
+  --viz-base: #C9C6BF;
+  --viz-ink: #23242C;
+  --viz-muted: #5C5E6E;      /* 6.4:1 on white */
+  --card-ring: rgba(74, 17, 20, .10);
+  --card-shadow: 0 1px 2px rgba(55, 12, 15, .05), 0 8px 24px rgba(55, 12, 15, .05);
+
+  background: var(--plane);
+  color: var(--viz-ink);
+}
+
+/* Tabular figures everywhere a number sits in a column, so digits line up. */
+.staff-body .tile-value, .staff-body .bar-value, .staff-body .status-value,
+.staff-body .plot-ylab, .staff-body .data-table td,
+.staff-body .chart-table td { font-variant-numeric: tabular-nums; }
+
+
+/* ==================================================== 1. top bar */
+.staff-body .staff-bar {
+  background: var(--surface-darker);
+  color: #fff;
+  position: sticky; top: 0; z-index: 40;
+  box-shadow: 0 1px 0 rgba(255,255,255,.10), 0 6px 20px rgba(55,12,15,.18);
+}
+.staff-body .staff-bar-inner {
+  max-width: 1320px; margin: 0 auto; padding: 10px 22px;
+  display: flex; align-items: center; gap: 20px;
+}
+/* 44px minimum on everything in the chrome a thumb has to hit. These are all
+   short-label controls, so without an explicit floor they come out 30–41px. */
+.staff-body .staff-brand {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
+  color: #fff; text-decoration: none; font-weight: 800; letter-spacing: -.01em;
+}
+.staff-body .staff-brand img { height: 30px; width: auto; }
+.staff-body .staff-brand em { font-family: var(--accent-serif); font-weight: 400; }
+.staff-body .staff-tag {
+  font-size: .62rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.26);
+}
+.staff-body .staff-nav { margin-left: auto; display: flex; gap: 4px; }
+.staff-body .staff-nav a {
+  color: rgba(255,255,255,.82); text-decoration: none;
+  font-size: .84rem; font-weight: 700; padding: 9px 13px; border-radius: 8px;
+  min-height: 44px; display: inline-flex; align-items: center;
+  transition: background var(--dur-1) ease, color var(--dur-1) ease;
+}
+.staff-body .staff-nav a:hover { background: rgba(255,255,255,.12); color: #fff; }
+.staff-body .staff-nav a[aria-current] { background: rgba(255,255,255,.18); color: #fff; }
+.staff-body .staff-who {
+  display: flex; align-items: center; gap: 12px;
+  font-size: .84rem; color: rgba(255,255,255,.82);
+  padding-left: 16px; border-left: 1px solid rgba(255,255,255,.18);
+}
+.staff-body .staff-who form { margin: 0; }
+.staff-body .staff-signout {
+  font: inherit; font-weight: 700; cursor: pointer; color: #fff;
+  background: transparent; border: 1px solid rgba(255,255,255,.34);
+  padding: 7px 14px; border-radius: 8px; min-height: 44px;
+  transition: background var(--dur-1) ease, border-color var(--dur-1) ease;
+}
+.staff-body .staff-signout:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.6); }
+
+.staff-body .staff-flash-stack { max-width: 1320px; margin: 16px auto 0; padding: 0 22px; }
+.staff-body .staff-flash {
+  padding: 12px 16px; border-radius: 10px; font-weight: 600;
+  background: #fff; border: 1px solid var(--card-ring); border-left: 3px solid var(--viz-1);
+}
+
+
+/* ==================================================== 2. sign-in page */
+.staff-body.staff-login-body { background: var(--surface-darker); }
+/* Centred in the viewport rather than pinned to the top — on a laptop the form
+   otherwise sits in the upper third with a long empty field of red under it. */
+.staff-body .staff-login {
+  max-width: 1000px; margin: 0 auto; padding: 46px 22px 60px;
+  min-height: calc(100vh - 200px);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .82fr); gap: 34px;
+  align-items: center; align-content: center;
+}
+.staff-body .staff-login-card {
+  background: #fff; border-radius: 18px; padding: 38px 36px;
+  box-shadow: 0 30px 70px rgba(30, 5, 7, .34);
+}
+.staff-body .staff-login-mark { height: 40px; width: auto; margin-bottom: 22px; }
+.staff-body .staff-login-card h1 { font-size: 1.6rem; margin: 0 0 6px; color: var(--ink); }
+.staff-body .staff-login-sub { color: var(--viz-muted); margin: 0 0 26px; font-size: .95rem; }
+
+.staff-body .staff-field { margin-bottom: 18px; }
+.staff-body .staff-field label {
+  display: block; font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--viz-muted); margin-bottom: 7px;
+}
+.staff-body .staff-field input {
+  width: 100%; font: inherit; font-size: 1rem; color: var(--viz-ink);
+  padding: 13px 14px; border-radius: 10px; background: #fff;
+  border: 1.5px solid #D8D5CE;
+  transition: border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
+}
+.staff-body .staff-field input:focus {
+  outline: none; border-color: var(--viz-1);
+  box-shadow: 0 0 0 3px rgba(86, 90, 194, .18);
+}
+.staff-body .staff-password { position: relative; }
+.staff-body .staff-password input { padding-right: 74px; }
+.staff-body .staff-peek {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  font: inherit; font-size: .74rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--viz-muted);
+  background: transparent; border: 0; cursor: pointer; padding: 8px 9px; border-radius: 7px;
+  transition: color var(--dur-1) ease, background var(--dur-1) ease;
+}
+.staff-body .staff-peek:hover { color: var(--viz-1); background: rgba(86,90,194,.09); }
+
+.staff-body .staff-form-error, .staff-body .staff-field-error {
+  font-size: .9rem; font-weight: 600; color: #8E1F1F;
+}
+.staff-body .staff-form-error {
+  background: #FDF0EF; border: 1px solid #F3C9C6; border-left: 3px solid var(--viz-crit);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 20px;
+}
+.staff-body .staff-form-error p { margin: 0; }
+.staff-body .staff-field-error { margin: 7px 0 0; }
+
+.staff-body .staff-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: inherit; font-weight: 800; font-size: .9rem; letter-spacing: .01em;
+  padding: 14px 22px; border-radius: 10px; border: 1.5px solid transparent;
+  cursor: pointer; text-decoration: none; min-height: 48px;
+  transition: transform var(--dur-1) var(--ease-out-expo),
+              background var(--dur-1) ease, box-shadow var(--dur-1) ease;
+}
+.staff-body .staff-btn-primary {
+  width: 100%; background: var(--viz-1); color: #fff;
+  box-shadow: 0 6px 18px rgba(86, 90, 194, .3);
+}
+.staff-body .staff-btn-primary:hover { background: #4a4eb2; transform: translateY(-1px); }
+.staff-body .staff-btn-primary:active { transform: translateY(0); }
+.staff-body .staff-btn-quiet {
+  background: #fff; color: var(--viz-1); border-color: #DAD7E8; font-size: .82rem;
+  padding: 11px 16px; min-height: 44px;
+}
+.staff-body .staff-btn-quiet:hover { background: #F4F3FB; border-color: var(--viz-1); }
+
+.staff-body .staff-login-help {
+  margin: 22px 0 0; padding-top: 20px; border-top: 1px solid var(--card-ring);
+  font-size: .84rem; color: var(--viz-muted); line-height: 1.6;
+}
+.staff-body .staff-login-aside { color: rgba(255,255,255,.9); padding-top: 12px; }
+.staff-body .staff-login-aside .staff-eyebrow { color: var(--gold); }
+.staff-body .staff-login-list { list-style: none; margin: 18px 0 26px; padding: 0; }
+.staff-body .staff-login-list li {
+  padding: 14px 0 14px 20px; border-bottom: 1px solid rgba(255,255,255,.16);
+  font-size: .92rem; line-height: 1.6; position: relative;
+}
+.staff-body .staff-login-list li::before {
+  content: "✳"; position: absolute; left: 0; top: 13px; color: var(--gold); font-size: .8rem;
+}
+.staff-body .staff-login-list strong { color: #fff; }
+.staff-body .staff-login-back {
+  color: rgba(255,255,255,.82); font-weight: 700; font-size: .86rem; text-decoration: none;
+}
+.staff-body .staff-login-back:hover { color: #fff; text-decoration: underline; }
+
+
+/* ==================================================== 3. page frame */
+.staff-body .staff-page { max-width: 1320px; margin: 0 auto; padding: 30px 22px 90px; }
+.staff-body .staff-eyebrow {
+  font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--viz-1); margin: 0 0 8px;
+}
+.staff-body .staff-head {
+  display: flex; flex-wrap: wrap; gap: 20px 30px;
+  align-items: flex-end; justify-content: space-between; margin-bottom: 26px;
+}
+.staff-body .staff-head h1 { font-size: 2rem; margin: 0; color: var(--ink); letter-spacing: -.02em; }
+.staff-body .staff-head-sub { margin: 6px 0 0; color: var(--viz-muted); font-size: .92rem; }
+.staff-body .staff-section-h {
+  font-size: 1.15rem; margin: 40px 0 16px; color: var(--ink);
+  padding-bottom: 10px; border-bottom: 1px solid var(--card-ring);
+}
+.staff-body .staff-foot {
+  margin: 40px 0 0; font-size: .84rem; color: var(--viz-muted);
+  line-height: 1.7; max-width: 74ch;
+}
+
+/* Range presets */
+.staff-body .range-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.staff-body .range-chip {
+  font-size: .8rem; font-weight: 700; text-decoration: none; color: var(--viz-muted);
+  background: #fff; border: 1px solid var(--card-ring);
+  padding: 10px 15px; border-radius: 999px; min-height: 46px;
+  display: inline-flex; align-items: center;
+  transition: color var(--dur-1) ease, background var(--dur-1) ease,
+              border-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out-expo);
+}
+.staff-body .range-chip:hover { color: var(--viz-1); border-color: var(--viz-1); transform: translateY(-1px); }
+.staff-body .range-chip.is-on {
+  background: var(--viz-1); border-color: var(--viz-1); color: #fff;
+  box-shadow: 0 4px 14px rgba(86, 90, 194, .28);
+}
+
+/* Cards. `.card` is scoped, so site.css's marketing card (and its hover lift)
+   does not reach in here — a dashboard full of cards that jump on hover is
+   noise, so only the tiles move, and only slightly. */
+.staff-body .card {
+  background: var(--surface); border: 1px solid var(--card-ring);
+  border-radius: 14px; padding: 22px 24px; box-shadow: var(--card-shadow);
+}
+.staff-body .card h2 { font-size: 1.05rem; margin: 0 0 4px; color: var(--ink); letter-spacing: -.01em; }
+.staff-body .card h3 { font-size: .95rem; margin: 0 0 4px; color: var(--ink); }
+.staff-body .grid-2 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px; align-items: start;
+}
+.staff-body .chart-note { margin: 0; font-size: .8rem; color: var(--viz-muted); line-height: 1.55; }
+.staff-body .chart-foot { margin: 14px 0 0; font-size: .78rem; color: var(--viz-muted); }
+.staff-body .chart-empty {
+  margin: 18px 0 4px; padding: 22px; text-align: center; border-radius: 10px;
+  background: #FAF9F7; color: var(--viz-muted); font-size: .88rem;
+}
+.staff-body .chart-head {
+  display: flex; gap: 18px; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px;
+}
+.staff-body .chart-legend {
+  margin: 0; display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: .76rem; color: var(--viz-muted); font-weight: 600;
+}
+.staff-body .key { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.staff-body .key-series { background: var(--viz-1); }
+.staff-body .key-mean {
+  height: 0; border-top: 2px dashed var(--viz-2); border-radius: 0; margin-left: 8px;
+}
+
+
+/* ==================================================== 4. window + meters */
+.staff-body .window-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px 34px; align-items: center; margin-bottom: 18px;
+}
+.staff-body .window-copy h2 { margin-bottom: 6px; }
+.staff-body .window-copy p { margin: 0; color: var(--viz-muted); font-size: .92rem; }
+.staff-body .window-copy b { color: var(--viz-ink); font-size: 1.05rem; }
+.staff-body .meter-track {
+  height: 12px; border-radius: 999px; background: var(--viz-track); overflow: hidden;
+}
+.staff-body .meter-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: linear-gradient(90deg, var(--viz-r3), var(--viz-1));
+}
+.staff-body .meter-cap {
+  display: flex; justify-content: space-between; margin: 8px 0 0;
+  font-size: .78rem; color: var(--viz-muted); font-weight: 600;
+}
+.staff-body .consent-meter { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--card-ring); }
+.staff-body .consent-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 0 0 9px; font-size: .88rem; font-weight: 600; color: var(--viz-ink);
+}
+.staff-body .consent-head b { font-size: 1.1rem; }
+.staff-body .consent-meter .chart-note { margin-top: 8px; }
+
+
+/* ==================================================== 5. stat tiles */
+/* Six sources, six equal columns, no spanning — a hero that spans two units
+   makes seven, which never divides into the row and drops one tile onto a line
+   of its own. The lead tile earns its emphasis from weight and tint instead. */
+.staff-body .tile-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 14px; margin-bottom: 18px;
+}
+.staff-body .tile {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 18px 18px 0; overflow: hidden;
+}
+.staff-body .tile-label {
+  margin: 0; font-size: .72rem; font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--viz-muted); line-height: 1.35;
+}
+.staff-body .tile-value {
+  margin: 0; font-size: 2.1rem; line-height: 1; font-weight: 800;
+  color: var(--ink); letter-spacing: -.03em;
+}
+.staff-body .tile-hero { background: linear-gradient(180deg, #FBFAFE, #F4F3FC); }
+.staff-body .tile-hero .tile-value { font-size: 2.6rem; color: var(--viz-1); }
+.staff-body .tile-foot {
+  margin-top: auto; padding-bottom: 12px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.staff-body .delta {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  font-size: .82rem; font-weight: 800; color: var(--viz-muted);
+}
+/* These two "good/bad" inks are darkened status steps, not series colours, and
+   the arrow plus the sign already say the direction without them. */
+.staff-body .delta-up { color: #0A7D0A; }
+.staff-body .delta-down { color: #A62F2F; }
+.staff-body .delta-vs { font-weight: 600; color: var(--viz-muted); font-size: .76rem; }
+
+/* Full-bleed sparkline along the bottom edge of the tile. Non-uniform scaling
+   is fine here: there is no text in it, and a hairline stroke stretched
+   horizontally is indistinguishable from one that is not. */
+.staff-body .spark { display: block; width: calc(100% + 36px); height: 34px; margin: 0 -18px; }
+.staff-body .spark-area { fill: var(--viz-1); opacity: .12; }
+.staff-body .spark-line {
+  fill: none; stroke: var(--viz-1); stroke-width: 1.6;
+  stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke;
+}
+
+
+/* ==================================================== 6. bar charts */
+.staff-body .chart-bars { margin: 0; }
+.staff-body figure.chart { padding: 22px 24px; margin: 0; background: var(--surface);
+  border: 1px solid var(--card-ring); border-radius: 14px; box-shadow: var(--card-shadow); }
+.staff-body .chart figcaption { margin-bottom: 16px; }
+.staff-body .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.staff-body .bar-row {
+  display: grid; grid-template-columns: minmax(96px, 30%) 1fr auto;
+  gap: 12px; align-items: center;
+}
+/* Wrap to two lines rather than truncate. "Undergraduate" and "Lack of business
+   knowledge" ARE the labels — an ellipsis in the middle of a chart someone is
+   reading for meaning is worse than a row that is a few pixels taller. */
+.staff-body .bar-label {
+  font-size: .84rem; font-weight: 600; line-height: 1.28; color: var(--viz-ink);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.staff-body .bar-track {
+  height: 22px; border-radius: 4px; background: #F4F2EE; overflow: hidden;
+}
+.staff-body .bar-fill {
+  display: block; height: 100%; width: 0;
+  /* 4px rounded data-end, square against the baseline it grows from. */
+  border-radius: 0 4px 4px 0; background: var(--viz-1);
+}
+.staff-body .bar-value {
+  font-size: .84rem; font-weight: 700; color: var(--viz-ink);
+  display: flex; align-items: baseline; gap: 7px; justify-content: flex-end;
+  min-width: 74px;
+}
+.staff-body .bar-pct { font-size: .74rem; font-weight: 600; color: var(--viz-muted); }
+
+/* Ordered categories get the one-hue ramp, so the sequence is visible in the
+   colour. Five steps, cycling only if a band list ever grows past five. */
+.staff-body .chart-ordinal .bar-row:nth-child(5n+1) .bar-fill { background: var(--viz-r1); }
+.staff-body .chart-ordinal .bar-row:nth-child(5n+2) .bar-fill { background: var(--viz-r2); }
+.staff-body .chart-ordinal .bar-row:nth-child(5n+3) .bar-fill { background: var(--viz-r3); }
+.staff-body .chart-ordinal .bar-row:nth-child(5n+4) .bar-fill { background: var(--viz-r4); }
+.staff-body .chart-ordinal .bar-row:nth-child(5n+5) .bar-fill { background: var(--viz-r5); }
+
+/* Row hover: the track lifts, not the card. Pointer-only — on a phone :hover
+   sticks after the tap and leaves a row highlighted for no reason. */
+@media (hover: hover) and (pointer: fine) {
+  .staff-body .bar-row:hover .bar-track { background: #EDEAF6; }
+  .staff-body .bar-row:hover .bar-fill { filter: brightness(1.06); }
+}
+
+/* The table view — the relief channel, and the accessible read of every chart */
+.staff-body .chart-table { margin-top: 16px; }
+.staff-body .chart-table summary {
+  font-size: .78rem; font-weight: 700; color: var(--viz-1); cursor: pointer;
+  padding: 7px 0; list-style: none; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px;
+}
+.staff-body .chart-table summary::-webkit-details-marker { display: none; }
+.staff-body .chart-table summary::before {
+  content: "▸"; transition: transform var(--dur-2) var(--ease-out-expo); display: inline-block;
+}
+.staff-body .chart-table[open] summary::before { transform: rotate(90deg); }
+.staff-body .chart-table summary:hover { text-decoration: underline; }
+.staff-body .chart-table table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .82rem; }
+.staff-body .chart-table caption {
+  text-align: left; font-size: .76rem; color: var(--viz-muted);
+  padding-bottom: 8px; line-height: 1.5;
+}
+.staff-body .chart-table th, .staff-body .chart-table td {
+  text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--viz-grid);
+}
+.staff-body .chart-table thead th {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--viz-muted);
+}
+.staff-body .chart-table td { text-align: right; }
+.staff-body .chart-table tbody th { font-weight: 600; }
+
+
+/* ==================================================== 7. funnel (ordinal) */
+.staff-body .funnel { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 18px; }
+.staff-body .funnel-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; margin: 0 0 7px; font-size: .88rem; font-weight: 600;
+}
+.staff-body .funnel-top b { font-size: 1.15rem; color: var(--ink); }
+.staff-body .funnel-track { display: block; height: 26px; border-radius: 4px; background: #F4F2EE; overflow: hidden; }
+.staff-body .funnel-fill { display: block; height: 100%; width: 0; border-radius: 0 4px 4px 0; }
+.staff-body .funnel-step:nth-child(1) .funnel-fill { background: var(--viz-r2); }
+.staff-body .funnel-step:nth-child(2) .funnel-fill { background: var(--viz-r4); }
+.staff-body .funnel-step:nth-child(3) .funnel-fill { background: var(--viz-r5); }
+.staff-body .funnel-foot {
+  display: flex; gap: 12px; flex-wrap: wrap; margin: 7px 0 0;
+  font-size: .78rem; color: var(--viz-muted);
+}
+.staff-body .funnel-drop { color: #A62F2F; font-weight: 700; }
+
+
+/* ==================================================== 8. status list */
+.staff-body .status-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.staff-body .status-row {
+  display: grid; grid-template-columns: auto minmax(84px, 24%) 1fr auto;
+  gap: 11px; align-items: center;
+}
+.staff-body .status-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.staff-body .status-label { font-size: .84rem; font-weight: 600; }
+.staff-body .status-track { height: 22px; border-radius: 4px; background: #F4F2EE; overflow: hidden; }
+.staff-body .status-fill { display: block; height: 100%; width: 0; border-radius: 0 4px 4px 0; }
+.staff-body .status-value {
+  font-size: .84rem; font-weight: 700; display: flex; align-items: baseline;
+  gap: 7px; justify-content: flex-end; min-width: 70px;
+}
+.staff-body .status-good .status-dot, .staff-body .status-good .status-fill { background: var(--viz-good); }
+.staff-body .status-warning .status-dot, .staff-body .status-warning .status-fill { background: var(--viz-warn); }
+.staff-body .status-critical .status-dot, .staff-body .status-critical .status-fill { background: var(--viz-crit); }
+
+
+/* ==================================================== 9. the plot */
+.staff-body .plot-card { margin-bottom: 18px; }
+.staff-body .plot-wrap { position: relative; }
+.staff-body .plot { display: block; width: 100%; height: auto; overflow: visible; }
+.staff-body .plot-grid { stroke: var(--viz-grid); stroke-width: 1; }
+.staff-body .plot-grid[data-zero] { stroke: var(--viz-base); }
+.staff-body .plot-ylab, .staff-body .plot-xlab {
+  font-size: 11px; font-weight: 600; fill: var(--viz-muted);
+  font-family: var(--display);
+}
+.staff-body .plot-ylab { text-anchor: end; }
+.staff-body .plot-line {
+  fill: none; stroke: var(--viz-1); stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+.staff-body .plot-mean {
+  fill: none; stroke: var(--viz-2); stroke-width: 2;
+  stroke-dasharray: 5 4; stroke-linecap: round; opacity: .9;
+}
+.staff-body .plot-hit { fill: transparent; cursor: crosshair; }
+.staff-body .plot-crosshair { stroke: var(--viz-1); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
+/* 2px surface ring, so the focus dot reads against the line and the fill. */
+.staff-body .plot-focus { fill: var(--viz-1); stroke: #fff; stroke-width: 2; }
+.staff-body .plot-tip {
+  position: absolute; z-index: 5; pointer-events: none;
+  background: var(--ink-2); color: #fff; border-radius: 9px;
+  padding: 8px 11px; font-size: .78rem; font-weight: 600; line-height: 1.4;
+  white-space: nowrap; box-shadow: 0 8px 22px rgba(30, 5, 7, .3);
+  transform: translate(-50%, -100%); margin-top: -10px;
+  transition: opacity var(--dur-1) ease;
+}
+.staff-body .plot-tip b { display: block; font-size: .95rem; }
+.staff-body .plot-tip-date { color: rgba(255,255,255,.72); font-weight: 600; }
+
+/* A uniformly scaled SVG shrinks its own text, so the label size is bumped in
+   user units as the column narrows — the rendered size stays about 10px. */
+@media (max-width: 900px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 14px; } }
+@media (max-width: 620px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 19px; } }
+@media (max-width: 430px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 24px; } }
+
+
+/* ==================================================== 10. calendar heatmap */
+.staff-body .heat-scroll { overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+.staff-body .heat { display: flex; gap: 4px; align-items: flex-start; min-width: max-content; }
+.staff-body .heat-days {
+  display: grid; grid-template-rows: repeat(7, 15px); gap: 4px;
+  margin-right: 4px; flex: none;
+}
+.staff-body .heat-days span {
+  font-size: .62rem; font-weight: 700; color: var(--viz-muted);
+  line-height: 15px; text-align: right;
+}
+.staff-body .heat-week { display: grid; grid-template-rows: repeat(7, 15px); gap: 4px; flex: none; }
+.staff-body .heat-cell { width: 15px; height: 15px; border-radius: 3px; display: block; }
+.staff-body .heat-none { background: transparent; }
+.staff-body .heat-0 { background: var(--viz-track); }
+.staff-body .heat-1 { background: var(--viz-r1); }
+.staff-body .heat-2 { background: var(--viz-r2); }
+.staff-body .heat-3 { background: var(--viz-r4); }
+.staff-body .heat-4 { background: var(--viz-r5); }
+.staff-body .heat-legend .heat-cell { width: 12px; height: 12px; }
+@media (hover: hover) and (pointer: fine) {
+  .staff-body .heat-week .heat-cell:not(.heat-none):hover {
+    outline: 2px solid var(--ink); outline-offset: 1px;
+  }
+}
+
+
+/* ==================================================== 11. data tables */
+.staff-body .table-scroll { overflow-x: auto; margin-top: 4px; -webkit-overflow-scrolling: touch; }
+.staff-body .data-table { width: 100%; border-collapse: collapse; font-size: .86rem; min-width: 620px; }
+.staff-body .data-table th, .staff-body .data-table td {
+  text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--viz-grid); vertical-align: middle;
+}
+.staff-body .data-table thead th {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--viz-muted); border-bottom: 1px solid var(--viz-base);
+}
+.staff-body .data-table tbody tr { transition: background var(--dur-1) ease; }
+.staff-body .data-table tbody tr:hover { background: #FAF9FD; }
+/* Block, so the tap target is the whole cell rather than the width of the name.
+   WCAG 2.5.8 exempts inline links in text, but this is a list someone taps
+   through on a phone, and a 17px-tall target is a miss waiting to happen. */
+.staff-body .data-table a {
+  color: var(--viz-1); font-weight: 700; text-decoration: none;
+  display: block; padding: 6px 0; min-height: 32px;
+}
+.staff-body .data-table a:hover { text-decoration: underline; }
+.staff-body .pill {
+  display: inline-block; font-size: .7rem; font-weight: 800; letter-spacing: .04em;
+  padding: 5px 10px; border-radius: 999px; white-space: nowrap;
+}
+.staff-body .pill-good { background: #E6F5E6; color: #0A6B0A; }
+.staff-body .pill-wait { background: #FEF4E0; color: #7A5407; }
+
+
+/* ============================================================
+   12. MOTION
+
+   Every animation is a transition off `.is-visible`, which site.js adds when
+   the card scrolls in (section 3 of that file) — so nothing animates until it
+   is actually on screen, and with scripting off the `html:not(.js)` rules in
+   site.css leave everything in its final state.
+
+   All of it inherits site.css's reduced-motion killswitch, which flattens every
+   transition to .01ms globally.
+   ============================================================ */
+
+/* Bars, funnel steps and status rows grow from their baseline, each row a beat
+   behind the one above. --i comes from the template's forloop counter. */
+.staff-body .chart .bar-fill,
+.staff-body .funnel-fill,
+.staff-body .status-fill,
+.staff-body .meter-fill {
+  transition: width .85s var(--ease-out-expo) var(--bar-delay, 0ms);
+}
+.staff-body .bar-row, .staff-body .funnel-step, .staff-body .status-row {
+  --bar-delay: calc(var(--i, 0) * 55ms);
+}
+.staff-body .chart.is-visible .bar-fill,
+.staff-body .is-visible .funnel-fill,
+.staff-body .is-visible .status-fill { width: var(--w); }
+.staff-body .is-visible .meter-fill { width: var(--pct); }
+/* No script, no reveal class to flip — show the final geometry. */
+html:not(.js) .staff-body .bar-fill,
+html:not(.js) .staff-body .funnel-fill,
+html:not(.js) .staff-body .status-fill { width: var(--w); }
+html:not(.js) .staff-body .meter-fill { width: var(--pct); }
+
+/* The solid lines draw themselves left to right. pathLength="1" on the path
+   normalises the dash units so one dash spans the whole path whatever its real
+   length is.
+
+   The 7-day average is deliberately NOT in this group: its dashes ARE its
+   identity (that is what the legend promises), and a draw-on needs
+   stroke-dasharray for itself — it would overwrite the pattern and render the
+   average as a solid orange line indistinguishable in form from the daily one.
+   It fades in on a delay instead. */
+.staff-body .plot-line, .staff-body .spark-line {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.1s var(--ease-out-expo) .12s;
+}
+.staff-body .is-visible .plot-line,
+.staff-body .is-visible .spark-line { stroke-dashoffset: 0; }
+html:not(.js) .staff-body .plot-line,
+html:not(.js) .staff-body .spark-line { stroke-dashoffset: 0; }
+
+.staff-body .plot-mean { opacity: 0; transition: opacity var(--dur-3) ease .75s; }
+.staff-body .is-visible .plot-mean { opacity: .9; }
+html:not(.js) .staff-body .plot-mean { opacity: .9; }
+
+/* The fill rises under the line rather than fading in place. */
+.staff-body .plot-area, .staff-body .spark-area {
+  opacity: 0; transform: scaleY(.6); transform-origin: bottom;
+  transition: opacity var(--dur-3) ease .2s, transform .9s var(--ease-out-expo) .2s;
+}
+.staff-body .is-visible .plot-area { opacity: 1; transform: none; }
+.staff-body .is-visible .spark-area { opacity: .12; transform: none; }
+html:not(.js) .staff-body .plot-area { opacity: 1; transform: none; }
+html:not(.js) .staff-body .spark-area { opacity: .12; transform: none; }
+
+.staff-body .plot-focus { transition: opacity var(--dur-1) ease; }
+
+/* Heatmap cells pop in a column at a time — the calendar fills up week by week. */
+.staff-body .heat-week .heat-cell {
+  opacity: 0; transform: scale(.4);
+  transition: opacity var(--dur-2) ease var(--cell-delay, 0ms),
+              transform var(--dur-2) var(--ease-spring) var(--cell-delay, 0ms);
+}
+.staff-body .heat-week { --cell-delay: calc(var(--i, 0) * 26ms); }
+.staff-body .is-visible .heat-week .heat-cell { opacity: 1; transform: none; }
+html:not(.js) .staff-body .heat-week .heat-cell { opacity: 1; transform: none; }
+
+/* Tiles: a small lift on hover, and the count-up staff.js drives. */
+.staff-body .tile {
+  transition: transform var(--dur-2) var(--ease-out-expo), box-shadow var(--dur-2) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .staff-body .tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 4px rgba(55,12,15,.06), 0 14px 34px rgba(55,12,15,.10);
+  }
+}
+/* Cards must not inherit site.css's marketing hover lift. */
+.staff-body .card:hover, .staff-body .card.reveal.is-visible:hover,
+.staff-body figure.chart:hover { transform: none; }
+
+/* Focus visibility, since this is a keyboard-heavy admin surface. */
+.staff-body a:focus-visible, .staff-body button:focus-visible,
+.staff-body summary:focus-visible, .staff-body input:focus-visible {
+  outline: 2px solid var(--viz-1); outline-offset: 2px; border-radius: 6px;
+}
+.staff-body .staff-bar a:focus-visible, .staff-body .staff-bar button:focus-visible {
+  outline-color: #fff;
+}
+
+
+/* ==================================================== 13. narrow screens */
+@media (max-width: 1000px) {
+  .staff-body .window-card { grid-template-columns: 1fr; }
+  .staff-body .staff-login { grid-template-columns: 1fr; padding-top: 34px; }
+  .staff-body .staff-login-aside { order: 2; padding-top: 0; }
+}
+@media (max-width: 760px) {
+  .staff-body .staff-bar-inner { flex-wrap: wrap; gap: 10px 14px; padding: 10px 16px; }
+  .staff-body .staff-nav { margin-left: 0; order: 3; width: 100%; overflow-x: auto; }
+  .staff-body .staff-nav a { white-space: nowrap; }
+  .staff-body .staff-who { margin-left: auto; padding-left: 0; border-left: 0; }
+  .staff-body .staff-page { padding: 22px 16px 70px; }
+  .staff-body .staff-head { align-items: flex-start; }
+  .staff-body .staff-head h1 { font-size: 1.6rem; }
+  .staff-body .range-row { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .staff-body .range-chip { white-space: nowrap; }
+  .staff-body .grid-2 { grid-template-columns: 1fr; gap: 14px; }
+  .staff-body .tile-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .staff-body .tile-hero { grid-column: 1 / -1; }
+  .staff-body .card, .staff-body figure.chart { padding: 18px 16px; }
+  .staff-body .staff-login-card { padding: 28px 22px; }
+  .staff-body .bar-row { grid-template-columns: minmax(74px, 34%) 1fr auto; gap: 9px; }
+  .staff-body .bar-value, .staff-body .status-value { min-width: 0; }
+  .staff-body .status-row { grid-template-columns: auto minmax(66px, 30%) 1fr auto; gap: 8px; }
+  .staff-body .chart-head { gap: 10px; }
+}
+@media (max-width: 420px) {
+  .staff-body .tile-value { font-size: 1.8rem; }
+  .staff-body .tile-hero .tile-value { font-size: 2.5rem; }
+  /* "was 13" is the first thing to go — the arrow and signed number still say
+     the direction, and the tiles are two-up at this width. The sparkline stays:
+     it is the only thing giving a 150px tile any shape. */
+  .staff-body .delta-vs { display: none; }
+  .staff-body .bar-label, .staff-body .status-label { font-size: .8rem; }
+  .staff-body .spark { height: 28px; }
+}
