@@ -1,15 +1,20 @@
 import io
+from unittest import mock
 import shutil
 import tempfile
 import zipfile
 
 from django.contrib.auth.models import User
 from django.core import mail
+from django.core.mail.backends.locmem import EmailBackend as LocMemEmailBackend
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from . import models
+from .services import acknowledge
 from .models import EmbarkApplication
 
 MEDIA_ROOT = tempfile.mkdtemp()
@@ -262,11 +267,12 @@ class PublicFormTests(TestCase):
         self.assertContains(response, "links to your Drive, not to the video")
 
     # -------------------------------------------- personal & business links
-    def test_embark_requires_linkedin(self):
-        """LinkedIn is the one profile the panel can check a founder against."""
-        response = self.submit("apply", dict(EMBARK, linkedin=""))
-        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
-        self.assertContains(response, "This field is required")
+    def test_embark_does_not_require_linkedin(self):
+        """Plenty of real founders run their venture off Instagram and have no
+        LinkedIn at all — a required field they cannot fill is a wall."""
+        self.submit("apply", dict(EMBARK, linkedin=""))
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.linkedin, "")
 
     def test_embark_rejects_another_platform_in_the_linkedin_field(self):
         response = self.submit(
@@ -285,10 +291,11 @@ class PublicFormTests(TestCase):
         self.assertEqual(models.EmbarkApplication.objects.count(), 1)
 
     def test_the_optional_link_fields_are_genuinely_optional(self):
-        """A business with no site and an applicant on one platform must still
-        be able to apply — only LinkedIn is compulsory."""
-        self.submit("apply", dict(EMBARK, social_handle="", social_handle_2="",
-                                  business_website="", business_social_handle=""))
+        """None of the link fields is compulsory: a business with no site, run by
+        someone with no LinkedIn, must still be able to apply."""
+        self.submit("apply", dict(EMBARK, linkedin="", social_handle="",
+                                  social_handle_2="", business_website="",
+                                  business_social_handle=""))
         application = models.EmbarkApplication.objects.get()
         self.assertEqual(application.business_website, "")
         self.assertEqual(application.social_handle_2, "")
@@ -364,3 +371,258 @@ class PublicFormTests(TestCase):
                 response = self.client.get(reverse(f"core:{page}"))
                 self.assertContains(response, 'class="g-recaptcha"')
                 self.assertContains(response, "recaptcha/api.js")
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
+@SSL_REDIRECT_OFF
+class UnfinishedApplicationTests(TestCase):
+    """The apply form's background save — see models.PartialApplication.
+
+    What matters here is the boundary: enough typed to reach someone gets kept,
+    less than that does not, and nobody is ever chased about an application they
+    did in fact send.
+    """
+
+    def save(self, data):
+        return self.client.post(reverse("submissions:apply_progress"),
+                                dict(data, draft_id="draft-abc12345"))
+
+    def test_a_half_filled_form_is_kept_once_there_is_an_email(self):
+        self.save({"name": "Chidi Okafor", "email": "chidi@example.com",
+                   "business_name": "Okafor Farms", "furthest_step": "2"})
+        row = models.PartialApplication.objects.get()
+        self.assertEqual(row.name, "Chidi Okafor")
+        self.assertEqual(row.email, "chidi@example.com")
+        self.assertEqual(row.business_name, "Okafor Farms")
+        self.assertEqual(row.furthest_step, 2)
+        self.assertIsNone(row.completed_at)
+
+    def test_a_phone_number_alone_is_enough_to_reach_someone(self):
+        self.save({"name": "Chidi", "phone_code": "+234", "phone": "8012345678"})
+        row = models.PartialApplication.objects.get()
+        self.assertEqual(row.phone_display, "+234 8012345678")
+
+    def test_nothing_is_kept_without_a_way_to_make_contact(self):
+        """A name and a half-typed email is not something to store: there is
+        nothing we could do with it."""
+        self.save({"name": "Chidi", "email": "chidi@", "phone": "801"})
+        self.assertEqual(models.PartialApplication.objects.count(), 0)
+
+    def test_typing_on_updates_the_same_row(self):
+        self.save({"name": "Chidi", "email": "chidi@example.com", "furthest_step": "1"})
+        self.save({"name": "Chidi Okafor", "email": "chidi@example.com",
+                   "business_name": "Okafor Farms", "furthest_step": "3"})
+        row = models.PartialApplication.objects.get()
+        self.assertEqual(row.name, "Chidi Okafor")
+        self.assertEqual(row.furthest_step, 3)
+
+    def test_going_back_a_section_does_not_lower_the_furthest_step(self):
+        self.save({"email": "chidi@example.com", "furthest_step": "3"})
+        self.save({"email": "chidi@example.com", "furthest_step": "1"})
+        self.assertEqual(models.PartialApplication.objects.get().furthest_step, 3)
+
+    def test_every_answer_typed_is_kept_not_just_the_contact_columns(self):
+        self.save({"email": "chidi@example.com", "major_challenge": "Cold-chain",
+                   "growth_limits": ["funding", "customers"]})
+        row = models.PartialApplication.objects.get()
+        self.assertEqual(row.answers["major_challenge"], "Cold-chain")
+        self.assertEqual(row.answers["growth_limits"], ["funding", "customers"])
+        self.assertIn("Cold-chain", row.answers_display)
+
+    def test_the_honeypot_still_applies(self):
+        self.save({"email": "bot@example.com", "website_url": "http://spam.example"})
+        self.assertEqual(models.PartialApplication.objects.count(), 0)
+
+    def test_a_missing_draft_id_is_refused(self):
+        response = self.client.post(reverse("submissions:apply_progress"),
+                                    {"email": "chidi@example.com"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(models.PartialApplication.objects.count(), 0)
+
+    def test_submitting_the_real_application_closes_the_unfinished_row(self):
+        self.save({"name": "Chidi", "email": "chidi@example.com"})
+        self.client.post(reverse("submissions:apply"),
+                         dict(EMBARK, draft_id="draft-abc12345"), follow=True)
+        self.assertEqual(models.EmbarkApplication.objects.count(), 1)
+        self.assertIsNotNone(models.PartialApplication.objects.get().completed_at)
+
+    def test_a_row_started_on_another_device_is_closed_by_email(self):
+        """Started on a phone, finished on a laptop: two draft ids, one person.
+        Chasing them about an application already sent is the one outcome this
+        must not produce."""
+        models.PartialApplication.objects.create(
+            draft_id="some-other-device", email="chidi@example.com")
+        self.client.post(reverse("submissions:apply"), EMBARK, follow=True)
+        self.assertIsNotNone(models.PartialApplication.objects.get().completed_at)
+
+    def test_a_rejected_application_leaves_the_row_open(self):
+        self.save({"name": "Chidi", "email": "chidi@example.com"})
+        self.client.post(reverse("submissions:apply"),
+                         dict(EMBARK, draft_id="draft-abc12345", institution=""),
+                         follow=True)
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertIsNone(models.PartialApplication.objects.get().completed_at)
+
+    def test_no_email_is_sent_for_an_unfinished_application(self):
+        """They have not applied. An acknowledgement would say they had."""
+        mail.outbox.clear()
+        self.save({"name": "Chidi", "email": "chidi@example.com"})
+        self.assertEqual(mail.outbox, [])
+
+    def test_the_team_can_read_and_export_the_unfinished_rows(self):
+        """The admin side of it: a list to work through and a CSV to mail from."""
+        row = models.PartialApplication.objects.create(
+            draft_id="draft-abc12345", name="Chidi Okafor",
+            email="chidi@example.com", phone_code="+234", phone="8012345678",
+            business_name="Okafor Farms", furthest_step=2,
+            answers={"major_challenge": "Cold-chain logistics"})
+        User.objects.create_superuser("boss", "boss@example.com", PASSWORD)
+        self.client.login(username="boss", password=PASSWORD)
+
+        page = self.client.get(reverse("admin:submissions_partialapplication_change",
+                                       args=[row.pk]))
+        self.assertContains(page, "Cold-chain logistics")   # everything they typed
+
+        listing = self.client.get(
+            reverse("admin:submissions_partialapplication_changelist"))
+        self.assertContains(listing, "Chidi Okafor")
+        self.assertContains(listing, "+234 8012345678")     # code and number as one
+        self.assertContains(listing, "Unfinished")
+
+        csv_response = self.client.post(
+            reverse("admin:submissions_partialapplication_changelist"),
+            {"action": "export_csv", "_selected_action": [row.pk]})
+        body = csv_response.content.decode()
+        self.assertIn("attachment", csv_response["Content-Disposition"])
+        self.assertIn("chidi@example.com", body)
+        self.assertIn("Okafor Farms", body)
+
+    def test_the_apply_page_asks_the_form_to_save_progress(self):
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, 'data-progress-url="/forms/apply/progress/"')
+        self.assertContains(response, 'name="draft_id"')
+
+
+# The backfill refuses to --send on a backend whose name contains "locmem",
+# because stamping every row as acknowledged while sending nothing is the one
+# failure that cannot be undone by re-running. That guard also blocks the test
+# backend, so the send path needs a backend that captures like locmem but is not
+# named like it. Subclassing is the whole trick.
+class CapturingEmailBackend(LocMemEmailBackend):
+    pass
+
+
+CAPTURING = override_settings(EMAIL_BACKEND="submissions.tests.CapturingEmailBackend")
+
+
+@SSL_REDIRECT_OFF
+class AcknowledgementStampTests(TestCase):
+    """Who has been written to, and who is still owed a message."""
+
+    def _application(self, **kw):
+        fields = {"name": "Ada Obi", "email": "ada@example.com",
+                  "phone": "8012345678", "city": "Lagos", "country": "Nigeria",
+                  "business_name": "Acme Crafts"}
+        fields.update(kw)
+        return models.EmbarkApplication.objects.create(**fields)
+
+    def test_a_successful_send_stamps_the_row(self):
+        obj = self._application()
+        self.assertIsNone(obj.acknowledged_at)
+        self.assertTrue(acknowledge(obj.email, "Ada", "applying", obj=obj))
+        obj.refresh_from_db()
+        self.assertIsNotNone(obj.acknowledged_at)
+
+    def test_a_failed_send_leaves_the_row_unstamped(self):
+        """Otherwise a provider outage would mark everyone as done and the
+        backfill would never retry them."""
+        obj = self._application()
+        with mock.patch("submissions.services.send_mail",
+                        side_effect=OSError("connection refused")):
+            self.assertFalse(acknowledge(obj.email, "Ada", "applying", obj=obj))
+        obj.refresh_from_db()
+        self.assertIsNone(obj.acknowledged_at)
+
+    def test_a_form_submission_stamps_the_row_it_created(self):
+        """So the backfill never re-mails someone the live form already reached."""
+        self.client.post(reverse("submissions:contact"), CONTACT, follow=True)
+        row = models.ContactMessage.objects.get()
+        self.assertIsNotNone(row.acknowledged_at)
+
+
+@SSL_REDIRECT_OFF
+class BackfillCommandTests(TestCase):
+
+    def _application(self, **kw):
+        fields = {"name": "Ada Obi", "email": "ada@example.com",
+                  "phone": "8012345678", "city": "Lagos", "country": "Nigeria",
+                  "business_name": "Acme Crafts"}
+        fields.update(kw)
+        return models.EmbarkApplication.objects.create(**fields)
+
+    def run_cmd(self, *args):
+        out = io.StringIO()
+        call_command("backfill_acknowledgements", *args, stdout=out, stderr=out)
+        return out.getvalue()
+
+    def test_a_dry_run_sends_nothing_and_stamps_nothing(self):
+        obj = self._application()
+        output = self.run_cmd()
+        self.assertIn("DRY RUN", output)
+        self.assertIn("ada@example.com", output)
+        self.assertEqual(len(mail.outbox), 0)
+        obj.refresh_from_db()
+        self.assertIsNone(obj.acknowledged_at)
+
+    @CAPTURING
+    def test_send_delivers_once_and_stamps(self):
+        obj = self._application()
+        self.run_cmd("--send", "--sleep", "0")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("ada@example.com", mail.outbox[0].to)
+        obj.refresh_from_db()
+        self.assertIsNotNone(obj.acknowledged_at)
+
+    @CAPTURING
+    def test_running_it_twice_does_not_mail_anyone_twice(self):
+        """The property the whole acknowledged_at column exists for."""
+        self._application()
+        self.run_cmd("--send", "--sleep", "0")
+        self.run_cmd("--send", "--sleep", "0")
+        self.assertEqual(len(mail.outbox), 1)
+
+    @CAPTURING
+    def test_one_person_on_two_forms_gets_one_email(self):
+        self._application(email="both@example.com")
+        models.VolunteerApplication.objects.create(
+            name="Ada Obi", email="both@example.com", phone="8012345678",
+            country="Nigeria")
+        self.run_cmd("--send", "--sleep", "0", "--form", "embark",
+                     "--form", "volunteers")
+        self.assertEqual(len(mail.outbox), 1)
+
+    @CAPTURING
+    def test_abandoned_drafts_are_never_mailed(self):
+        """PartialApplication rows were never submitted, so "we received your
+        submission" would be a false statement to someone who gave up."""
+        models.PartialApplication.objects.create(
+            name="Chidi Eze", email="chidi@example.com", answers={})
+        self.run_cmd("--send", "--sleep", "0")
+        self.assertEqual(len(mail.outbox), 0)
+
+    @CAPTURING
+    def test_limit_caps_the_batch_and_reports_the_remainder(self):
+        for i in range(3):
+            self._application(email=f"a{i}@example.com")
+        output = self.run_cmd("--send", "--sleep", "0", "--limit", "2")
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("1 more are eligible", output)
+
+    def test_send_is_refused_on_a_backend_that_does_not_send(self):
+        """Stamping every row while delivering nothing is unrecoverable: the
+        real run afterwards would skip all of them."""
+        obj = self._application()
+        with self.assertRaises(CommandError):
+            self.run_cmd("--send")
+        obj.refresh_from_db()
+        self.assertIsNone(obj.acknowledged_at)

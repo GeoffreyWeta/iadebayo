@@ -73,10 +73,19 @@
       <p class="form-note">Three short sections. Fields marked * are required, and you'll
         get a confirmation email once you submit.</p>
 
+      {% comment %}
+        data-progress-url turns on the background save in form-steps.js: once the
+        applicant has left an email or a phone number, their answers so far are
+        kept server-side too, so the team can help the ones who stall finish.
+        Only this form asks for it. The note under the buttons tells the
+        applicant it is happening — a silent copy would not be honest.
+      {% endcomment %}
       <form method="post" action="{% url 'submissions:apply' %}" class="form-steps"
             enctype="multipart/form-data" novalidate
-            id="embark-form" data-draft-key="embark-application">
+            id="embark-form" data-draft-key="embark-application"
+            data-progress-url="{% url 'submissions:apply_progress' %}">
         {% csrf_token %}
+        <input type="hidden" name="draft_id" value="">
 
         {# Progress rail — becomes clickable once the step script runs #}
         <ol class="step-rail">
@@ -109,9 +118,11 @@
           <button type="submit" class="btn btn-primary" data-step-submit>Submit application</button>
         </div>
         <p class="form-draft-note" hidden>
-          Your answers are saved in this browser as you type, so you can close the tab and
-          come back to finish. Record and share your video before you start, so you have
-          the link ready to paste.
+          Your answers are saved as you type, so you can close the tab and come back to
+          finish. Once you have given us your email or phone number we keep a copy of
+          what you have filled in, so we can help you complete it if you get stuck —
+          your application only counts once you press Submit. Record and share your
+          video before you start, so you have the link ready to paste.
         </p>
       </form>
     </div>

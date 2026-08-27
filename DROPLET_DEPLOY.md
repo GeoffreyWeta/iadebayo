@@ -17,12 +17,21 @@ You need:
 - A DigitalOcean account with billing set up.
 - Access to the Namecheap account holding `iadebayo.foundation`.
 - Push access to the GitHub repo, and your local work committed (see 0.2).
-- **Your SMTP details.** A droplet must NOT run its own mail server (DigitalOcean
-  blocks port 25 on new accounts, and a fresh IP has no sending reputation).
-  Whoever hosts `hello@iadebayo.foundation` today keeps hosting it — you just
-  reuse their SMTP host/port/password. Common cases:
-  - SmartWeb cPanel: `mail.iadebayo.foundation`, port 465, SSL
-  - Namecheap Private Email: `mail.privateemail.com`, port 465, SSL
+- **A SendGrid account, or your existing SMTP details.** A droplet must NOT run
+  its own mail server: DigitalOcean blocks port 25 on new accounts, and a fresh
+  IP has no sending reputation, so mail it sent directly would land in spam even
+  if the port were open. Two ways round that, and the app supports both with no
+  code change — it is entirely a matter of what you put in `.env`:
+  - **SendGrid (recommended).** Sign up, create an API key with *Mail Send*
+    permission, then complete **Domain Authentication** for
+    `iadebayo.foundation` under Settings → Sender Authentication. That step
+    hands you a set of CNAME records to add at Namecheap; skipping it means
+    SendGrid accepts your login and then rejects every message. The free tier
+    covers this site's volume comfortably.
+  - **Your existing mail host.** Whoever hosts `hello@iadebayo.foundation` today
+    keeps hosting it and you reuse their SMTP credentials. Common cases:
+    SmartWeb cPanel `mail.iadebayo.foundation` port 465 SSL, or Namecheap
+    Private Email `mail.privateemail.com` port 465 SSL.
 - **Know where your email DNS lives.** If mail is working today, the MX records
   are somewhere. This guide keeps DNS at Namecheap precisely so you never touch
   those records — you only change the two A records that point at the web server.
@@ -273,13 +282,15 @@ temporary so you can test over plain HTTP before DNS and TLS exist.
     # --- Database ---
     DATABASE_URL=postgres://iadebayo:ReplaceWithLongRandomPassword123@127.0.0.1:5432/iadebayo
 
-    # --- Email (reuse your existing mail host — do NOT run a mail server here) ---
+    # --- Email (SendGrid SMTP relay — do NOT run a mail server here) ---
+    # EMAIL_HOST_USER is the literal word "apikey"; the API key is the password.
     EMAIL_BACKEND=smtp
-    EMAIL_HOST=mail.iadebayo.foundation
+    EMAIL_HOST=smtp.sendgrid.net
     EMAIL_PORT=465
     EMAIL_USE_SSL=True
-    EMAIL_HOST_USER=noreply@iadebayo.foundation
-    EMAIL_HOST_PASSWORD=
+    EMAIL_USE_TLS=False
+    EMAIL_HOST_USER=apikey
+    EMAIL_HOST_PASSWORD=SG.paste-your-sendgrid-api-key-here
     DEFAULT_FROM_EMAIL=IADEBAYO Foundation <noreply@iadebayo.foundation>
     FOUNDATION_NOTIFY_EMAIL=hello@iadebayo.foundation
 
@@ -586,11 +597,18 @@ Then:
 - **Submit a real Embark application with a ~50 MB video.** This is the one form
   that can fail purely on infrastructure: too small a `client_max_body_size` and
   nginx returns a bare `413` before Django sees it.
-- Submit one form on the live site and confirm the notification email arrives at
-  `hello@iadebayo.foundation`. **Test this, don't assume it** — in production
-  `send_mail` runs with `fail_silently=True`, so wrong SMTP credentials lose the
-  notification without an error anywhere. The submission itself is still saved to
-  the admin, so nothing is lost, but nobody gets told about it.
+- **Test mail before you test a form:**
+
+      cd /srv/iadebayo && .venv/bin/python manage.py send_test_email
+
+  It prints the resolved settings, opens the connection and the send as separate
+  steps, and exits non-zero with the real reason if either fails. Run it *first*
+  — a form submission tells you nothing useful, because the view deliberately
+  catches send failures so a dead mail host cannot 500 a submission that already
+  saved. The failure only reaches the log, never the page.
+- Then submit one form on the live site and confirm the notification actually
+  arrives at `hello@iadebayo.foundation`. "Accepted for delivery" is not
+  "delivered" — check the spam folder and SendGrid's Activity feed too.
 - `https://iadebayo.foundation/sitemap.xml` renders.
 
 ---
@@ -645,6 +663,43 @@ stale copy. Keep `render.yaml` and `render-build.sh` in the repo — they cost
 nothing and document the alternative.
 
 ---
+
+## Backfilling confirmation emails
+
+Every submission taken before mail worked on the server was saved but never
+acknowledged: the send was attempted, it failed, and the failure was caught so
+that the submission itself would still succeed. Those people are still owed a
+confirmation.
+
+    cd /srv/iadebayo
+    .venv/bin/python manage.py backfill_acknowledgements
+
+That is a **dry run** -- it lists exactly who would be written to and sends
+nothing. Read the list before going further. When it looks right:
+
+    .venv/bin/python manage.py backfill_acknowledgements --send --limit 20
+
+**Use `--limit`, and start small.** A brand-new sending domain that suddenly
+emits hundreds of messages to addresses collected months ago is the textbook
+spam signature. Stale addresses bounce, the bounce rate spikes on a domain with
+no sending history, and SendGrid suspends the account -- which takes down the
+live form mail too. Send 20, wait, read the bounce and spam-complaint numbers on
+SendGrid's dashboard, then send the next batch.
+
+The command is safe to re-run. Each successful send stamps `acknowledged_at` on
+that row, so a repeat run picks up only the people still owed one; a batch that
+fails halfway resumes rather than starting over. Rows whose send failed are
+deliberately *not* stamped, so they are retried next time.
+
+By default it covers Embark, faculty, volunteer and partnership submissions.
+Contact messages are excluded -- "we received your message" for a question
+somebody asked months ago and has given up on is just confusing -- but you can
+opt in with `--form contact`. Abandoned drafts (`PartialApplication`) are never
+included at any setting: those people never submitted, so telling them their
+submission was received would be false.
+
+Going forward no backfill is needed. The live forms already send on submission
+and stamp the row as they go.
 
 ## Shipping updates later — automatic deploy on push
 
@@ -785,12 +840,12 @@ across machines, so it reports rather than blocks.
 | **Uploaded images 404** | The `media/` folder wasn't copied across (it's gitignored), or `/srv/iadebayo` isn't group-readable by `www-data`. Re-run Phase 5.7. |
 | **`413 Request Entity Too Large`** when applying | The applicant's video is bigger than `client_max_body_size`. Raise it in Phase 7.1 and reload nginx. |
 | **`/media/` press page is 403 Forbidden** | The exact-match `location = /media/` block is missing, so nginx tried to list the uploads directory. Add it (Phase 7.1). |
-| **Forms save but no email arrives** | Wrong SMTP host/password. Production swallows the error — test by hand: `.venv/bin/python manage.py shell -c "from django.core.mail import send_mail; send_mail('t','b',None,['hello@iadebayo.foundation'],fail_silently=False)"` and read the traceback. |
+| **Forms save but no email arrives** | Run `.venv/bin/python manage.py send_test_email` and read what it says. Connection refused → wrong host/port or the SSL/TLS flags disagree with the port. Connected but rejected → the API key lacks *Mail Send*, or `DEFAULT_FROM_EMAIL` is not a verified sender in SendGrid. The views log these but never surface them, so `journalctl -u iadebayo -n 50` is the other place to look. |
 | **Every form says "couldn't verify that you're human"** | `RECAPTCHA_SECRET_KEY` is set but `RECAPTCHA_SITE_KEY` isn't (so no widget renders), or the keys are from different reCAPTCHA sites. Set both, or clear both to disable. |
 | **Video download saves a 0-byte file** | `X_ACCEL_REDIRECT=True` but the `internal` `/protected-media/` location is missing from the Nginx config. Add it (Phase 7.1), or set `X_ACCEL_REDIRECT=False` to let Django stream instead. |
 | **`permission denied for schema public`** | You skipped the `GRANT ALL ON SCHEMA public` in Phase 4.1. |
 | **Certbot: "challenge failed"** | DNS hasn't propagated, or port 80 is closed. Re-check Phase 8.3 and `sudo ufw status`. |
-| **Forms send nothing** | `EMAIL_BACKEND=smtp` must be set (it defaults to `console`). Test with `.venv/bin/python manage.py shell -c "from django.core.mail import send_mail; send_mail('test','body',None,['hello@iadebayo.foundation'])"`. |
+| **Forms send nothing at all** | `EMAIL_BACKEND=smtp` must be set — it defaults to `console`, which renders mail to stdout and sends none of it. `send_test_email` refuses to run under the console backend and tells you so, rather than reporting a false success. |
 | **Out of memory during pip/collectstatic** | Swap isn't on. Re-run Phase 2.4, confirm with `free -h`. |
 
 Useful logs:

@@ -210,9 +210,10 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
           "heard_about_other", "media_consent"]),
     ]
 
+    # LinkedIn is deliberately absent: see the note on the model's link fields.
     REQUIRED = {
         "name", "gender", "applicant_status", "email", "phone", "date_of_birth",
-        "institution", "city", "country", "linkedin",
+        "institution", "city", "country",
         "business_name", "business_sector", "business_video_url", "year_established",
         "major_challenge", "growth_limits", "entrepreneurship_view",
         "device", "will_participate", "reliable_internet", "heard_about", "media_consent",
@@ -269,7 +270,8 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
                              "may be used by IADEBAYO Foundation.",
         }
         help_texts = {
-            "linkedin": "Required. Paste your profile URL — “linkedin.com/in/…” is enough.",
+            "linkedin": "Optional. If you have one, paste the profile URL — "
+                        "“linkedin.com/in/…” is enough.",
             "social_handle": "Optional. Instagram, X, TikTok — whichever you actually use.",
             "social_handle_2": "Optional. A second platform, if you have one.",
             "business_website": "Optional — leave blank if the business has no site yet.",
@@ -305,11 +307,12 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     def clean_linkedin(self):
         """Catch the other-platform paste.
 
-        LinkedIn is the one profile the form insists on, and the commonest way
-        that goes wrong is an Instagram or personal-site URL dropped into it —
-        perfectly valid as a URL, so URLField accepts it happily, and the review
-        panel only finds out weeks later. The two handle fields below exist
-        precisely so those links have somewhere else to go.
+        The field is optional, but a wrong link in it is worse than an empty
+        one: an Instagram or personal-site URL dropped here is perfectly valid
+        as a URL, so URLField accepts it happily, and the review panel only
+        finds out weeks later that the profile it was told to check is not a
+        LinkedIn at all. The two handle fields below exist precisely so those
+        links have somewhere else to go.
         """
         url = (self.cleaned_data.get("linkedin") or "").strip()
         if not url:

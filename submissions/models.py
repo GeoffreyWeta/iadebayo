@@ -30,6 +30,19 @@ class TimestampedSubmission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     reviewed = models.BooleanField(default=False, help_text="Tick once the team has handled this")
 
+    # When the automatic "we received your submission" mail was accepted for
+    # delivery. Null means it was never sent -- which covers every row created
+    # before mail was configured on the server, since the send failure is caught
+    # and logged rather than raised (see services.acknowledge).
+    #
+    # This exists to make the backfill command idempotent. Without a per-row
+    # record there is no way to answer "who is still owed a confirmation", and a
+    # bulk send that cannot tell would either skip people or mail them twice --
+    # and running it again after a partial failure would re-mail everyone it had
+    # already reached. `editable=False` keeps it out of the admin forms; it is a
+    # record of what happened, not a setting anyone should toggle.
+    acknowledged_at = models.DateTimeField(null=True, blank=True, editable=False)
+
     class Meta:
         abstract = True
         ordering = ["-created_at"]
@@ -124,12 +137,15 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
 
     # The applicant's own presence, kept separate from the business's below.
     #
-    # LinkedIn is the only one the form requires (see
-    # EmbarkApplicationForm.REQUIRED): it is the profile a review panel can
-    # actually check a founder against, and it is the one platform where a
-    # missing account is a signal rather than a preference. The two free handles
-    # take whatever the applicant actually uses — Instagram, X, TikTok — so the
-    # form does not have to guess the platform list.
+    # All three are optional. LinkedIn was compulsory until 2026-08-27 on the
+    # reasoning that it is the profile a review panel can check a founder
+    # against; in practice plenty of genuine African student founders run their
+    # venture entirely off Instagram or WhatsApp and have no LinkedIn account at
+    # all, and a required field they cannot fill is a wall, not a signal. It is
+    # still validated *if* supplied (see EmbarkApplicationForm.clean_linkedin),
+    # because a wrong link in this field is worse than an empty one. The two
+    # free handles take whatever the applicant actually uses — Instagram, X,
+    # TikTok — so the form does not have to guess the platform list.
     #
     # `social_handle` predates the split and was labelled "Business or personal",
     # so a handful of pre-2026-08 rows may hold a business handle in it. Nothing
@@ -243,6 +259,94 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
             picked = [p for p in picked if p != labels["other"]]
             picked.append(f"Other: {self.growth_limits_other}")
         return ", ".join(picked)
+
+
+class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
+    """An Embark application that was typed but never submitted.
+
+    Most people who open the application form never reach the end of it — they
+    run out of data, they have not recorded the video yet, or the tab dies. The
+    browser-local draft (see form-steps.js) lets *them* come back, but it leaves
+    the Foundation with nothing: no name, no email, no way to say "you were
+    nearly there, here is what is missing". This table is that missing half.
+
+    The form posts here as it is filled in, so a row exists from the moment the
+    applicant has given something to contact them with, and is updated as they
+    keep typing. Two consequences worth being deliberate about:
+
+      * **Rows are keyed on `draft_id`**, a random id the browser keeps beside
+        the local draft — not on email, which is often typed last, and not on
+        the Django session, which a phone browser drops. One person filling the
+        form over three evenings updates one row.
+      * **A row is only created once there is a way to reach the person.** A
+        name alone is not; an email or a phone number is. Storing keystrokes
+        from someone who then closed the tab without leaving contact details
+        would collect personal data that can serve no purpose.
+
+    Everything else the applicant typed is kept in `answers` verbatim, so the
+    team can see how far they got and what they were stuck on rather than
+    guessing. Nothing here is ever treated as an application: these people have
+    not consented to anything and have not pressed submit. Follow-up should be
+    about *finishing the application they started*, and nothing else.
+    """
+
+    # Mirrored as columns because these are what the team searches, sorts and
+    # exports on; the rest of the form lives in `answers`.
+    MIRRORED = ("name", "email", "phone_code", "phone", "country", "city",
+                "institution", "business_name")
+
+    draft_id = models.CharField(max_length=64, unique=True,
+                                help_text="Random id the applicant's browser keeps "
+                                          "beside their local draft.")
+    name = models.CharField("Full name", max_length=120, blank=True)
+    email = models.EmailField("Email address", blank=True)
+    phone = models.CharField("Phone number", max_length=32, blank=True)
+    country = models.CharField(max_length=80, blank=True)
+    city = models.CharField(max_length=80, blank=True)
+    institution = models.CharField("Institution", max_length=160, blank=True)
+    business_name = models.CharField(max_length=160, blank=True)
+
+    answers = models.JSONField("Everything typed so far", default=dict, blank=True)
+    furthest_step = models.PositiveSmallIntegerField("Furthest section reached", default=1)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(
+        "Finished the application", null=True, blank=True,
+        help_text="Set when a full application arrives from this draft or this "
+                  "email address. Rows with a date here need no chasing.")
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Unfinished application"
+        verbose_name_plural = "Unfinished applications"
+
+    def __str__(self):
+        who = self.name or self.email or self.phone_display or "Anonymous"
+        return f"{who} — step {self.furthest_step}"
+
+    @property
+    def is_complete(self):
+        return self.completed_at is not None
+
+    @property
+    def answers_display(self):
+        """The stored answers as `Label: value` lines, in form order.
+
+        Keys are form field names, so the model's own labels are what the team
+        should see. Anything unrecognised (a field renamed since the row was
+        written) falls back to its raw key rather than being dropped — an old
+        answer is still an answer.
+        """
+        labels = {f.name: f.verbose_name for f in self._meta.model._meta.fields}
+        labels.update({f.name: f.verbose_name for f in EmbarkApplication._meta.fields})
+        lines = []
+        for key, value in self.answers.items():
+            if isinstance(value, list):
+                value = ", ".join(str(v) for v in value)
+            if value in ("", None):
+                continue
+            label = labels.get(key, key.replace("_", " "))
+            lines.append(f"{label[:1].upper()}{label[1:]}: {value}")
+        return "\n".join(lines)
 
 
 class FacultyApplication(TimestampedSubmission, DiallingCodeMixin):

@@ -6,6 +6,7 @@ import urllib.request
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone
 
 log = logging.getLogger(__name__)
 
@@ -32,16 +33,47 @@ def verify_recaptcha(request) -> bool:
 
 
 def notify_team(subject: str, body: str):
-    """Email the Foundation team about a new submission."""
+    """Email the Foundation team about a new submission.
+
+    `fail_silently=False` with the failure caught here, rather than
+    `fail_silently=True` and no handler. The two are not the same: passing True
+    makes `send_mail` swallow the SMTPException internally and return 0, so the
+    `except` below never runs and `log.exception` never fires. That is how a
+    misconfigured mail host loses every notification with no trace anywhere —
+    the submission saves, the page says thank you, and nobody is told.
+
+    Raising is still not an option: the row is already committed by this point,
+    so a dead SMTP host must not turn a successful submission into a 500. Hence
+    catch-and-log — the send fails, the applicant is unaffected, and there is a
+    line in the log saying so.
+    """
     try:
         send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
-                  [settings.FOUNDATION_NOTIFY_EMAIL], fail_silently=not settings.DEBUG)
+                  [settings.FOUNDATION_NOTIFY_EMAIL], fail_silently=False)
     except Exception:
-        log.exception("Team notification email failed")
+        log.exception("Team notification email failed (subject=%r)", subject)
 
 
-def acknowledge(to_email: str, first_name: str, what: str):
-    """Auto-acknowledgement email to the person who submitted the form."""
+def acknowledge(to_email: str, first_name: str, what: str, obj=None,
+                connection=None):
+    """Auto-acknowledgement email to the person who submitted the form.
+
+    Returns True if the message was accepted for delivery, False if it was
+    not. The form views ignore that -- a failed acknowledgement must never
+    affect a submission that already saved -- but the backfill command needs
+    it to decide whether to stamp the row and whether to keep going.
+
+    `obj` is the row being acknowledged. When given, `acknowledged_at` is
+    stamped on success, which is what stops a re-run of the backfill from
+    mailing the same person twice. The stamp goes through `queryset.update()`
+    rather than `obj.save()` on purpose: save() would rewrite every column
+    from a possibly stale in-memory copy, and on a row someone happens to be
+    editing in the admin that silently reverts their edit.
+
+    `connection` lets a bulk caller reuse one SMTP connection for a whole run.
+    Left None, every send opens and tears down its own -- fine for a single
+    message from a form view, needlessly slow for hundreds.
+    """
     body = (
         f"Dear {first_name},\n\n"
         f"Thank you for {what}. We have received your submission and our team "
@@ -50,8 +82,15 @@ def acknowledge(to_email: str, first_name: str, what: str):
         f"IADEBAYO Foundation\n"
         f"hello@iadebayo.foundation | www.iadebayo.foundation"
     )
+    # Same catch-and-log as notify_team, and for the same reason — see there.
     try:
         send_mail("We received your submission — IADEBAYO Foundation", body,
-                  settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=not settings.DEBUG)
+                  settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=False,
+                  connection=connection)
     except Exception:
-        log.exception("Acknowledgement email failed")
+        log.exception("Acknowledgement email failed (to=%r)", to_email)
+        return False
+
+    if obj is not None:
+        type(obj).objects.filter(pk=obj.pk).update(acknowledged_at=timezone.now())
+    return True

@@ -1,10 +1,11 @@
+import csv
 import os
 import shutil
 import tempfile
 import zipfile
 
 from django.contrib import admin, messages
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.html import format_html
@@ -146,6 +147,84 @@ class EmbarkAdmin(SubmissionAdmin):
         archive_file.seek(0)
         return FileResponse(archive_file, as_attachment=True,
                             filename="embark-application-videos.zip")
+
+
+@admin.register(models.PartialApplication)
+class PartialApplicationAdmin(admin.ModelAdmin):
+    """People who started an Embark application and never sent it.
+
+    Deliberately not a SubmissionAdmin: these are not submissions. Nobody here
+    pressed submit, nobody ticked the media consent, and nothing in this table
+    should ever be read as an application. It exists so the team can send one
+    "you were nearly there" note — see models.PartialApplication.
+    """
+
+    list_display = ("who", "email", "phone_display", "business_name", "country",
+                    "furthest_step", "updated_at", "status")
+    list_filter = ("furthest_step", "reviewed", "country", "updated_at")
+    search_fields = ("name", "email", "phone", "business_name", "institution", "country")
+    readonly_fields = ("draft_id", "created_at", "updated_at", "completed_at",
+                       "everything_typed")
+    actions = ["export_csv", "mark_followed_up"]
+    fieldsets = (
+        ("How to reach them", {
+            "description": "The whole point of this record. Contact them about "
+                           "finishing the application they started, and nothing else "
+                           "— they have not consented to anything beyond that.",
+            "fields": ("name", "email", ("phone_code", "phone"),
+                       ("country", "city"), "institution", "business_name"),
+        }),
+        ("How far they got", {
+            "fields": ("furthest_step", "everything_typed"),
+        }),
+        ("Follow-up", {
+            "fields": ("reviewed", "created_at", "updated_at", "completed_at", "draft_id"),
+        }),
+    )
+
+    @admin.display(description="Applicant", ordering="name")
+    def who(self, obj):
+        return obj.name or "— no name yet —"
+
+    @admin.display(description="Phone")
+    def phone_display(self, obj):
+        return obj.phone_display or "—"
+
+    @admin.display(description="Status")
+    def status(self, obj):
+        if obj.is_complete:
+            return format_html('<span style="color:#15803d">Finished &amp; submitted</span>')
+        if obj.reviewed:
+            return format_html('<span style="color:#666">Followed up</span>')
+        return format_html('<b style="color:#b45309">Unfinished</b>')
+
+    @admin.display(description="Everything they typed")
+    def everything_typed(self, obj):
+        return format_html('<pre style="white-space:pre-wrap;margin:0">{}</pre>',
+                           obj.answers_display or "— nothing beyond the contact details —")
+
+    @admin.action(description="Export selected to CSV (for a follow-up mail-out)")
+    def export_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = \
+            'attachment; filename="unfinished-embark-applications.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Name", "Email", "Phone", "Business", "Institution",
+                         "Country", "City", "Furthest step", "Started", "Last typed",
+                         "Finished later"])
+        for row in queryset:
+            writer.writerow([
+                row.name, row.email, row.phone_display, row.business_name,
+                row.institution, row.country, row.city, row.furthest_step,
+                row.created_at.strftime("%Y-%m-%d %H:%M"),
+                row.updated_at.strftime("%Y-%m-%d %H:%M"),
+                "yes" if row.is_complete else "no"])
+        return response
+
+    @admin.action(description="Mark selected as followed up")
+    def mark_followed_up(self, request, queryset):
+        updated = queryset.update(reviewed=True)
+        self.message_user(request, f"{updated} marked as followed up.", messages.SUCCESS)
 
 
 class PhoneColumnMixin:

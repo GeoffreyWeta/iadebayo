@@ -6,6 +6,8 @@ urlpatterns = [
     path("contact/", views.contact, name="contact"),
     path("newsletter/", views.newsletter, name="newsletter"),
     path("apply/", views.apply_embark, name="apply"),
+    # Background save from the apply form while it is being filled in.
+    path("apply/progress/", views.apply_progress, name="apply_progress"),
     path("faculty/", views.faculty, name="faculty"),
     path("volunteer/", views.volunteer, name="volunteer"),
     path("partner/", views.partner, name="partner"),

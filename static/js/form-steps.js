@@ -1,5 +1,7 @@
-/* Multi-step form: one section at a time, plus a browser-local draft so an
-   applicant can close the tab and come back.
+/* Multi-step form: one section at a time, a browser-local draft so an applicant
+   can close the tab and come back, and — once they have left contact details —
+   a quiet copy of the same draft on the server so the Foundation can reach the
+   ones who never come back.
 
    Progressive enhancement — with JS off, every fieldset is visible, Back/Next
    stay hidden, and the form submits in one go exactly as before. */
@@ -17,8 +19,14 @@
   var btnNext = form.querySelector("[data-step-next]");
   var btnSubmit = form.querySelector("[data-step-submit]");
   var draftNote = form.querySelector(".form-draft-note");
-  var SKIP = { csrfmiddlewaretoken: 1, "g-recaptcha-response": 1, website_url: 1 };
+  var SKIP = { csrfmiddlewaretoken: 1, "g-recaptcha-response": 1, website_url: 1,
+               draft_id: 1 };
   var storageKey = "iadebayo:draft:" + (form.dataset.draftKey || "form");
+
+  // Replaced by the progress-capture block below when the form asks for it;
+  // a no-op on every other form so the draft saver can call it unconditionally.
+  var queueProgress = function () {};
+  var progressIdKey = storageKey + ":id";
 
   /* ------------------------------------------------------------ stepping */
 
@@ -161,7 +169,13 @@
   }
 
   function clearDraft() {
-    try { localStorage.removeItem(storageKey); } catch (err) { /* nothing to do */ }
+    try {
+      localStorage.removeItem(storageKey);
+      // The draft id goes with it, so a second application (a later cohort, a
+      // shared family laptop) starts its own row rather than overwriting the
+      // one belonging to the application just sent.
+      localStorage.removeItem(progressIdKey);
+    } catch (err) { /* nothing to do */ }
   }
 
   // Don't overwrite a server round-trip: those values are more current.
@@ -171,10 +185,126 @@
   function queueSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveDraft, 250);
+    queueProgress();
   }
   form.addEventListener("input", queueSave);
   form.addEventListener("change", queueSave);
   if (draftNote) draftNote.hidden = false;
+
+  /* ------------------------------------------- unfinished-application capture */
+  /* Most people who open this form never reach the end of it, and the draft
+     above only helps the ones who come back. So once the applicant has typed
+     something we could actually contact them on, the same answers go to the
+     server too — see submissions.models.PartialApplication for what is kept.
+
+     Deliberately quiet: no spinner, no "saved" tick, nothing that could read as
+     "your application is in". It is not. The only thing on screen that changes
+     is the draft note under the buttons, which says so in plain words.
+
+     The whole block is a no-op if the form carries no progress URL, so the
+     other forms on the site are untouched. */
+  (function progressCapture() {
+    var url = form.dataset.progressUrl;
+    if (!url) return;
+
+    var emailField = form.querySelector('[name="email"]');
+    var phoneField = form.querySelector('[name="phone"]');
+    if (!emailField && !phoneField) return;
+
+    var idKey = progressIdKey;
+    var token = form.querySelector('[name="csrfmiddlewaretoken"]');
+    var stamp = form.querySelector('input[name="draft_id"]');
+    var lastSent = "";
+
+    /* One id per browser, kept beside the local draft, so an applicant filling
+       the form over three evenings updates one row instead of leaving three.
+       randomUUID needs a secure context and is missing on older Androids —
+       hence the fallback, which does not have to be cryptographic, only
+       unlikely to collide. */
+    function draftId() {
+      var id;
+      try { id = localStorage.getItem(idKey); } catch (err) { /* private mode */ }
+      if (id) return id;
+      if (window.crypto && window.crypto.randomUUID) {
+        id = window.crypto.randomUUID();
+      } else {
+        id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      }
+      try { localStorage.setItem(idKey, id); } catch (err) { /* fine, new id next time */ }
+      return id;
+    }
+
+    // Same test the server applies, so we don't post rows it will refuse.
+    function reachable() {
+      var email = emailField ? emailField.value.trim() : "";
+      var phone = phoneField ? phoneField.value.trim() : "";
+      return (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)
+              || phone.replace(/\D/g, "").length >= 7);
+    }
+
+    function payload() {
+      var data = new FormData();
+      data.append("draft_id", draftId());
+      data.append("furthest_step", String(current + 1));
+      if (token) data.append("csrfmiddlewaretoken", token.value);
+      controls().forEach(function (el) {
+        if ((el.type === "checkbox" || el.type === "radio") && !el.checked) return;
+        if (el.value) data.append(el.name, el.value);
+      });
+      return data;
+    }
+
+    // Cheap fingerprint of what we last sent, so idle typing in one field does
+    // not re-post the whole form every few seconds.
+    function fingerprint(data) {
+      var parts = [];
+      data.forEach(function (value, key) {
+        if (key !== "csrfmiddlewaretoken") parts.push(key + "=" + value);
+      });
+      return parts.join("&");
+    }
+
+    function send(leaving) {
+      if (!reachable()) return;
+      var data = payload();
+      var print = fingerprint(data);
+      if (print === lastSent) return;
+      lastSent = print;
+      // On the way out there is no time for a response — sendBeacon survives
+      // the page going away, which is exactly the applicant we most want to
+      // have captured.
+      if (leaving && navigator.sendBeacon && navigator.sendBeacon(url, data)) return;
+      // keepalive only on the way out: it caps the body at 64 KB, and a long
+      // answer in every textarea can pass that on an ordinary mid-typing save.
+      var options = { method: "POST", body: data, credentials: "same-origin" };
+      if (leaving) options.keepalive = true;
+      fetch(url, options)
+        .catch(function () { lastSent = ""; });   // offline — try again next time
+    }
+
+    // Carried on the real submit too, so the server can mark this person's
+    // unfinished row as finished instead of chasing them about it.
+    if (stamp) stamp.value = draftId();
+
+    var progressTimer;
+    function queue() {
+      clearTimeout(progressTimer);
+      progressTimer = setTimeout(send, 3000);
+    }
+    queueProgress = queue;                 // hook the draft saver up to this
+
+    // Moving between sections is the strongest signal we have that a chunk of
+    // answers is settled, so don't wait out the timer for it.
+    [btnNext, btnPrev].forEach(function (b) {
+      b.addEventListener("click", function () { clearTimeout(progressTimer); send(false); });
+    });
+    // pagehide, not unload: unload is ignored on iOS Safari and blocks the
+    // back-forward cache everywhere else.
+    window.addEventListener("pagehide", function () {
+      clearTimeout(progressTimer);
+      send(true);
+    });
+  })();
 
   /* --------------------------------------------- country → region picker */
   /* Pick a country and the region field becomes that country's own list —
