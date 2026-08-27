@@ -201,6 +201,17 @@ RECAPTCHA_SECRET_KEY = env("RECAPTCHA_SECRET_KEY", "")
 # Google Analytics 4 — set GA_MEASUREMENT_ID (e.g. G-XXXXXXXXXX) to activate
 GA_MEASUREMENT_ID = env("GA_MEASUREMENT_ID", "")
 
+# Meta (Facebook) Pixel — set META_PIXEL_ID to the numeric id from Events
+# Manager to activate. Left empty, not a line of Facebook's code reaches the
+# page, which is what makes it safe to have in the repo at all: a developer's
+# local run must never report test traffic as real conversions, and an id
+# hard-coded into a template would do exactly that.
+#
+# Deliberately *without* Meta's advanced matching: the site never hands the
+# pixel an applicant's email or phone number. See templates/includes/
+# meta_pixel.html for what that rules out, and why.
+META_PIXEL_ID = env("META_PIXEL_ID", "")
+
 # ----------------------------------------------------------------- site meta
 SITE_NAME = "IADEBAYO Foundation"
 SITE_BASE_URL = env("SITE_BASE_URL", "https://www.iadebayo.foundation")

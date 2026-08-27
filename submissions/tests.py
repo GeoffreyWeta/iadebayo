@@ -626,3 +626,78 @@ class BackfillCommandTests(TestCase):
             self.run_cmd("--send")
         obj.refresh_from_db()
         self.assertIsNone(obj.acknowledged_at)
+
+
+PIXEL_ID = "1221975869207645"
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
+@SSL_REDIRECT_OFF
+class MetaPixelTests(TestCase):
+    """The Meta Pixel: off unless configured, and honest about what it reports."""
+
+    def test_nothing_facebook_reaches_the_page_without_an_id(self):
+        """The default, and what every developer machine runs."""
+        response = self.client.get(reverse("core:home"))
+        self.assertNotContains(response, "connect.facebook.net")
+        self.assertNotContains(response, "fbq(")
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_the_base_code_is_on_every_page(self):
+        for page in ["home", "apply", "contact", "embark", "privacy"]:
+            with self.subTest(page=page):
+                response = self.client.get(reverse(f"core:{page}"))
+                self.assertContains(response, "connect.facebook.net")
+                self.assertContains(response, f"fbq('init', '{PIXEL_ID}')")
+                self.assertContains(response, "fbq('track', 'PageView')")
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_the_pixel_is_never_told_who_the_visitor_is(self):
+        """Advanced matching would make `init` carry the applicant's email and
+        phone number. It must not: the privacy policy says personal information
+        is shared only for the purpose it was given for, and being matched to an
+        advertising profile is not that purpose."""
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, f"fbq('init', '{PIXEL_ID}');")   # id, nothing else
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_a_completed_application_reports_a_conversion(self):
+        response = self.client.post(reverse("submissions:apply"), EMBARK, follow=True)
+        self.assertEqual(models.EmbarkApplication.objects.count(), 1)
+        self.assertContains(response, "fbq('track', 'SubmitApplication')")
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_the_conversion_is_reported_once_not_on_every_page_after(self):
+        """Left in the session it would report a fresh application on every page
+        the applicant went on to read."""
+        self.client.post(reverse("submissions:apply"), EMBARK, follow=True)
+        later = self.client.get(reverse("core:home"))
+        self.assertNotContains(later, "SubmitApplication")
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_a_rejected_application_reports_nothing(self):
+        """No row saved, no conversion — or the cost-per-application figure in
+        Ads Manager counts forms that failed validation."""
+        response = self.client.post(reverse("submissions:apply"),
+                                    dict(EMBARK, institution=""), follow=True)
+        self.assertEqual(models.EmbarkApplication.objects.count(), 0)
+        self.assertNotContains(response, "SubmitApplication")
+
+    @override_settings(META_PIXEL_ID=PIXEL_ID)
+    def test_each_form_reports_its_own_kind_of_conversion(self):
+        for name, data, event in [("contact", CONTACT, "Contact"),
+                                  ("faculty", FACULTY, "Lead"),
+                                  ("volunteer", VOLUNTEER, "Lead"),
+                                  ("partner", PARTNER, "Lead"),
+                                  ("newsletter", {"email": "new@example.com"},
+                                   "Subscribe")]:
+            with self.subTest(form=name):
+                response = self.client.post(reverse(f"submissions:{name}"), data,
+                                            follow=True)
+                self.assertContains(response, f"fbq('track', '{event}')")
+
+    def test_a_conversion_is_not_stored_when_no_pixel_is_configured(self):
+        """No id, no session write — a visitor to a site running no pixel should
+        not be handed a session cookie because of one."""
+        self.client.post(reverse("submissions:apply"), EMBARK, follow=True)
+        self.assertNotIn("meta_pixel_event", self.client.session)

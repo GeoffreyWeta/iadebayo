@@ -301,6 +301,12 @@ temporary so you can test over plain HTTP before DNS and TLS exist.
     # --- Google Analytics 4 ---
     GA_MEASUREMENT_ID=
 
+    # --- Meta (Facebook) Pixel: the numeric id from Events Manager ---
+    # This is the live site, so this is the one place it belongs. The base code
+    # and the conversion events are already in the templates; only the id is
+    # configuration. Empty means no Facebook code is served at all.
+    META_PIXEL_ID=
+
     # --- Embark explainer video ---
     EMBARK_INTRO_VIDEO_URL=
 

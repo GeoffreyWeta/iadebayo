@@ -23,12 +23,29 @@ SUCCESS = "Thank you! Your submission has been received. A confirmation email is
 RECAPTCHA_FAIL = "We couldn't verify that you're human. Please complete the reCAPTCHA and try again."
 
 
-def _handle(request, form_class, ack_text, notify_subject, redirect_to, on_invalid=None):
+def _pixel(request, event):
+    """Queue one Meta Pixel conversion event for the page we redirect to.
+
+    Only ever a fixed name from Meta's standard list — never anything typed by
+    a visitor, and never carrying who they are. See templates/includes/
+    meta_pixel.html. A no-op when no pixel id is configured, so nothing is put
+    in the session (and no session cookie is set on a visitor) on a site that
+    is not running one.
+    """
+    if event and getattr(settings, "META_PIXEL_ID", ""):
+        request.session["meta_pixel_event"] = event
+
+
+def _handle(request, form_class, ack_text, notify_subject, redirect_to,
+            on_invalid=None, pixel_event=None):
     """Validate, save, notify.
 
     `on_invalid(form)` lets a caller re-render its page with the bound form so
     the visitor's answers survive; without it we fall back to flashing the
     errors and bouncing back to the referring page.
+
+    `pixel_event` fires on the page after a *successful* save, so the ads
+    platform counts a conversion only when there is a row to show for it.
     """
     form = form_class(request.POST, request.FILES)
     if not verify_recaptcha(request):
@@ -42,6 +59,7 @@ def _handle(request, form_class, ack_text, notify_subject, redirect_to, on_inval
             # obj= stamps acknowledged_at, so the backfill command knows
             # this person has already been written to and skips them.
             acknowledge(email, name.split()[0], ack_text, obj=obj)
+        _pixel(request, pixel_event)
         messages.success(request, SUCCESS)
         return redirect(redirect_to)
     else:
@@ -101,7 +119,7 @@ def _summary(obj):
 @require_POST
 def contact(request):
     return _handle(request, forms.ContactForm, "contacting IADEBAYO Foundation",
-                   "New contact message", "core:contact")
+                   "New contact message", "core:contact", pixel_event="Contact")
 
 
 @require_POST
@@ -109,6 +127,7 @@ def newsletter(request):
     form = forms.NewsletterForm(request.POST)
     if form.is_valid():
         form.save()
+        _pixel(request, "Subscribe")
         messages.success(request, "You're subscribed! Welcome to the community.")
     else:
         for errs in form.errors.values():
@@ -125,9 +144,13 @@ def apply_embark(request):
         return render(request, "core/apply.html", apply_context(form))
 
     before = models.EmbarkApplication.objects.count()
+    # SubmitApplication, not Lead: this is the conversion the ads are actually
+    # buying, and keeping it distinct from the other forms is what makes the
+    # cost-per-application figure in Ads Manager mean anything.
     response = _handle(request, forms.EmbarkApplicationForm,
                        "applying to the Embark Entrepreneurship Academy",
-                       "New Embark application", "core:apply", on_invalid=rerender)
+                       "New Embark application", "core:apply", on_invalid=rerender,
+                       pixel_event="SubmitApplication")
     if models.EmbarkApplication.objects.count() > before:
         _close_partial(request)
     return response
@@ -258,7 +281,8 @@ def faculty(request):
 
     return _handle(request, forms.FacultyApplicationForm,
                    "applying to join our faculty",
-                   "New faculty application", "core:join_faculty", on_invalid=rerender)
+                   "New faculty application", "core:join_faculty", on_invalid=rerender,
+                   pixel_event="Lead")
 
 
 @require_POST
@@ -269,14 +293,15 @@ def volunteer(request):
 
     return _handle(request, forms.VolunteerApplicationForm,
                    "offering to volunteer with IADEBAYO Foundation",
-                   "New volunteer application", "core:volunteer", on_invalid=rerender)
+                   "New volunteer application", "core:volunteer", on_invalid=rerender,
+                   pixel_event="Lead")
 
 
 @require_POST
 def partner(request):
     return _handle(request, forms.PartnershipInquiryForm,
                    "your interest in partnering with IADEBAYO Foundation",
-                   "New partnership inquiry", "core:partner")
+                   "New partnership inquiry", "core:partner", pixel_event="Lead")
 
 
 # --------------------------------------------------------- staff-only download

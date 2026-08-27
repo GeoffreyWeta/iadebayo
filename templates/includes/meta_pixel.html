@@ -1,0 +1,44 @@
+{% comment %}
+  Meta (Facebook) Pixel. Renders nothing at all unless META_PIXEL_ID is set —
+  see config/settings/base.py.
+
+  What this sends, and what it deliberately does not:
+
+    * Every page view, as Meta's standard PageView. That is the baseline the
+      ads platform needs to know a visit happened.
+    * One conversion event on the page a form redirects to after a *successful*
+      submission — `meta_pixel_event`, set by submissions.views and handed over
+      by core.context_processors. That is what turns "3,000 clicks" into "eleven
+      of them applied", which is the only reason to run a pixel on this site.
+    * Nothing else. In particular, no advanced matching: Meta's install flow
+      offers to pass the visitor's email address and phone number to `fbq` so it
+      can tie the action to a Facebook account, and this site does not, because
+      the pages where we hold those details are the application forms. An
+      applicant gives us their number to be contacted about a programme, not to
+      be matched to an advertising profile, and the privacy policy says we share
+      personal information only for the purpose it was given for. Turning
+      matching on would make that untrue. The event names below carry no
+      applicant data — they say *that* someone applied, never who.
+
+  The event name is always one of the fixed strings in submissions.views, never
+  anything a visitor typed.
+{% endcomment %}
+{% if META_PIXEL_ID %}
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '{{ META_PIXEL_ID }}');
+fbq('track', 'PageView');
+{% if meta_pixel_event %}fbq('track', '{{ meta_pixel_event }}');{% endif %}
+</script>
+<noscript><img height="1" width="1" style="display:none" alt=""
+  src="https://www.facebook.com/tr?id={{ META_PIXEL_ID }}&amp;ev=PageView&amp;noscript=1"></noscript>
+<!-- End Meta Pixel Code -->
+{% endif %}
