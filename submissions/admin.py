@@ -38,7 +38,7 @@ class EmbarkAdmin(SubmissionAdmin):
         ("Section A — About the applicant", {
             "fields": ("name", "gender", "applicant_status", "email",
                        ("phone_code", "phone"),
-                       "date_of_birth", "institution", ("city", "state", "country"),
+                       "date_of_birth", "institution", ("country", "state", "city"),
                        "linkedin", ("social_handle", "social_handle_2")),
         }),
         ("Section B — Business information", {

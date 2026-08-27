@@ -176,6 +176,127 @@
   form.addEventListener("change", queueSave);
   if (draftNote) draftNote.hidden = false;
 
+  /* --------------------------------------------- country → region picker */
+  /* Pick a country and the region field becomes that country's own list —
+     37 states for Nigeria, 47 counties for Kenya, 9 provinces for South
+     Africa — with the label renamed to the word that country actually uses.
+
+     The `state` text input remains the only control that submits. A <select>
+     with NO `name` sits in front of it and writes into it. Three things fall
+     out of that, all of them the point:
+
+       * Server-side validation does not change at all. `state` stays free
+         text, so every legacy row, and every region ISO has never heard of,
+         stays valid. A dropdown that could reject a real place name would be
+         worse than the text box it replaced.
+       * Nothing can ever submit two values for one field — the failure you get
+         by naming the picker and forgetting to disable the input.
+       * With this script off, or on a country we have no list for, the
+         applicant just types, exactly as before.
+
+     Runs after restoreDraft() on purpose: a restored or server-re-rendered
+     value has to be reflected in the picker, not overwritten by it.
+
+     Data: static/js/subdivisions.js — generated from ISO 3166-2, top-level
+     subdivisions only, 66 countries. Anywhere else falls back to the text box.
+  */
+  (function regionPicker() {
+    var countrySelect = form.querySelector("#id_country");
+    var stateInput = form.querySelector("#id_state");
+    var DATA = window.IADEBAYO_SUBDIVISIONS;
+    if (!countrySelect || !stateInput || !DATA) return;
+
+    // Sentinel for the escape-hatch option. Underscored, and deliberately not
+    // something exotic like a control character: `select.value = x` resolves
+    // silently to "" when nothing matches, so a sentinel that does not survive
+    // a DOM round-trip reads as "they picked the blank option", not as a bug.
+    var OTHER = "__other__";
+    var label = form.querySelector('label[for="' + stateInput.id + '"]');
+    var rawLabel = label ? label.textContent.trim() : "";
+    var star = /\*\s*$/.test(rawLabel) ? " *" : "";
+    var baseLabel = rawLabel.replace(/\s*\*\s*$/, "");
+    var basePlaceholder = stateInput.placeholder;
+
+    var picker = document.createElement("select");
+    picker.className = "form-input form-select";
+    picker.id = "id_state_picker";
+    picker.hidden = true;
+    stateInput.parentNode.insertBefore(picker, stateInput);
+
+    function setLabel(text, forId) {
+      if (!label) return;
+      label.textContent = text + star;
+      // Move `for` with the visible control, so clicking the label focuses
+      // what the applicant can actually see.
+      label.setAttribute("for", forId);
+    }
+
+    function fill(entry) {
+      picker.textContent = "";
+      picker.add(new Option("Select " + entry.label.toLowerCase() + "…", ""));
+      entry.items.forEach(function (name) { picker.add(new Option(name, name)); });
+      picker.add(new Option("Other / not listed", OTHER));
+    }
+
+    function showTextBox(placeholder) {
+      stateInput.hidden = false;
+      stateInput.placeholder = placeholder;
+    }
+
+    function sync(countryChanged) {
+      var entry = DATA[countrySelect.value];
+
+      if (!entry) {                       // no list for this country
+        picker.hidden = true;
+        showTextBox(basePlaceholder);
+        setLabel(baseLabel, stateInput.id);
+        return;
+      }
+
+      fill(entry);
+      picker.hidden = false;
+      setLabel(entry.label, picker.id);
+
+      // Changing country invalidates whatever region was chosen for the old one.
+      if (countryChanged) stateInput.value = "";
+      var current = stateInput.value.trim();
+
+      var options = picker.options;
+      for (var i = 0; i < options.length; i++) {
+        if (current && options[i].value === current) {
+          picker.selectedIndex = i;
+          stateInput.hidden = true;
+          return;
+        }
+      }
+      if (current) {                      // theirs is not on the list — keep it
+        picker.value = OTHER;
+        showTextBox("Your " + entry.label.toLowerCase());
+      } else {
+        picker.selectedIndex = 0;
+        stateInput.hidden = true;
+      }
+    }
+
+    picker.addEventListener("change", function () {
+      var entry = DATA[countrySelect.value];
+      if (picker.value === OTHER) {
+        stateInput.value = "";
+        showTextBox(entry ? "Your " + entry.label.toLowerCase() : basePlaceholder);
+        stateInput.focus();
+      } else {
+        stateInput.hidden = true;
+        stateInput.value = picker.value;
+      }
+      // Setting .value in script fires nothing, and the draft saver listens for
+      // real events — tell it explicitly or the choice is not saved.
+      form.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    countrySelect.addEventListener("change", function () { sync(true); });
+    sync(false);
+  })();
+
   /* ------------------------------------------------------------- submit */
 
   form.addEventListener("submit", function (e) {

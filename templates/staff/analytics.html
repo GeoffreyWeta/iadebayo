@@ -252,6 +252,9 @@
   <h2 class="staff-section-h reveal">Who is applying</h2>
   <div class="grid-2">
     {% include "staff/_bars.html" with title="Countries" data=countries note="Top 8, rest folded into Other" %}
+    {# Named with their country: subdivision names repeat across borders, see
+       analytics.region_breakdown. #}
+    {% include "staff/_bars.html" with title="States and regions" data=states note="Top 8, rest folded into Other" %}
     {% include "staff/_bars.html" with title="Sectors" data=sectors note="Top 8, rest folded into Other" %}
     {% include "staff/_bars.html" with title="Academic status" data=status %}
     {% include "staff/_bars.html" with title="Gender" data=gender %}

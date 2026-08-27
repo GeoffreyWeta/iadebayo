@@ -302,6 +302,36 @@ class PublicFormTests(TestCase):
         # Scheme assumed for the bare domain, same as LinkedIn.
         self.assertEqual(application.business_website, "https://okaforfarms.ng")
 
+    # ------------------------------------------------ country → region field
+    def test_region_is_still_free_text_on_the_server(self):
+        """The picker is a browser convenience. If the server ever started
+        validating `state` against the ISO list, a legacy row or a region ISO
+        has not caught up with would be rejected — so a value that is on no
+        list has to keep saving."""
+        self.submit("apply", dict(EMBARK, country="Nigeria",
+                                  state="Somewhere Not On Any List"))
+        self.assertEqual(models.EmbarkApplication.objects.get().state,
+                         "Somewhere Not On Any List")
+
+    def test_a_picked_region_round_trips(self):
+        self.submit("apply", dict(EMBARK, country="Kenya", state="Nakuru"))
+        application = models.EmbarkApplication.objects.get()
+        self.assertEqual(application.country, "Kenya")
+        self.assertEqual(application.state, "Nakuru")
+
+    def test_region_data_is_wired_into_the_apply_page(self):
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, "js/subdivisions.js")
+        # Order matters: form-steps.js reads the data at run time, and both
+        # scripts are deferred, so the data file has to come first.
+        body = response.content.decode()
+        self.assertLess(body.index("js/subdivisions.js"), body.index("js/form-steps.js"))
+
+    def test_country_is_asked_before_the_region_it_controls(self):
+        response = self.client.get(reverse("core:apply"))
+        body = response.content.decode()
+        self.assertLess(body.index('id="id_country"'), body.index('id="id_state"'))
+
     def test_the_video_brief_is_on_the_form(self):
         """The three things the video must cover are the most-missed instruction
         on the form, so they are asserted rather than trusted."""

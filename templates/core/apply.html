@@ -120,5 +120,13 @@
 {% endblock %}
 
 {% block scripts %}
+{% comment %}
+  subdivisions.js first: form-steps.js reads window.IADEBAYO_SUBDIVISIONS to turn
+  the region field into the chosen country's own list. Both are `defer`, which
+  guarantees they run in document order, so the data is always there in time.
+  It is a separate file rather than inline JSON so the browser caches the 16 KB
+  across page loads instead of re-sending it with every render of the form.
+{% endcomment %}
+<script src="{% static 'js/subdivisions.js' %}" defer></script>
 <script src="{% static 'js/form-steps.js' %}" defer></script>
 {% endblock %}

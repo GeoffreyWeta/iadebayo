@@ -148,6 +148,35 @@ class AnalyticsNumbersTests(TestCase):
         self.assertEqual(result["rows"][-1]["label"], "Other")
         self.assertEqual(sum(r["value"] for r in result["rows"]), 6)
 
+    def test_states_with_the_same_name_in_different_countries_stay_apart(self):
+        """The reason this is not just breakdown(qs, "state"): ISO 3166-2 gives
+        Ghana, Kenya and Botswana each a region called "Central", and merging
+        them would invent a three-country province nobody applied from."""
+        make_application(state="Central", country="Ghana")
+        make_application(state="Central", country="Kenya")
+        make_application(state="Central", country="Kenya")
+        result = analytics.region_breakdown(EmbarkApplication.objects.all())
+        by_label = {r["label"]: r["value"] for r in result["rows"]}
+        self.assertEqual(by_label["Central, Kenya"], 2)
+        self.assertEqual(by_label["Central, Ghana"], 1)
+        self.assertNotIn("Central", by_label)
+
+    def test_states_left_blank_are_not_counted_as_answers(self):
+        """`state` is optional, and the 2025 form never asked for it at all."""
+        make_application(state="Lagos")
+        make_application(state="")
+        result = analytics.region_breakdown(EmbarkApplication.objects.all())
+        self.assertEqual(result["answered"], 1)
+        self.assertEqual(result["rows"][0]["label"], "Lagos, Nigeria")
+        self.assertEqual(result["rows"][0]["pct"], 100)
+
+    def test_a_state_without_a_country_keeps_its_bare_name(self):
+        """Legacy rows only — the form requires country — but a label reading
+        "Kano, " would look like a truncation bug."""
+        make_application(state="Kano", country="")
+        rows = analytics.region_breakdown(EmbarkApplication.objects.all())["rows"]
+        self.assertEqual(rows[0]["label"], "Kano")
+
     def test_multi_select_counts_people_not_ticks(self):
         make_application(growth_limits="funding,customers")
         make_application(growth_limits="funding")

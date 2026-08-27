@@ -188,8 +188,12 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         ("Section A — About the applicant",
          "Tell us who you are. Use an email address you check often; that is where "
          "every update about your application will go.",
+         # Country before state, and adjacent to it: the region field becomes
+         # that country's own list (see the region picker in form-steps.js), so
+         # asking for a state above the country it depends on reads as broken.
+         # Country → state → city is also the plain top-down reading order.
          ["name", "gender", "applicant_status", "email", "phone_code", "phone",
-          "date_of_birth", "institution", "city", "state", "country",
+          "date_of_birth", "institution", "country", "state", "city",
           "linkedin", "social_handle", "social_handle_2"]),
         ("Section B — Business information",
          "Now the venture itself. Your video carries as much weight as the written "

@@ -105,7 +105,46 @@ def breakdown(qs, field, choices=None, limit=None, blank_ok=False):
             continue
         answered += 1
         rows[labels.get(value, value or "Not said")] += 1
+    return _ranked(rows, answered, limit)
 
+
+def region_breakdown(qs, limit=None):
+    """Counts per state/region, qualified by the country it sits in.
+
+    The state picker stores a bare subdivision name, and those repeat across
+    countries — ISO 3166-2 has a "Central" in Botswana, Ghana, Kenya and Zambia,
+    and a "Northern" in half a dozen more. Keying on `state` alone would add four
+    unrelated places into one bar and label it with whichever country the reader
+    happened to assume, so the key is the (state, country) pair and the label
+    carries the country with it.
+
+    Every row is qualified, not just the ambiguous ones: labels that switch
+    format partway down a chart read as a rendering bug, and the reader cannot
+    tell "Lagos" from "Lagos, Nigeria" means anything without checking the rest
+    of the list. Country is required on the form, so a state with no country only
+    turns up in legacy rows; those fall back to the bare name rather than
+    printing a dangling comma.
+    """
+    rows = Counter()
+    answered = 0
+    for state, country in qs.values_list("state", "country"):
+        state = (state or "").strip()
+        if not state:
+            continue
+        answered += 1
+        country = (country or "").strip()
+        rows[f"{state}, {country}" if country else state] += 1
+    return _ranked(rows, answered, limit)
+
+
+def _ranked(rows, answered, limit=None):
+    """Biggest first, with the tail folded into a single "Other" row.
+
+    Shared by the plain and country-qualified breakdowns so the two order and
+    truncate identically — someone reading "States and regions" against
+    "Countries" should not have to work out whether "Other" was cut the same way
+    in both.
+    """
     ordered = sorted(rows.items(), key=lambda kv: (-kv[1], str(kv[0]).lower()))
     if limit and len(ordered) > limit:
         head, tail = ordered[:limit], ordered[limit:]
@@ -427,6 +466,7 @@ def dashboard(range_key=None, today=None):
         "heat": heat_grid(series),
         "funnel": _funnel(apps),
         "countries": breakdown(apps, "country", limit=8),
+        "states": region_breakdown(apps, limit=8),
         "sectors": breakdown(apps, "business_sector",
                              EmbarkApplication.SECTOR_CHOICES, limit=8),
         "referrals": breakdown(apps, "heard_about", EmbarkApplication.REFERRAL_CHOICES),
