@@ -43,6 +43,7 @@
     <nav class="staff-nav" aria-label="Staff area">
       <a href="{% url 'staff:analytics' %}"{% if nav == 'analytics' %} aria-current="page"{% endif %}>Analytics</a>
       <a href="{% url 'admin:index' %}">Admin</a>
+      <a href="{% url 'staff:password_change' %}"{% if nav == 'password' %} aria-current="page"{% endif %}>Password</a>
       <a href="{% url 'core:home' %}">View site</a>
     </nav>
     <div class="staff-who">

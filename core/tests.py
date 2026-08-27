@@ -326,3 +326,72 @@ class CohortWindowTests(TestCase):
             ("Applications open", "1 August – 11 September 2026"),
             ("Admission notifications", "14 – 25 September 2026"),
         ])
+
+
+@SSL_REDIRECT_OFF
+class StaffPasswordChangeTests(TestCase):
+    """Staff can replace the password an administrator handed them."""
+
+    NEW = "sunset-marble-97"
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user("dare", password=PASSWORD, is_staff=True)
+        self.client.login(username="dare", password=PASSWORD)
+
+    def test_anonymous_is_bounced_to_the_staff_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("staff:password_change"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("staff:login"), response["Location"])
+
+    def test_a_signed_in_non_staff_user_cannot_reach_it(self):
+        """is_staff, not merely is_authenticated -- the page is inside the area
+        that reads applicant data."""
+        self.client.logout()
+        User.objects.create_user("outsider", password=PASSWORD)
+        self.client.login(username="outsider", password=PASSWORD)
+        response = self.client.get(reverse("staff:password_change"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("staff:login"), response["Location"])
+
+    def test_the_page_renders_for_staff(self):
+        response = self.client.get(reverse("staff:password_change"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Change your password")
+
+    def test_changing_it_works_and_keeps_the_session(self):
+        response = self.client.post(reverse("staff:password_change"), {
+            "old_password": PASSWORD,
+            "new_password1": self.NEW,
+            "new_password2": self.NEW,
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.NEW))
+        # Still signed in: a password change that silently logged everyone out
+        # would read as the form having failed.
+        self.assertEqual(self.client.get(reverse("staff:analytics")).status_code, 200)
+
+    def test_the_wrong_current_password_is_rejected(self):
+        response = self.client.post(reverse("staff:password_change"), {
+            "old_password": "not-the-password",
+            "new_password1": self.NEW,
+            "new_password2": self.NEW,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(PASSWORD))
+
+    def test_a_weak_new_password_is_refused(self):
+        """The validators are the reason this page is worth having: the shared
+        starter password cannot be set again through it."""
+        for weak in ["yosie", "1234", "password"]:
+            with self.subTest(weak=weak):
+                self.client.post(reverse("staff:password_change"), {
+                    "old_password": PASSWORD,
+                    "new_password1": weak,
+                    "new_password2": weak,
+                })
+                self.user.refresh_from_db()
+                self.assertTrue(self.user.check_password(PASSWORD))

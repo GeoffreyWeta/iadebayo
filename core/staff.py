@@ -10,6 +10,7 @@ Accounts are still created in the admin. That is deliberate — there is no
 self-service registration, because every account here can read applicants'
 personal data.
 """
+from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
@@ -113,6 +114,33 @@ class StaffLoginView(auth_views.LoginView):
                 except ValueError:      # entry expired between add and incr
                     cache.add(key, 1, LOCK_SECONDS)
         return super().form_invalid(form)
+
+
+class StaffPasswordChangeView(auth_views.PasswordChangeView):
+    """Let a staffer change their own password without going near the admin.
+
+    Accounts are created by an administrator, which means every one of them
+    starts life with a password somebody else chose and therefore knows. There
+    has to be a way to replace it that does not require the admin UI, because
+    not every staff account has permissions there -- an account can reach the
+    dashboard and still land on an empty admin index.
+
+    Django's PasswordChangeForm asks for the current password and runs
+    AUTH_PASSWORD_VALIDATORS on the new one, so the weak shared password a
+    person is handed cannot be set again here. `staff_required` rather than the
+    plain login_required Django would use, so a non-staff account cannot reach
+    it, and the redirect lands on the branded sign-in like everything else.
+    """
+    template_name = "staff/password_change.html"
+    success_url = reverse_lazy("staff:analytics")
+    extra_context = {"page_title": "Change password"}
+
+    def form_valid(self, response):
+        # update_session_auth_hash inside the parent keeps the current session
+        # alive; without this message the redirect to analytics looks like the
+        # form silently did nothing.
+        messages.success(self.request, "Your password has been changed.")
+        return super().form_valid(response)
 
 
 class StaffLogoutView(auth_views.LogoutView):
