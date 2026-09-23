@@ -389,3 +389,79 @@ class PromoPopup(models.Model):
             if promo.is_live():
                 return promo
         return None
+
+
+class EmailTemplate(models.Model):
+    """A reusable message the team sends an applicant after deciding on them.
+
+    The team writes these; nothing here is sent automatically. A template is
+    picked on the application's own page, substituted with that applicant's
+    details (see core.mailmerge), and then shown in an editable box before it
+    goes anywhere — so the template is a starting point, not a machine that
+    mails people on its own.
+
+    `purpose` is only a default: an "approved" template is the one pre-selected
+    after an approval, but any template can be chosen for any applicant. The
+    team knows their own cases better than a dropdown does.
+    """
+    APPROVED = "approved"
+    DECLINED = "declined"
+    ANY = "any"
+    PURPOSE_CHOICES = [
+        (APPROVED, "After approving someone"),
+        (DECLINED, "After declining someone"),
+        (ANY, "Anything else"),
+    ]
+
+    name = models.CharField(
+        max_length=80,
+        help_text="What you will recognise this by in the dropdown, e.g. "
+                  "“Cohort 5 offer”. Never shown to the applicant.")
+    purpose = models.CharField(
+        max_length=10, choices=PURPOSE_CHOICES, default=APPROVED,
+        help_text="Which decision this is the usual reply to. It only decides "
+                  "which template is offered first.")
+    subject = models.CharField(
+        max_length=200,
+        help_text="The email's subject line. Placeholders work here too.")
+    body = models.TextField(
+        help_text="The message. Use the placeholders listed beside the box to "
+                  "drop in the applicant's own details.")
+    is_default = models.BooleanField(
+        "Offer this one first", default=False,
+        help_text="The template pre-filled for its purpose. If several are "
+                  "ticked, the most recently edited wins.")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["purpose", "name"]
+        verbose_name = "Email template"
+        verbose_name_plural = "Email templates"
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        """Refuse a placeholder this site cannot fill.
+
+        Checked at save time rather than at send time because a typo caught
+        here is caught once, by the person who made it, while they are looking
+        at the text. Caught at send time it is caught by whoever happens to mail
+        the next applicant, and only if they read carefully.
+        """
+        from django.core.exceptions import ValidationError
+
+        from . import mailmerge
+        bad = mailmerge.unknown(self.subject, self.body)
+        if bad:
+            raise ValidationError({
+                "body": "This site cannot fill in: %(bad)s. Check the spelling "
+                        "against the list of placeholders." % {
+                            "bad": ", ".join(f"{{{{ {b} }}}}" for b in bad)}})
+
+    @classmethod
+    def preferred(cls, purpose):
+        """The template to offer first for a decision, or None if there are none."""
+        matching = cls.objects.filter(purpose=purpose)
+        return (matching.filter(is_default=True).order_by("-updated_at").first()
+                or matching.order_by("name").first())

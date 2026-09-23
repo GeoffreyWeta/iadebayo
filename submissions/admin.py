@@ -29,8 +29,8 @@ class ContactAdmin(SubmissionAdmin):
 class EmbarkAdmin(SubmissionAdmin):
     search_fields = ("name", "email", "business_name", "country", "institution")
     list_display = ("name", "business_name", "applicant_status", "country",
-                    "video_link", "created_at", "reviewed")
-    list_filter = ("reviewed", "applicant_status", "gender", "device",
+                    "video_link", "created_at", "decision", "reviewed")
+    list_filter = ("decision", "reviewed", "applicant_status", "gender", "device",
                    "reliable_internet", "heard_about", "country", "created_at")
     readonly_fields = ("created_at", "limiting_factors", "video_link_display",
                        "video_download")

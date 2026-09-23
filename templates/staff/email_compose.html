@@ -1,0 +1,156 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One message, to one applicant, written by a person.
+
+  The box already holds the real message: the view substitutes the applicant's
+  details into the chosen template before this page is rendered, so what is on
+  screen is what will arrive. There is no second "preview" step for that reason
+  — a preview that shows something different from the box is worse than none,
+  and one that shows the same thing is a click for nothing.
+
+  Nothing on this page sends automatically, and nothing sends on load. The
+  template picker is its own GET form precisely so that choosing a template can
+  never be the same request as sending one.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow">
+      <a href="{{ c.url }}">{{ c.label }}</a> ›
+      <a href="{% url 'staff:detail' c.slug obj.pk %}">{{ obj }}</a>
+    </p>
+    <h1>Send an email</h1>
+    <p class="staff-head-sub">
+      {% if to_email %}To {{ obj.name }} at <strong>{{ to_email }}</strong>
+      {% else %}This submission has no email address on it.{% endif %}
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-quiet" href="{% url 'staff:detail' c.slug obj.pk %}">← Back to the application</a>
+  </div>
+</header>
+
+<p class="detail-state">
+  {% if decision == "approved" %}<span class="pill pill-good">Approved</span>
+  {% elif decision == "declined" %}<span class="pill pill-wait">Declined</span>
+  {% else %}<span class="pill pill-wait">No decision recorded</span>{% endif %}
+  {% if sent_at %}
+  <span class="pill pill-good">Already emailed {{ sent_at|date:"j M Y, H:i" }}</span>
+  {% endif %}
+</p>
+
+{% if sent_at %}
+<p class="staff-caveat">
+  This applicant has already been sent a decision email. Sending another is
+  allowed — people do ask for the details again — but check first that you are
+  not writing to someone twice about the same thing.
+</p>
+{% endif %}
+
+{% if not to_email %}
+<section class="card detail-card">
+  <p>There is no address to send to, so there is nothing to write. The email
+     field on this submission is empty.</p>
+</section>
+
+{% else %}
+
+{% comment %} Its own form, and a GET: picking a template loads text, it never sends. {% endcomment %}
+<section class="card form-block">
+  <h2>Start from a template</h2>
+  {% if templates %}
+  <p class="chart-note">
+    Choosing a template replaces whatever is in the boxes below, so pick one
+    first and edit afterwards. Templates are managed under
+    <a href="{% url 'staff:list' 'email-templates' %}">Email templates</a>.
+  </p>
+  <form method="get" class="staff-form">
+    <div class="form-grid">
+      <div class="staff-field">
+        <label for="template-pick">Template</label>
+        <select id="template-pick" name="template" class="staff-input staff-select">
+          <option value="">— start from an empty message —</option>
+          {% for t in templates %}
+          <option value="{{ t.pk }}"{% if chosen and t.pk == chosen.pk %} selected{% endif %}>
+            {{ t.name }} ({{ t.get_purpose_display|lower }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="staff-btn staff-btn-quiet staff-btn-inline">Load this template</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="chart-note">
+    No templates yet. You can write this message from scratch below, or
+    <a href="{% url 'staff:new' 'email-templates' %}">save one as a template</a>
+    so the next person does not have to write it again.
+  </p>
+  {% endif %}
+</section>
+
+<form method="post" class="staff-form edit-form" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="staff-form-error" role="alert">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="card form-block">
+    <h2>The message</h2>
+    <p class="chart-note">
+      This is exactly what {{ obj.name|default:"the applicant" }} will receive —
+      their details have already been filled in. Read it before you send it.
+    </p>
+
+    <div class="form-grid">
+      <div class="staff-field field-subject{% if form.subject.errors %} has-error{% endif %}">
+        <label for="{{ form.subject.id_for_label }}">Subject <span class="req" title="Required">*</span></label>
+        {{ form.subject }}
+        {% for error in form.subject.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="staff-field field-body{% if form.body.errors %} has-error{% endif %}">
+        <label for="{{ form.body.id_for_label }}">Message <span class="req" title="Required">*</span></label>
+        {{ form.body }}
+        {% for error in form.body.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+        <p class="field-help">
+          Plain text. Blank lines separate paragraphs, and the reply address is
+          the team inbox, so an applicant who replies reaches a person.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card form-block">
+    <h2>Placeholders you can type</h2>
+    <p class="chart-note">
+      The template already filled these in. They are here for anything you add
+      by hand — type one and it is replaced when you press send. Anything this
+      site cannot fill in stops the send rather than going out blank.
+    </p>
+    <dl class="detail-list">
+      {% for token, meaning in placeholders %}
+      <div class="detail-row">
+        <dt><code>{{ token }}</code></dt>
+        <dd>{{ meaning }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <div class="form-actions">
+    <button type="submit" class="staff-btn staff-btn-primary staff-btn-inline">
+      Send to {{ to_email }}
+    </button>
+    <a class="staff-btn staff-btn-quiet" href="{% url 'staff:detail' c.slug obj.pk %}">Cancel</a>
+  </div>
+</form>
+
+{% endif %}
+{% endblock %}

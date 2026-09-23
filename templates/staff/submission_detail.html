@@ -44,6 +44,78 @@
 </p>
 {% endif %}
 
+{% if c.decides %}
+{% comment %}
+  Deciding and telling are two buttons on purpose. The decision is recorded
+  here; the email is written on its own page, where it can be read before it
+  goes. A single "approve and notify" button would make every misclick an
+  email that cannot be taken back.
+
+  The standing warning below is the whole reason the send is recorded against
+  the row: without it, "approved three weeks ago and never told" is invisible.
+{% endcomment %}
+<section class="card detail-card">
+  <h2>Decision</h2>
+
+  <p class="detail-state">
+    {% if obj.decision == "approved" %}<span class="pill pill-good">Approved</span>
+    {% elif obj.decision == "declined" %}<span class="pill pill-wait">Declined</span>
+    {% else %}<span class="pill pill-wait">No decision yet</span>{% endif %}
+
+    {% if obj.decided_at %}
+    <span class="cell-none">by {{ obj.decided_by|default:"a staff member" }}
+      on {{ obj.decided_at|date:"j M Y, H:i" }}</span>
+    {% endif %}
+  </p>
+
+  {% if obj.decision_email_sent_at %}
+  <p class="detail-state"><span class="pill pill-good">Emailed
+    {{ obj.decision_email_sent_at|date:"j M Y, H:i" }}</span></p>
+  {% elif obj.awaiting_email %}
+  <p class="staff-caveat">
+    This person has not been told. The decision is recorded here and nowhere
+    else until you send them an email.
+  </p>
+  {% endif %}
+
+  <div class="head-actions">
+    {% if obj.decision != "approved" %}
+    <form method="post" action="{% url 'staff:decide' c.slug obj.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="approved">
+      <input type="hidden" name="next" value="{{ here }}">
+      <button type="submit" class="staff-btn staff-btn-primary staff-btn-inline">Approve</button>
+    </form>
+    {% endif %}
+
+    {% if obj.decision != "declined" %}
+    <form method="post" action="{% url 'staff:decide' c.slug obj.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="declined">
+      <input type="hidden" name="next" value="{{ here }}">
+      <button type="submit" class="staff-btn staff-btn-quiet staff-btn-inline">Decline</button>
+    </form>
+    {% endif %}
+
+    {% if obj.decision %}
+    <form method="post" action="{% url 'staff:decide' c.slug obj.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="">
+      <input type="hidden" name="next" value="{{ here }}">
+      <button type="submit" class="staff-btn staff-btn-quiet staff-btn-inline">Clear decision</button>
+    </form>
+    {% endif %}
+
+    {% if c.mailable and obj.email %}
+    <a class="staff-btn {% if obj.awaiting_email %}staff-btn-primary{% else %}staff-btn-quiet{% endif %} staff-btn-inline"
+       href="{% url 'staff:email' c.slug obj.pk %}">
+      {% if obj.decision_email_sent_at %}Send another email{% else %}Send email{% endif %}
+    </a>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 <section class="card detail-card">
   <h2>What they submitted</h2>
   <dl class="detail-list">

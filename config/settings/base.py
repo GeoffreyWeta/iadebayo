@@ -193,6 +193,19 @@ else:
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "IADEBAYO Foundation <noreply@iadebayo.foundation>")
 FOUNDATION_NOTIFY_EMAIL = env("FOUNDATION_NOTIFY_EMAIL", "hello@iadebayo.foundation")
 
+# The address on the decision emails the team sends applicants by hand. Kept
+# separate from DEFAULT_FROM_EMAIL because those go out as "noreply@", which is
+# the wrong address for a message an applicant is meant to reply to.
+#
+# Sending these through Gmail while they arrive as embark@iadebayo.foundation is
+# a mail-host setting, not a code one: verify the address in Gmail (Settings >
+# Accounts > Send mail as) or as a SendGrid sender, point EMAIL_HOST at that
+# provider, and set this to the verified address. An unverified From is what
+# gets a domain marked as spoofing.
+EMBARK_FROM_EMAIL = env("EMBARK_FROM_EMAIL", "") or DEFAULT_FROM_EMAIL
+# Where an applicant's reply lands. Blank falls back to the team inbox.
+EMBARK_REPLY_TO = env("EMBARK_REPLY_TO", "") or FOUNDATION_NOTIFY_EMAIL
+
 # ------------------------------------------------------------------ reCAPTCHA
 # Leave keys empty in dev to disable. Get keys: https://www.google.com/recaptcha/admin
 RECAPTCHA_SITE_KEY = env("RECAPTCHA_SITE_KEY", "")

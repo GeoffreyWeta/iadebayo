@@ -139,3 +139,10 @@ class PromoPopupAdmin(admin.ModelAdmin):
     def live_now(self, obj):
         """Active AND inside its date window — the dates catch people out."""
         return obj.is_live()
+
+
+@admin.register(models.EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "purpose", "subject", "is_default", "updated_at")
+    list_filter = ("purpose", "is_default")
+    search_fields = ("name", "subject", "body")

@@ -1,6 +1,7 @@
 """One model per form in the spec. All reviewable in Django admin."""
 from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
@@ -70,6 +71,65 @@ class DiallingCodeMixin(models.Model):
         return f"{self.phone_code} {self.phone}".strip()
 
 
+class DecisionMixin(models.Model):
+    """Whether the team said yes, and whether they have told the person yet.
+
+    A decision is a mark the team puts *on* a submission, like `reviewed` — it
+    is not an edit of what the applicant wrote, so it does not break the rule
+    that submissions are read-only in the staff area (see core.staff_views).
+
+    The three columns answer three different questions, and collapsing them
+    loses one of the answers:
+
+      `decision`   what we decided
+      `decided_at` when, so "approved last week and still not told" is a query
+      `decision_email_sent_at` whether they have actually heard
+
+    That last one exists for the same reason `acknowledged_at` does. Without a
+    per-row record of the send, nobody can answer "who have we approved but not
+    written to", and the honest answer to that question is the only thing
+    standing between an applicant and being told twice, or never.
+
+    Mix in *after* TimestampedSubmission, for the Meta reason DiallingCodeMixin
+    explains above.
+    """
+    APPROVED = "approved"
+    DECLINED = "declined"
+    DECISION_CHOICES = [(APPROVED, "Approved"), (DECLINED, "Declined")]
+
+    decision = models.CharField(
+        max_length=10, choices=DECISION_CHOICES, blank=True,
+        help_text="Blank until the team has decided.")
+    decided_at = models.DateTimeField(null=True, blank=True, editable=False)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name="+",
+        help_text="Who recorded the decision.")
+    decision_email_sent_at = models.DateTimeField(
+        null=True, blank=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def is_approved(self):
+        return self.decision == self.APPROVED
+
+    @property
+    def decision_label(self):
+        return self.get_decision_display() if self.decision else "No decision yet"
+
+    @property
+    def awaiting_email(self):
+        """Decided, but the person has not been written to.
+
+        Drives the warning on the application page. Deliberately true for a
+        decline as well as an approval: a decision nobody was told about is the
+        same failure either way.
+        """
+        return bool(self.decision) and self.decision_email_sent_at is None
+
+
 class ContactMessage(TimestampedSubmission):
     name = models.CharField(max_length=120)
     email = models.EmailField()
@@ -87,7 +147,8 @@ class NewsletterSubscriber(TimestampedSubmission):
         return self.email
 
 
-class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin):
+class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
+                       DecisionMixin):
     """Embark Academy application, in three sections.
 
     Every field is permissive at the database level so historic applications

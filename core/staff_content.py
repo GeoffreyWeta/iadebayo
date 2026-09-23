@@ -34,7 +34,14 @@ from dataclasses import dataclass
 from blog.models import Post
 from submissions import models as sub
 
+from . import mailmerge
 from . import models as content
+
+# Spelled out on the template form rather than left to the field's help text:
+# a placeholder that does not exist is refused on save (EmailTemplate.clean), so
+# the list of the ones that do exist has to be in front of whoever is typing.
+PLACEHOLDER_NOTE = "You can use: " + ", ".join(
+    f"{token} ({meaning.split(',')[0].lower()})" for token, meaning in mailmerge.catalogue()) + "."
 
 
 # --------------------------------------------------------------------- columns
@@ -101,6 +108,8 @@ class Collection:
     per_page: int = 25
     export: bool = False            # offer "Download CSV"
     review_field: str = ""          # inbox only: the boolean the list toggles
+    decision_field: str = ""        # inbox only: the approved/declined column
+    mailable: bool = False          # inbox only: offer "Send email" on the detail page
     icon: str = "•"
 
     # ---------------------------------------------------------------- helpers
@@ -124,6 +133,11 @@ class Collection:
     @property
     def is_inbox(self):
         return self.kind == "inbox"
+
+    @property
+    def decides(self):
+        """Whether this collection records an approve/decline decision."""
+        return bool(self.decision_field)
 
     @property
     def orderable(self):
@@ -445,12 +459,15 @@ APPLICATIONS = Collection(
     blurb="Completed applications to the Academy.",
     columns=(Col("name", "Applicant", "strong"), Col("business_name", "Business"),
              Col("country", "Country", "chip"), Col("created_at", "Received", "when"),
+             Col("decision", "Decision", "chip"),
              Col("reviewed", "Reviewed", "switch")),
     search=("name", "email", "business_name", "country", "institution", "phone"),
-    filters=("reviewed", "applicant_status", "gender", "device",
+    filters=("decision", "reviewed", "applicant_status", "gender", "device",
              "reliable_internet", "heard_about", "country"),
     ordering=("-created_at",),
     review_field="reviewed",
+    decision_field="decision",
+    mailable=True,
     export=True,
     per_page=30,
     empty="No applications yet.",
@@ -583,12 +600,46 @@ NEWSLETTER = Collection(
 )
 
 
+# ================================================= mail: what we send applicants
+EMAIL_TEMPLATES = Collection(
+    slug="email-templates",
+    model=content.EmailTemplate,
+    label="Email templates",
+    singular="email template",
+    section="mail",
+    icon="✎",
+    blurb="The messages the team sends applicants after deciding on them.",
+    columns=(Col("name", "Template", "strong"),
+             Col("purpose", "Usual reply to", "chip"),
+             Col("subject", "Subject"),
+             Col("is_default", "Offered first", "switch"),
+             Col("updated_at", "Last edited", "when")),
+    groups=(
+        Group("What this template is for",
+              "The name is yours — the applicant never sees it.",
+              ("name", "purpose", "is_default")),
+        Group("The message",
+              "Write it as you would write the email. " + PLACEHOLDER_NOTE,
+              ("subject", "body")),
+    ),
+    search=("name", "subject", "body"),
+    filters=("purpose", "is_default"),
+    ordering=("purpose", "name"),
+    empty="No templates yet. Add one and it becomes selectable on every "
+          "application.",
+    note="Nothing here is ever sent automatically. A template is the text an "
+         "email starts from; someone still opens the application, reads the "
+         "message and presses send.",
+)
+
+
 # ------------------------------------------------------------------- the index
 COLLECTIONS = (
     COHORT, IMPACT, MILESTONES, GALLERY, SPOTLIGHT, RESOURCES, POSTS, PROMOS, SEO,
     TEAM, FACULTY, ALUMNI,
     APPLICATIONS, UNFINISHED, CONTACT, FACULTY_APPS, VOLUNTEERS, PARTNERSHIPS,
     NEWSLETTER,
+    EMAIL_TEMPLATES,
 )
 
 BY_SLUG = {c.slug: c for c in COLLECTIONS}
@@ -599,6 +650,7 @@ SECTIONS = (
     ("content", "Site content", "Pages, media and the blog"),
     ("people", "People", "Team, faculty and alumni"),
     ("inbox", "Submissions", "Everything the public sent us"),
+    ("mail", "Email", "The messages you send applicants"),
 )
 
 

@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.utils import timezone
 
 log = logging.getLogger(__name__)
@@ -93,4 +93,41 @@ def acknowledge(to_email: str, first_name: str, what: str, obj=None,
 
     if obj is not None:
         type(obj).objects.filter(pk=obj.pk).update(acknowledged_at=timezone.now())
+    return True
+
+
+def send_to_applicant(to_email: str, subject: str, body: str, obj=None,
+                      stamp_field="decision_email_sent_at") -> bool:
+    """One message, written by a staff member, to one applicant.
+
+    Unlike `notify_team` and `acknowledge` this is not automatic — somebody
+    pressed send on text they had just read. So the failure handling is the
+    opposite way round: the caller is a person waiting at a screen, and they
+    have to be told it did not go, otherwise they tick the applicant off a list
+    that nothing was ever sent to. Hence a bool the view turns into a visible
+    error, rather than a log line nobody reads.
+
+    `reply_to` is set because these are messages an applicant is meant to answer.
+    Sent from `EMBARK_FROM_EMAIL` and answered to `EMBARK_REPLY_TO`, so the
+    From address can be a send-only mailbox without the reply bouncing.
+
+    The row is stamped only on success, for the reason `acknowledged_at` exists:
+    a stamp written before the send would make a failed send indistinguishable
+    from a delivered one, and the applicant would never be written to again.
+    """
+    message = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.EMBARK_FROM_EMAIL,
+        to=[to_email],
+        reply_to=[settings.EMBARK_REPLY_TO] if settings.EMBARK_REPLY_TO else None,
+    )
+    try:
+        message.send(fail_silently=False)
+    except Exception:
+        log.exception("Applicant email failed (to=%r, subject=%r)", to_email, subject)
+        return False
+
+    if obj is not None and stamp_field:
+        type(obj).objects.filter(pk=obj.pk).update(**{stamp_field: timezone.now()})
     return True

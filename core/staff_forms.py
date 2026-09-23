@@ -169,3 +169,39 @@ def form_class_for(collection):
                   {"collection": collection}),
         fields=list(collection.form_fields),
     )
+
+
+class ApplicantEmailForm(forms.Form):
+    """The message about to be sent to one applicant.
+
+    Not a ModelForm: nothing here is saved. The subject and body arrive already
+    substituted for this applicant (the compose view renders the chosen template
+    before it ever reaches the browser), so what a staff member reads in these
+    two boxes is what the applicant receives — no second pass, no surprise.
+
+    Placeholders are still substituted once more on send, so that someone who
+    types `{{ first_name }}` into the box by hand gets what they expect. By then
+    the rendered text has none left, which makes the second pass a no-op in the
+    ordinary case.
+    """
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": "staff-input"}))
+    body = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "staff-input staff-textarea", "rows": 18}))
+
+    def clean(self):
+        """Refuse a placeholder nothing can fill, rather than mail it out.
+
+        EmailTemplate.clean already blocks these when the template is saved, but
+        this box is free text — someone can type one straight in here, and this
+        is the last point before it is somebody's email.
+        """
+        cleaned = super().clean()
+        from . import mailmerge
+        bad = mailmerge.unknown(cleaned.get("subject", ""), cleaned.get("body", ""))
+        if bad:
+            raise forms.ValidationError(
+                "This site cannot fill in: %(bad)s. Fix or remove it before sending."
+                % {"bad": ", ".join(f"{{{{ {b} }}}}" for b in bad)})
+        return cleaned

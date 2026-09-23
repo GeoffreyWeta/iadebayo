@@ -38,7 +38,7 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from . import staff_content
+from . import mailmerge, staff_content
 from .staff import staff_required
 from .staff_forms import form_class_for
 
@@ -491,7 +491,13 @@ def submission_detail(request, slug, pk):
 
 # Columns that are plumbing, not answers: they say nothing to someone reading an
 # application and their labels ("Draft id") only add noise.
-_DETAIL_SKIP = {"id", "draft_id", "acknowledged_at", "answers"}
+#
+# The decision columns are skipped for a different reason than the rest: they
+# are not plumbing, they are just not *answers*. The applicant did not tell us
+# whether we approved them, and listing our own decision under "What they
+# submitted" reads as though they did. They have their own card on the page.
+_DETAIL_SKIP = {"id", "draft_id", "acknowledged_at", "answers",
+                "decision", "decided_at", "decided_by", "decision_email_sent_at"}
 
 
 def detail_rows(obj):
@@ -695,3 +701,120 @@ def collection_export(request, slug):
             row.append("" if value is None else str(value))
         writer.writerow(row)
     return response
+
+
+# ============================================================ decisions and mail
+def _decidable(slug):
+    """The collection for `slug`, if it records decisions. 404 otherwise.
+
+    The check is on the collection rather than on the model so that these two
+    views stay as generic as every other view in this module: a second inbox
+    that starts recording decisions declares `decision_field` and gets both
+    screens, with nothing added here.
+    """
+    collection = collection_or_404(slug)
+    if not collection.decides:
+        raise Http404("That collection does not record decisions.")
+    return collection
+
+
+@require_POST
+@staff_required
+def collection_decide(request, slug, pk):
+    """Record approve / decline / undo on one submission.
+
+    Deliberately does not send anything. Deciding and telling someone are two
+    actions a person should take separately: the second one needs the first to
+    be right, and a button that does both means every misclick is an email that
+    cannot be recalled. The decision sets up the next screen; it does not fire it.
+    """
+    collection = _decidable(slug)
+    obj = get_object_or_404(collection.model, pk=pk)
+    field = collection.decision_field
+
+    value = request.POST.get("decision", "")
+    allowed = {c for c, _ in collection.model._meta.get_field(field).choices}
+    if value and value not in allowed:
+        raise Http404("Not a decision this collection recognises.")
+
+    setattr(obj, field, value)
+    obj.decided_at = timezone.now() if value else None
+    obj.decided_by = request.user if value else None
+    obj.save(update_fields=[field, "decided_at", "decided_by"])
+
+    if value:
+        messages.success(
+            request,
+            f"“{str(obj)[:60]}” marked {obj.get_decision_display().lower()}. "
+            f"They have not been told yet — use “Send email” when you are ready.")
+    else:
+        messages.success(request, f"Decision cleared for “{str(obj)[:60]}”.")
+    return back_to(request, collection.url("detail", pk=pk))
+
+
+@never_cache
+@staff_required
+def collection_email(request, slug, pk):
+    """Compose and send one message to one applicant.
+
+    GET fills the box from a template — the one the URL names, or the one whose
+    purpose matches the decision just recorded — with this applicant's details
+    already substituted. POST sends exactly what came back in the box.
+
+    Rendering on the way *in* rather than on the way out is the point. A staff
+    member who reads the message before pressing send has read the real message,
+    not a draft with `{{ first_name }}` in it that will be filled in later by
+    code they cannot see.
+    """
+    from .models import EmailTemplate
+    from .staff_forms import ApplicantEmailForm
+    from submissions.services import send_to_applicant
+
+    collection = _decidable(slug)
+    obj = get_object_or_404(collection.model, pk=pk)
+    to_email = (getattr(obj, "email", "") or "").strip()
+
+    templates = list(EmailTemplate.objects.all())
+    chosen = None
+    if request.GET.get("template"):
+        chosen = next((t for t in templates
+                       if str(t.pk) == request.GET["template"]), None)
+    elif getattr(obj, collection.decision_field, ""):
+        chosen = EmailTemplate.preferred(getattr(obj, collection.decision_field))
+
+    context = mailmerge.context_for(obj)
+
+    if request.method == "POST":
+        form = ApplicantEmailForm(request.POST)
+        if not to_email:
+            # Belt and braces: the button is hidden without an address, but a
+            # POST is not the button.
+            messages.error(request, "That submission has no email address on it.")
+        elif form.is_valid():
+            subject = mailmerge.render(form.cleaned_data["subject"], context)
+            body = mailmerge.render(form.cleaned_data["body"], context)
+            sent = send_to_applicant(to_email, subject, body, obj=obj)
+            if sent:
+                messages.success(request, f"Email sent to {to_email}.")
+                return redirect(collection.url("detail", pk=pk))
+            # Not a redirect: the text is still in the box, and losing it would
+            # mean rewriting the message to try again.
+            messages.error(
+                request,
+                "The message could not be sent — the mail server refused it. "
+                "Nothing was recorded against this applicant, so nothing is "
+                "lost by trying again.")
+    else:
+        form = ApplicantEmailForm(initial={
+            "subject": mailmerge.render(chosen.subject, context) if chosen else "",
+            "body": mailmerge.render(chosen.body, context) if chosen else "",
+        })
+
+    return render(request, "staff/email_compose.html", shell(
+        request, page_title=f"Email {getattr(obj, 'name', '') or to_email}",
+        nav=collection.slug, c=collection, obj=obj, form=form,
+        to_email=to_email, templates=templates, chosen=chosen,
+        placeholders=mailmerge.catalogue(),
+        sent_at=getattr(obj, "decision_email_sent_at", None),
+        decision=getattr(obj, collection.decision_field, ""),
+    ))

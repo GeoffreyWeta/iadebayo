@@ -33,4 +33,6 @@ urlpatterns = [
     path("c/<slug:slug>/<int:pk>/edit/", staff_views.collection_edit, name="edit"),
     path("c/<slug:slug>/<int:pk>/delete/", staff_views.collection_delete, name="delete"),
     path("c/<slug:slug>/<int:pk>/toggle/", staff_views.collection_toggle, name="toggle"),
+    path("c/<slug:slug>/<int:pk>/decide/", staff_views.collection_decide, name="decide"),
+    path("c/<slug:slug>/<int:pk>/email/", staff_views.collection_email, name="email"),
 ]

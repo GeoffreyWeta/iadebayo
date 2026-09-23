@@ -6,7 +6,10 @@ way nobody notices, and it is worth pinning down separately from the markup.
 """
 import datetime as dt
 
+from unittest import mock
+
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
@@ -16,8 +19,8 @@ from django.utils import timezone
 from submissions.models import (ContactMessage, EmbarkApplication,
                                 NewsletterSubscriber)
 
-from . import analytics, cohort
-from .models import Cohort
+from . import analytics, cohort, mailmerge
+from .models import Cohort, EmailTemplate
 
 PASSWORD = "pw-for-tests-only"
 
@@ -439,3 +442,200 @@ class StaffPasswordChangeTests(TestCase):
                 })
                 self.user.refresh_from_db()
                 self.assertTrue(self.user.check_password(PASSWORD))
+
+
+# ==================================================== decisions and staff email
+@SSL_REDIRECT_OFF
+class MailMergeTests(TestCase):
+    """Placeholder substitution: the part that ends up in a real inbox."""
+
+    def test_a_placeholder_becomes_the_applicants_own_detail(self):
+        app = make_application(name="Chidi Okafor", business_name="Okafor Foods")
+        out = mailmerge.render(
+            "Dear {{ first_name }}, about {{ business_name }}.",
+            mailmerge.context_for(app))
+        self.assertEqual(out, "Dear Chidi, about Okafor Foods.")
+
+    def test_spacing_inside_the_braces_does_not_matter(self):
+        app = make_application(name="Chidi Okafor")
+        context = mailmerge.context_for(app)
+        self.assertEqual(mailmerge.render("{{first_name}}", context), "Chidi")
+        self.assertEqual(mailmerge.render("{{   first_name   }}", context), "Chidi")
+
+    def test_a_nameless_application_does_not_produce_dear_comma(self):
+        app = make_application(name="")
+        self.assertEqual(
+            mailmerge.render("Dear {{ first_name }},", mailmerge.context_for(app)),
+            "Dear there,")
+
+    def test_an_unknown_placeholder_is_reported_not_blanked(self):
+        """A typo must stop the send. Blanked, it arrives as "Dear ,"."""
+        self.assertEqual(mailmerge.unknown("Hi {{ frist_name }}"), ["frist_name"])
+        self.assertEqual(mailmerge.unknown("Hi {{ first_name }}"), [])
+
+    def test_template_syntax_is_not_executed(self):
+        """The body is prose typed by a person, not a program to be run."""
+        app = make_application(name="Chidi Okafor")
+        text = "{% if 1 %}x{% endif %} {{ obj.email }}"
+        self.assertEqual(mailmerge.render(text, mailmerge.context_for(app)), text)
+
+
+@SSL_REDIRECT_OFF
+class EmailTemplateModelTests(TestCase):
+    def test_a_misspelled_placeholder_is_refused_at_save(self):
+        template = EmailTemplate(name="Offer", subject="Hello",
+                                 body="Dear {{ frist_name }},")
+        with self.assertRaises(ValidationError) as caught:
+            template.full_clean()
+        self.assertIn("frist_name", str(caught.exception))
+
+    def test_the_default_is_preferred_over_an_alphabetically_earlier_one(self):
+        EmailTemplate.objects.create(name="A plain one", subject="s", body="b",
+                                     purpose=EmailTemplate.APPROVED)
+        wanted = EmailTemplate.objects.create(
+            name="Z the real one", subject="s", body="b",
+            purpose=EmailTemplate.APPROVED, is_default=True)
+        self.assertEqual(EmailTemplate.preferred(EmailTemplate.APPROVED), wanted)
+
+    def test_no_template_for_a_purpose_is_none_not_an_error(self):
+        self.assertIsNone(EmailTemplate.preferred(EmailTemplate.DECLINED))
+
+
+@SSL_REDIRECT_OFF
+class DecisionTests(TestCase):
+    """Recording approve / decline, and who may do it."""
+
+    def setUp(self):
+        cache.clear()
+        mail.outbox = []
+        self.user = User.objects.create_user("dare", password=PASSWORD, is_staff=True)
+        self.app = make_application()
+        self.url = reverse("staff:decide",
+                           kwargs={"slug": "applications", "pk": self.app.pk})
+
+    def test_a_stranger_cannot_decide_anything(self):
+        response = self.client.post(self.url, {"decision": "approved"})
+        self.assertEqual(response.status_code, 302)
+        self.app.refresh_from_db()
+        self.assertEqual(self.app.decision, "")
+
+    def test_approving_records_who_and_when(self):
+        self.client.login(username="dare", password=PASSWORD)
+        self.client.post(self.url, {"decision": "approved"})
+        self.app.refresh_from_db()
+        self.assertEqual(self.app.decision, "approved")
+        self.assertEqual(self.app.decided_by, self.user)
+        self.assertIsNotNone(self.app.decided_at)
+
+    def test_approving_does_not_send_anything(self):
+        """Deciding and telling someone are two separate actions."""
+        self.client.login(username="dare", password=PASSWORD)
+        self.client.post(self.url, {"decision": "approved"})
+        self.app.refresh_from_db()
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNone(self.app.decision_email_sent_at)
+
+    def test_clearing_a_decision_clears_the_stamps_with_it(self):
+        self.client.login(username="dare", password=PASSWORD)
+        self.client.post(self.url, {"decision": "approved"})
+        self.client.post(self.url, {"decision": ""})
+        self.app.refresh_from_db()
+        self.assertEqual(self.app.decision, "")
+        self.assertIsNone(self.app.decided_at)
+        self.assertIsNone(self.app.decided_by)
+
+    def test_an_invented_decision_is_refused(self):
+        self.client.login(username="dare", password=PASSWORD)
+        response = self.client.post(self.url, {"decision": "maybe"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_a_collection_that_records_no_decisions_has_no_such_page(self):
+        self.client.login(username="dare", password=PASSWORD)
+        message = ContactMessage.objects.create(
+            name="Ada", email="a@example.com", subject="Hi", message="Hello")
+        response = self.client.post(
+            reverse("staff:decide", kwargs={"slug": "messages", "pk": message.pk}),
+            {"decision": "approved"})
+        self.assertEqual(response.status_code, 404)
+
+
+@SSL_REDIRECT_OFF
+@override_settings(EMBARK_FROM_EMAIL="Embark <embark@iadebayo.foundation>",
+                   EMBARK_REPLY_TO="hello@iadebayo.foundation")
+class ApplicantEmailTests(TestCase):
+    """Composing and sending one message to one applicant."""
+
+    def setUp(self):
+        cache.clear()
+        mail.outbox = []
+        User.objects.create_user("dare", password=PASSWORD, is_staff=True)
+        self.client.login(username="dare", password=PASSWORD)
+        self.app = make_application(name="Chidi Okafor", email="chidi@example.com",
+                                    decision="approved")
+        self.template = EmailTemplate.objects.create(
+            name="Cohort offer", purpose=EmailTemplate.APPROVED, is_default=True,
+            subject="Welcome to {{ cohort }}, {{ first_name }}",
+            body="Dear {{ first_name }},\n\nYou are in.")
+        self.url = reverse("staff:email",
+                           kwargs={"slug": "applications", "pk": self.app.pk})
+
+    def test_the_box_is_prefilled_with_the_real_message_not_the_template(self):
+        """What a staffer reads before sending must be what actually arrives."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        body = response.context["form"].initial["body"]
+        self.assertIn("Dear Chidi,", body)
+        self.assertNotIn("{{", body)
+
+    def test_the_default_template_for_the_decision_is_the_one_offered(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["chosen"], self.template)
+
+    def test_sending_delivers_from_the_embark_address_and_stamps_the_row(self):
+        response = self.client.post(self.url, {
+            "subject": "Welcome to Cohort 5, Chidi",
+            "body": "Dear Chidi,\n\nYou are in."})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["chidi@example.com"])
+        self.assertEqual(sent.from_email, "Embark <embark@iadebayo.foundation>")
+        self.assertEqual(sent.reply_to, ["hello@iadebayo.foundation"])
+        self.app.refresh_from_db()
+        self.assertIsNotNone(self.app.decision_email_sent_at)
+
+    def test_a_placeholder_typed_by_hand_is_still_filled_in(self):
+        self.client.post(self.url, {"subject": "Hello {{ first_name }}",
+                                    "body": "Dear {{ first_name }},"})
+        self.assertEqual(mail.outbox[0].subject, "Hello Chidi")
+
+    def test_a_misspelled_placeholder_stops_the_send(self):
+        response = self.client.post(self.url, {"subject": "Hi",
+                                               "body": "Dear {{ frist_name }},"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
+        self.app.refresh_from_db()
+        self.assertIsNone(self.app.decision_email_sent_at)
+
+    def test_a_failed_send_leaves_the_row_unstamped(self):
+        """Otherwise a bounced message reads as a delivered one, forever."""
+        with mock.patch("django.core.mail.EmailMessage.send",
+                        side_effect=OSError("mail server down")):
+            response = self.client.post(self.url, {"subject": "Hi", "body": "Hello"})
+        self.assertEqual(response.status_code, 200)
+        self.app.refresh_from_db()
+        self.assertIsNone(self.app.decision_email_sent_at)
+
+    def test_an_application_with_no_address_cannot_be_mailed(self):
+        nowhere = make_application(name="No Address", email="")
+        url = reverse("staff:email",
+                      kwargs={"slug": "applications", "pk": nowhere.pk})
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.post(url, {"subject": "Hi", "body": "Hello"})
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_a_stranger_cannot_open_the_compose_page(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/staff/login/", response["Location"])
