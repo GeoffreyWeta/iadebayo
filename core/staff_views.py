@@ -1,7 +1,7 @@
 """The staff area's content management: one set of views for every collection.
 
 These views are generic. They are handed a `Collection` from core.staff_content
-by the URL slug and work entirely off what it declares — there is no per-model
+by the URL slug and work entirely off what it declares - there is no per-model
 view here, and there should not be one. See that module for why.
 
 What a signed-in staff member can do
@@ -14,7 +14,7 @@ nothing. The whole point of this area is that those accounts can do their job
 without anyone having to understand Django's permission system.
 
 The one thing `is_staff` alone does not buy is deletion of a submission. A
-content row is replaceable — re-upload the photo, retype the milestone. An
+content row is replaceable - re-upload the photo, retype the milestone. An
 application is not: it is the only copy of what a person sent us, and it is what
 every number on the analytics page is counted from. So `can_delete` requires a
 superuser for `kind="inbox"`, and the UI does not offer the button otherwise.
@@ -75,7 +75,7 @@ def _public_links(collection):
     """`where` resolved to real URLs, dropping any route that no longer exists.
 
     A renamed URL should not take the whole staff page down with a
-    NoReverseMatch — the link is a convenience, not the point of the screen.
+    NoReverseMatch - the link is a convenience, not the point of the screen.
     """
     links = []
     for name, label in collection.where:
@@ -89,7 +89,7 @@ def _public_links(collection):
 def _field(model, name):
     try:
         return model._meta.get_field(name)
-    except Exception:          # noqa: BLE001 — a column spec naming a property
+    except Exception:          # noqa: BLE001 - a column spec naming a property
         return None
 
 
@@ -154,11 +154,11 @@ def row_for(obj, collection):
 
 # ============================================================ search + filters
 def _distinct_values(collection, name):
-    """Filter options for a column with no `choices` — country, step, and such.
+    """Filter options for a column with no `choices` - country, step, and such.
 
     Capped at 40: this is a dropdown, and the day someone applies from the
     fortieth country it should stop growing rather than become unusable. The
-    cheaper alternative — no filter at all — costs more.
+    cheaper alternative - no filter at all - costs more.
     """
     qs = collection.model._default_manager.exclude(**{f"{name}__isnull": True})
     if isinstance(_field(collection.model, name), dj.CharField):
@@ -263,7 +263,7 @@ def page_links(request, page):
 def shell(request, **extra):
     """Context every staff page needs: the sidebar, and what is waiting on it.
 
-    The unreviewed counts are one COUNT per inbox collection — seven small
+    The unreviewed counts are one COUNT per inbox collection - seven small
     queries on an indexed boolean. That buys a number beside "Embark
     applications" in the nav, which is the difference between a team that
     notices a new application and a team that remembers to go and look.
@@ -285,7 +285,7 @@ def shell(request, **extra):
 @never_cache
 @staff_required
 def dashboard(request):
-    """`/staff/` — what changed, what is waiting, and what is live right now.
+    """`/staff/` - what changed, what is waiting, and what is live right now.
 
     Deliberately not a link farm. The three things a staffer opening this page
     needs are: is anything waiting for me, is the site currently saying what we
@@ -334,7 +334,7 @@ def dashboard(request):
 
     # No Cohort row means the public schedule band and the countdown below are
     # running on the dates compiled into core/cohort.py, which is worth saying
-    # out loud — it is the one piece of site content that silently has a
+    # out loud - it is the one piece of site content that silently has a
     # developer-set value rather than an empty one.
     if staff_content.COHORT.model.current() is None:
         flags.append({
@@ -376,11 +376,11 @@ def collection_list(request, slug):
         public_links=_public_links(collection),
         may_delete=can_delete(request.user, collection),
         # The export follows the search and the filters, so it carries the same
-        # query string — minus `page`, which would export one screenful.
+        # query string - minus `page`, which would export one screenful.
         export_url=reverse("staff:export", kwargs={"slug": collection.slug})
                    + querystring(request, page=None),
         # Reordering renumbers the whole collection, so it is only offered on an
-        # unfiltered, unpaginated view — dragging row 3 above row 1 on page 2 of
+        # unfiltered, unpaginated view - dragging row 3 above row 1 on page 2 of
         # a search result cannot mean anything coherent.
         may_reorder=collection.orderable and not query and not selected
                     and paginator.num_pages == 1,
@@ -394,7 +394,7 @@ def collection_list(request, slug):
 def collection_edit(request, slug, pk=None):
     collection = collection_or_404(slug)
     if collection.is_inbox:
-        raise Http404("Submissions are records, not content — they are not editable.")
+        raise Http404("Submissions are records, not content - they are not editable.")
 
     instance = get_object_or_404(collection.model, pk=pk) if pk else None
     form_class = form_class_for(collection)
@@ -412,7 +412,7 @@ def collection_edit(request, slug, pk=None):
             if "save_and_add" in request.POST:
                 return redirect("staff:new", slug=collection.slug)
             return redirect(collection.url())
-        messages.error(request, "Nothing was saved — see the highlighted fields.")
+        messages.error(request, "Nothing was saved - see the highlighted fields.")
     else:
         form = form_class(instance=instance)
 
@@ -445,7 +445,7 @@ def _place_new_at_end(obj, collection, creating):
 @never_cache
 @staff_required
 def collection_delete(request, slug, pk):
-    """GET asks; POST does it. Never a link — a GET must not destroy anything."""
+    """GET asks; POST does it. Never a link - a GET must not destroy anything."""
     collection = collection_or_404(slug)
     obj = get_object_or_404(collection.model, pk=pk)
 
@@ -522,7 +522,7 @@ def detail_rows(obj):
 
 
 def detail_extras(obj):
-    """Derived read-outs that are not fields — the joined-up phone number, the
+    """Derived read-outs that are not fields - the joined-up phone number, the
     ticked growth limits, the raw draft of an unfinished application."""
     extras = []
     if hasattr(obj, "phone_display"):
@@ -540,7 +540,7 @@ def detail_extras(obj):
 @require_POST
 @staff_required
 def collection_toggle(request, slug, pk):
-    """Flip one boolean from the list — reviewed, published, active, featured.
+    """Flip one boolean from the list - reviewed, published, active, featured.
 
     Only fields the collection already declares as a `switch` column (or its
     review field) can be flipped, so this endpoint cannot be pointed at an
@@ -558,7 +558,7 @@ def collection_toggle(request, slug, pk):
     new = not getattr(obj, name)
     setattr(obj, name, new)
     # `update_fields` limits the UPDATE to the one column, which also silently
-    # skips any auto_now column — and PromoPopup.current() picks the campaign to
+    # skips any auto_now column - and PromoPopup.current() picks the campaign to
     # show by `-updated_at`, so a popup switched on from this button would sort
     # behind one edited earlier and never appear. Write those too.
     stamps = [f.name for f in collection.model._meta.fields
@@ -568,7 +568,7 @@ def collection_toggle(request, slug, pk):
     field = collection.model._meta.get_field(name)
     messages.success(
         request,
-        f"“{str(obj)[:60]}” — {field.verbose_name} {'on' if new else 'off'}.")
+        f"“{str(obj)[:60]}” - {field.verbose_name} {'on' if new else 'off'}.")
     return back_to(request, collection.url())
 
 
@@ -663,7 +663,7 @@ def collection_bulk(request, slug):
 def collection_export(request, slug):
     """The current, filtered list as CSV.
 
-    Exports what is on screen, not the whole table — someone who filtered to
+    Exports what is on screen, not the whole table - someone who filtered to
     Ghana and pressed Download means Ghana. The filename says so too.
     """
     collection = collection_or_404(slug)
@@ -746,7 +746,7 @@ def collection_decide(request, slug, pk):
         messages.success(
             request,
             f"“{str(obj)[:60]}” marked {obj.get_decision_display().lower()}. "
-            f"They have not been told yet — use “Send email” when you are ready.")
+            f"They have not been told yet - use “Send email” when you are ready.")
     else:
         messages.success(request, f"Decision cleared for “{str(obj)[:60]}”.")
     return back_to(request, collection.url("detail", pk=pk))
@@ -757,8 +757,8 @@ def collection_decide(request, slug, pk):
 def collection_email(request, slug, pk):
     """Compose and send one message to one applicant.
 
-    GET fills the box from a template — the one the URL names, or the one whose
-    purpose matches the decision just recorded — with this applicant's details
+    GET fills the box from a template - the one the URL names, or the one whose
+    purpose matches the decision just recorded - with this applicant's details
     already substituted. POST sends exactly what came back in the box.
 
     Rendering on the way *in* rather than on the way out is the point. A staff
@@ -801,7 +801,7 @@ def collection_email(request, slug, pk):
             # mean rewriting the message to try again.
             messages.error(
                 request,
-                "The message could not be sent — the mail server refused it. "
+                "The message could not be sent - the mail server refused it. "
                 "Nothing was recorded against this applicant, so nothing is "
                 "lost by trying again.")
     else:

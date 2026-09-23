@@ -3,7 +3,7 @@
 {% comment %}
   The confirmation step. It exists because the list's Delete is a link, and a
   link is followed by prefetchers, by a mistaken middle-click, and by anything
-  that crawls the page — so the link can only ever lead here, and only the POST
+  that crawls the page - so the link can only ever lead here, and only the POST
   below actually destroys anything.
 
   The row is shown again, with the same columns the list used, so the thing
@@ -28,10 +28,10 @@
       <dt>{{ cell.heading }}</dt>
       <dd>
         {% if cell.kind == "thumb" %}
-          {% if cell.url %}<img class="cell-thumb" src="{{ cell.url }}" alt="">{% else %}—{% endif %}
-        {% elif cell.kind == "when" %}{{ cell.value|date:"j M Y, H:i"|default:"—" }}
-        {% elif cell.kind == "date" %}{{ cell.value|date:"j M Y"|default:"—" }}
-        {% else %}{{ cell.text|default:"—" }}{% endif %}
+          {% if cell.url %}<img class="cell-thumb" src="{{ cell.url }}" alt="">{% else %}-{% endif %}
+        {% elif cell.kind == "when" %}{{ cell.value|date:"j M Y, H:i"|default:"-" }}
+        {% elif cell.kind == "date" %}{{ cell.value|date:"j M Y"|default:"-" }}
+        {% else %}{{ cell.text|default:"-" }}{% endif %}
       </dd>
     </div>
     {% endif %}

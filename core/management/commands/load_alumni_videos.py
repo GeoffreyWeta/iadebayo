@@ -5,7 +5,7 @@ and inventing an alumnus's name or claiming an impact they did not describe
 would be worse than an obvious TODO. Replace them in the admin under
 Testimonials.
 
-Idempotent — matched on youtube_url, so re-running never duplicates a row and
+Idempotent - matched on youtube_url, so re-running never duplicates a row and
 never overwrites text that has already been edited.
 """
 from django.core.management.base import BaseCommand
@@ -23,7 +23,7 @@ VIDEOS = [
 ]
 
 PLACEHOLDER_STORY = (
-    "TODO — replace with this alumnus's story: what they build, who it serves, and "
+    "TODO - replace with this alumnus's story: what they build, who it serves, and "
     "what changed for the business during and after Embark.\n\n"
     "A second paragraph on impact: customers reached, jobs created, revenue growth, "
     "or whatever they are proudest of. Blank lines start a new paragraph."
@@ -45,8 +45,8 @@ class Command(BaseCommand):
                 continue
             Testimonial.objects.create(
                 kind="video",
-                name=f"Alumnus {index} — replace with their name",
-                business="Venture, Country — replace",
+                name=f"Alumnus {index} - replace with their name",
+                business="Venture, Country - replace",
                 youtube_url=url,
                 story=PLACEHOLDER_STORY,
                 order=index,

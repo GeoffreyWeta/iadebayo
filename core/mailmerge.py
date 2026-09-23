@@ -19,7 +19,7 @@ again before anything goes out.
 """
 import re
 
-# `{{ name }}`, `{{name}}` — one lowercase identifier, nothing else. No dots, no
+# `{{ name }}`, `{{name}}` - one lowercase identifier, nothing else. No dots, no
 # filters, no tags: anything cleverer than a name is not a placeholder here.
 TOKEN = re.compile(r"\{\{\s*([a-z_][a-z0-9_]*)\s*\}\}")
 
@@ -94,7 +94,7 @@ def render(text, context):
     """Substitute every known placeholder. Unknown ones are left untouched.
 
     Left untouched rather than blanked because this is the last line of
-    defence, not the check — `unknown()` is what refuses the send. If one ever
+    defence, not the check - `unknown()` is what refuses the send. If one ever
     does slip through, `{{ frist_name }}` sitting in the body is at least a
     thing a person can see went wrong.
     """

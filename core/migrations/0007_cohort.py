@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('applications_close', models.DateField(help_text='Last day people can apply. The staff dashboard counts down to this.')),
                 ('notify_from', models.DateField(verbose_name='Notifications from')),
                 ('notify_to', models.DateField(verbose_name='Notifications until')),
-                ('is_current', models.BooleanField(default=True, help_text='Only one cohort is used at a time. Ticking this one is enough — the most recent ticked cohort wins.', verbose_name='This is the cohort we are advertising')),
+                ('is_current', models.BooleanField(default=True, help_text='Only one cohort is used at a time. Ticking this one is enough - the most recent ticked cohort wins.', verbose_name='This is the cohort we are advertising')),
             ],
             options={
                 'ordering': ['-applications_open'],

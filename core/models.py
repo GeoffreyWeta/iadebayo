@@ -19,7 +19,7 @@ CANONICAL_IMPACT_STATS = [
 class YouTubeEmbedMixin:
     """Embed/poster URLs derived from whatever YouTube link was pasted in.
 
-    See core.youtube — every shape reduces to a video id first, so Shorts and
+    See core.youtube - every shape reduces to a video id first, so Shorts and
     share links carrying ?si=… work the same as a plain watch URL.
     """
 
@@ -127,11 +127,11 @@ class Testimonial(YouTubeEmbedMixin, models.Model):
     quote = models.TextField(blank=True, help_text="For text testimonials")
     photo = models.ImageField(upload_to="alumni/", blank=True)
     youtube_url = models.URLField(
-        blank=True, help_text="Paste any YouTube link — watch page, youtu.be, or a Short")
+        blank=True, help_text="Paste any YouTube link - watch page, youtu.be, or a Short")
     ORIENTATION_CHOICES = [
         ("auto", "Detect automatically (Shorts are treated as vertical)"),
-        ("landscape", "Landscape — 16:9"),
-        ("portrait", "Vertical — 9:16"),
+        ("landscape", "Landscape - 16:9"),
+        ("portrait", "Vertical - 9:16"),
     ]
     orientation = models.CharField(
         max_length=10, choices=ORIENTATION_CHOICES, default="auto",
@@ -144,7 +144,7 @@ class Testimonial(YouTubeEmbedMixin, models.Model):
         help_text="The write-up for the alumni spotlight page: what they build and the "
                   "impact it has had. A few short paragraphs; blank lines start a new one.")
     link = models.URLField(
-        blank=True, help_text="Their website or social page — linked from the spotlight page")
+        blank=True, help_text="Their website or social page - linked from the spotlight page")
     link_label = models.CharField(
         max_length=60, blank=True,
         help_text="What to call that link, e.g. 'Instagram' or 'agrolink.co'. "
@@ -230,14 +230,14 @@ class Milestone(models.Model):
         ordering = ["order", "id"]
 
     def __str__(self):
-        return f"{self.year} — {self.text}"
+        return f"{self.year} - {self.text}"
 
 
 class Cohort(models.Model):
     """The dates of the programme cycle currently being advertised.
 
     These used to be constants in core/cohort.py, which meant that a cohort
-    slipping by a week — an ordinary thing that happens to a programme — needed
+    slipping by a week - an ordinary thing that happens to a programme - needed
     a developer and a deploy. In practice it meant the schedule band on /embark/
     said one thing while the team said another.
 
@@ -257,7 +257,7 @@ class Cohort(models.Model):
     is_current = models.BooleanField(
         "This is the cohort we are advertising", default=True,
         help_text="Only one cohort is used at a time. Ticking this one is enough "
-                  "— the most recent ticked cohort wins.")
+                  "- the most recent ticked cohort wins.")
 
     class Meta:
         ordering = ["-applications_open"]
@@ -271,7 +271,7 @@ class Cohort(models.Model):
         Checked here rather than left to the view, so it holds for the admin and
         for anything else that saves a cohort. A close date before the open date
         makes `window_progress` compute a negative total and the meter divide by
-        a negative number — better to refuse it at the form.
+        a negative number - better to refuse it at the form.
         """
         from django.core.exceptions import ValidationError
         errors = {}
@@ -310,13 +310,13 @@ class PromoPopup(models.Model):
     """A flier shown once, in a modal, to a visitor who hasn't seen it yet.
 
     Admin-managed rather than hardcoded so the team can raise and drop a
-    campaign — "Cohort 5 applications are open" — without a deploy, and so the
+    campaign - "Cohort 5 applications are open" - without a deploy, and so the
     artwork is uploaded rather than committed. Only one is ever shown: the most
     recently updated row that is ticked active and inside its date window.
     """
     title = models.CharField(
         max_length=140,
-        help_text="Internal label, and the modal's accessible name. e.g. “Embark Cohort 5 — applications open”")
+        help_text="Internal label, and the modal's accessible name. e.g. “Embark Cohort 5 - applications open”")
     image = models.ImageField(
         upload_to="promos/",
         help_text="The flier itself. Portrait or square reads best; it is shown at up to "
@@ -328,7 +328,7 @@ class PromoPopup(models.Model):
     link_url = models.CharField(
         "Button link", max_length=200, blank=True,
         help_text="Leave blank to send people to the Embark application, which is almost "
-                  "always what you want. Override only to point somewhere else — a path "
+                  "always what you want. Override only to point somewhere else - a path "
                   "like /get-involved/faculty/ or a full https:// URL.")
     link_label = models.CharField("Button text", max_length=60, default="Apply now")
 
@@ -397,7 +397,7 @@ class EmailTemplate(models.Model):
     The team writes these; nothing here is sent automatically. A template is
     picked on the application's own page, substituted with that applicant's
     details (see core.mailmerge), and then shown in an editable box before it
-    goes anywhere — so the template is a starting point, not a machine that
+    goes anywhere - so the template is a starting point, not a machine that
     mails people on its own.
 
     `purpose` is only a default: an "approved" template is the one pre-selected

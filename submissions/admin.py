@@ -36,17 +36,17 @@ class EmbarkAdmin(SubmissionAdmin):
                        "video_download")
     actions = ["download_videos_zip"]
     fieldsets = (
-        ("Section A — About the applicant", {
+        ("Section A - About the applicant", {
             "fields": ("name", "gender", "applicant_status", "email",
                        ("phone_code", "phone"),
                        "date_of_birth", "institution", ("country", "state", "city"),
                        "linkedin", ("social_handle", "social_handle_2")),
         }),
-        ("Section B — Business information", {
+        ("Section B - Business information", {
             "description": "Applicants link their video from Google Drive rather than "
-                           "uploading it. The brief asks them to cover three things — who "
+                           "uploading it. The brief asks them to cover three things - who "
                            "they are, what the business does, and why they should be "
-                           "chosen — so all three are fair to score. If the link does not "
+                           "chosen - so all three are fair to score. If the link does not "
                            "open for you, the applicant left sharing restricted and needs "
                            "an email asking them to set it to “Anyone with the link”.",
             "fields": ("business_name", "business_sector",
@@ -66,7 +66,7 @@ class EmbarkAdmin(SubmissionAdmin):
             "classes": ("collapse",),
             "description": "Applications submitted before 2026-08-01 uploaded the video "
                            "itself. Those files are still here and still download through "
-                           "the button — nothing new is written to this section.",
+                           "the button - nothing new is written to this section.",
             "fields": ("video_download", "business_video",
                        "business_description", "motivation"),
         }),
@@ -74,13 +74,13 @@ class EmbarkAdmin(SubmissionAdmin):
 
     @admin.display(description="Limiting factors (as ticked)")
     def limiting_factors(self, obj):
-        return obj.growth_limits_display or "—"
+        return obj.growth_limits_display or "-"
 
     # ------------------------------------------------------------ video links
     @admin.display(description="Applicant video")
     def video_link_display(self, obj):
         if not obj.business_video_url:
-            return "— no link supplied —"
+            return "- no link supplied -"
         return format_html(
             '<a class="button" href="{}" target="_blank" rel="noopener">▶ Open video</a>',
             obj.business_video_url)
@@ -89,7 +89,7 @@ class EmbarkAdmin(SubmissionAdmin):
     @admin.display(description="Applicant video")
     def video_download(self, obj):
         if not obj.pk or not obj.business_video:
-            return "— no video uploaded —"
+            return "- no video uploaded -"
         try:
             size = filesizeformat(obj.business_video.size)
         except (FileNotFoundError, OSError):
@@ -98,7 +98,7 @@ class EmbarkAdmin(SubmissionAdmin):
                 obj.business_video.name)
         return format_html(
             '<a class="button" href="{}">⬇ Download video</a>'
-            '<span style="margin-left:.75rem;color:#666">{} — {}</span>',
+            '<span style="margin-left:.75rem;color:#666">{} - {}</span>',
             reverse("submissions:download_video", args=[obj.pk]),
             os.path.basename(obj.business_video.name), size)
 
@@ -110,7 +110,7 @@ class EmbarkAdmin(SubmissionAdmin):
         if obj.business_video:
             return format_html('<a href="{}">Download</a>',
                                reverse("submissions:download_video", args=[obj.pk]))
-        return "—"
+        return "-"
 
     @admin.action(description="Download videos for selected applications (ZIP)")
     def download_videos_zip(self, request, queryset):
@@ -121,7 +121,7 @@ class EmbarkAdmin(SubmissionAdmin):
             return None
 
         # A tempfile rather than BytesIO: sixty 60 MB clips would not fit in the
-        # droplet's RAM. ZIP_STORED because video is already compressed —
+        # droplet's RAM. ZIP_STORED because video is already compressed -
         # deflating it just burns CPU on a one-core box for no size win.
         archive_file = tempfile.TemporaryFile()
         missing = []
@@ -141,7 +141,7 @@ class EmbarkAdmin(SubmissionAdmin):
             return None
         if missing:
             self.message_user(
-                request, "Left out of the ZIP — missing from storage: "
+                request, "Left out of the ZIP - missing from storage: "
                          + "; ".join(missing), messages.WARNING)
 
         archive_file.seek(0)
@@ -156,7 +156,7 @@ class PartialApplicationAdmin(admin.ModelAdmin):
     Deliberately not a SubmissionAdmin: these are not submissions. Nobody here
     pressed submit, nobody ticked the media consent, and nothing in this table
     should ever be read as an application. It exists so the team can send one
-    "you were nearly there" note — see models.PartialApplication.
+    "you were nearly there" note - see models.PartialApplication.
     """
 
     list_display = ("who", "email", "phone_display", "business_name", "country",
@@ -170,7 +170,7 @@ class PartialApplicationAdmin(admin.ModelAdmin):
         ("How to reach them", {
             "description": "The whole point of this record. Contact them about "
                            "finishing the application they started, and nothing else "
-                           "— they have not consented to anything beyond that.",
+                           "- they have not consented to anything beyond that.",
             "fields": ("name", "email", ("phone_code", "phone"),
                        ("country", "city"), "institution", "business_name"),
         }),
@@ -184,11 +184,11 @@ class PartialApplicationAdmin(admin.ModelAdmin):
 
     @admin.display(description="Applicant", ordering="name")
     def who(self, obj):
-        return obj.name or "— no name yet —"
+        return obj.name or "- no name yet -"
 
     @admin.display(description="Phone")
     def phone_display(self, obj):
-        return obj.phone_display or "—"
+        return obj.phone_display or "-"
 
     @admin.display(description="Status")
     def status(self, obj):
@@ -201,7 +201,7 @@ class PartialApplicationAdmin(admin.ModelAdmin):
     @admin.display(description="Everything they typed")
     def everything_typed(self, obj):
         return format_html('<pre style="white-space:pre-wrap;margin:0">{}</pre>',
-                           obj.answers_display or "— nothing beyond the contact details —")
+                           obj.answers_display or "- nothing beyond the contact details -")
 
     @admin.action(description="Export selected to CSV (for a follow-up mail-out)")
     def export_csv(self, request, queryset):
@@ -232,7 +232,7 @@ class PhoneColumnMixin:
 
     @admin.display(description="Phone")
     def phone_display(self, obj):
-        return obj.phone_display or "—"
+        return obj.phone_display or "-"
 
 
 @admin.register(models.FacultyApplication)

@@ -1,13 +1,13 @@
 {% extends "staff/manage_base.html" %}
 {% block main %}
 {% comment %}
-  One list, for all eighteen collections. Everything that differs between them —
-  the columns, the filters, whether rows can be reordered or deleted — arrived in
+  One list, for all eighteen collections. Everything that differs between them -
+  the columns, the filters, whether rows can be reordered or deleted - arrived in
   the context from core.staff_content, so there is no per-model branch here.
 
   Form layout note: the bulk-action form is a sibling of the table, not its
   parent, and the row checkboxes join it with `form="bulkform"`. That is what
-  lets each row carry its own little form for the on/off switches — forms cannot
+  lets each row carry its own little form for the on/off switches - forms cannot
   nest, so wrapping the table in the bulk form would mean every switch had to
   become a scripted checkbox, and stop working when the script does.
 {% endcomment %}
@@ -200,7 +200,7 @@
 </p>
 {% elif c.orderable %}
 <p class="chart-note reorder-hint">
-  Reordering is off while the list is searched, filtered or split across pages —
+  Reordering is off while the list is searched, filtered or split across pages -
   <a href="{{ c.url }}">show them all</a> to change the order.
 </p>
 {% endif %}

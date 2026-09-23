@@ -1,6 +1,6 @@
 """Reword the business-age question on the Embark application.
 
-Label only — the column still stores the four-digit year the business was
+Label only - the column still stores the four-digit year the business was
 established, which is why the old wording survives as the field's help text.
 No schema change; this migration exists so makemigrations stays quiet.
 """

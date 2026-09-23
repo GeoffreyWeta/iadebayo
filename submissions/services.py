@@ -39,12 +39,12 @@ def notify_team(subject: str, body: str):
     `fail_silently=True` and no handler. The two are not the same: passing True
     makes `send_mail` swallow the SMTPException internally and return 0, so the
     `except` below never runs and `log.exception` never fires. That is how a
-    misconfigured mail host loses every notification with no trace anywhere —
+    misconfigured mail host loses every notification with no trace anywhere -
     the submission saves, the page says thank you, and nobody is told.
 
     Raising is still not an option: the row is already committed by this point,
     so a dead SMTP host must not turn a successful submission into a 500. Hence
-    catch-and-log — the send fails, the applicant is unaffected, and there is a
+    catch-and-log - the send fails, the applicant is unaffected, and there is a
     line in the log saying so.
     """
     try:
@@ -82,9 +82,9 @@ def acknowledge(to_email: str, first_name: str, what: str, obj=None,
         f"IADEBAYO Foundation\n"
         f"hello@iadebayo.foundation | www.iadebayo.foundation"
     )
-    # Same catch-and-log as notify_team, and for the same reason — see there.
+    # Same catch-and-log as notify_team, and for the same reason - see there.
     try:
-        send_mail("We received your submission — IADEBAYO Foundation", body,
+        send_mail("We received your submission - IADEBAYO Foundation", body,
                   settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=False,
                   connection=connection)
     except Exception:
@@ -100,7 +100,7 @@ def send_to_applicant(to_email: str, subject: str, body: str, obj=None,
                       stamp_field="decision_email_sent_at") -> bool:
     """One message, written by a staff member, to one applicant.
 
-    Unlike `notify_team` and `acknowledge` this is not automatic — somebody
+    Unlike `notify_team` and `acknowledge` this is not automatic - somebody
     pressed send on text they had just read. So the failure handling is the
     opposite way round: the caller is a person waiting at a screen, and they
     have to be told it did not go, otherwise they tick the applicant off a list

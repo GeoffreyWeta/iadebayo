@@ -1,4 +1,4 @@
-"""/staff/ — sign-in, the team's content admin, and the analytics dashboard.
+"""/staff/ - sign-in, the team's content admin, and the analytics dashboard.
 
 Its own URL module rather than more entries in core.urls: everything in there is
 a public marketing page in the sitemap, and none of this is either.

@@ -3,7 +3,7 @@
 Exists because DigitalOcean blocks outbound SMTP (25/465/587) on droplets, so
 the stock SMTP backend times out there no matter how right the credentials are.
 HTTPS on 443 is never blocked. Everything that calls `send_mail` or
-`EmailMessage.send` keeps working unchanged — only EMAIL_BACKEND moves.
+`EmailMessage.send` keeps working unchanged - only EMAIL_BACKEND moves.
 
 Standard library only (urllib), so no new dependency on the droplet.
 """

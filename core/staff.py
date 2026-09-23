@@ -1,13 +1,13 @@
 """The staff area: a branded sign-in, and the team's own admin behind it.
 
-Auth is Django's, unchanged — same `auth_user` table, same password hashing, same
+Auth is Django's, unchanged - same `auth_user` table, same password hashing, same
 sessions, and the same `is_staff` flag the admin and the applicant-video download
 already gate on (submissions.views.download_application_video). Nothing here
 introduces a second idea of who a staff member is; it only puts a page the team
 recognises in front of it, instead of the bare Django admin form.
 
 Accounts are still created by an administrator (`manage.py create_staff`). That
-is deliberate — there is no self-service registration, because every account
+is deliberate - there is no self-service registration, because every account
 here can read applicants' personal data.
 
 This module is only the door: sign-in, sign-out, password change. What is behind
@@ -52,7 +52,7 @@ class StaffLoginForm(AuthenticationForm):
 
     Rejecting non-staff in `confirm_login_allowed` rather than after login keeps
     a non-staff account from ever getting a session here, and reuses the same
-    error slot the wrong-password case uses — so the message never reveals which
+    error slot the wrong-password case uses - so the message never reveals which
     of the two went wrong.
     """
     error_messages = {
@@ -71,7 +71,7 @@ class StaffLoginForm(AuthenticationForm):
     def clean(self):
         username = (self.cleaned_data.get("username") or "").strip()
         # Checked before super(), so a locked-out key never reaches the password
-        # hasher — otherwise the throttle still pays the bcrypt cost per attempt
+        # hasher - otherwise the throttle still pays the bcrypt cost per attempt
         # and the endpoint stays useful for tying up workers.
         #
         # Note: the default LocMemCache is per-process, so with several Gunicorn
@@ -168,5 +168,5 @@ def analytics_dashboard(request):
         request, page_title="Analytics", nav="analytics", **data))
 
 
-# `/staff/` itself is core.staff_views.dashboard — there is something to land on
+# `/staff/` itself is core.staff_views.dashboard - there is something to land on
 # now, so it is no longer a redirect to the numbers.

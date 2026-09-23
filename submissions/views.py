@@ -26,7 +26,7 @@ RECAPTCHA_FAIL = "We couldn't verify that you're human. Please complete the reCA
 def _pixel(request, event):
     """Queue one Meta Pixel conversion event for the page we redirect to.
 
-    Only ever a fixed name from Meta's standard list — never anything typed by
+    Only ever a fixed name from Meta's standard list - never anything typed by
     a visitor, and never carrying who they are. See templates/includes/
     meta_pixel.html. A no-op when no pixel id is configured, so nothing is put
     in the session (and no session cookie is set on a visitor) on a site that
@@ -139,7 +139,7 @@ def newsletter(request):
 def apply_embark(request):
     def rerender(form):
         # Long form: re-render in place so nothing typed is lost. (The video
-        # input can't be repopulated by any browser — the template says so.)
+        # input can't be repopulated by any browser - the template says so.)
         from core.views import apply_context
         return render(request, "core/apply.html", apply_context(form))
 
@@ -202,7 +202,7 @@ def _valid_email(value):
 def _reachable(email, phone):
     """Is there enough here to contact this person?
 
-    A half-typed email or three digits of a phone number is not — this is the
+    A half-typed email or three digits of a phone number is not - this is the
     line between "someone we can help finish" and keystrokes we have no business
     keeping.
     """
@@ -216,11 +216,11 @@ def apply_progress(request):
     Answers only, no side effects: no acknowledgement email, no team
     notification, no reCAPTCHA (the applicant has not finished, and a challenge
     they have not touched yet would reject every save). The honeypot still
-    applies, and a row is written only once there is a usable email or phone —
+    applies, and a row is written only once there is a usable email or phone -
     between them that is enough to keep the table free of bot noise and of
     people who typed two letters and left.
     """
-    if request.POST.get("website_url"):          # honeypot — a bot filled it in
+    if request.POST.get("website_url"):          # honeypot - a bot filled it in
         return JsonResponse({"saved": False}, status=202)
 
     draft_id = _clean_draft_id(request.POST.get("draft_id"))
@@ -246,7 +246,7 @@ def apply_progress(request):
         return JsonResponse({"saved": False}, status=202)
 
     # Mirror the columns the team works from, each clipped to what the column
-    # holds — the form is unvalidated at this point, so nothing may be trusted
+    # holds - the form is unvalidated at this point, so nothing may be trusted
     # to fit.
     caps = {f.name: f.max_length for f in models.PartialApplication._meta.fields
             if getattr(f, "max_length", None)}
@@ -312,7 +312,7 @@ def download_application_video(request, pk):
     The only way to read an application video: /media/applications/ is blocked
     at the web server because these clips show the applicant's face and business
     and the storage path is guessable. `staff_required` bounces anyone else to
-    the staff sign-in with `?next=` set, rather than 403-ing — a team member who
+    the staff sign-in with `?next=` set, rather than 403-ing - a team member who
     clicked a link in a notification email expects to sign in and land on the
     file, not to be told off.
     """

@@ -4,8 +4,8 @@
 {% comment %}
   The first hero slide is the largest-contentful paint on this page and it is
   a CSS background, so nothing discovers it until the style is resolved. On a
-  phone connection that is most of the wait. Preloading it — and only it, the
-  other two slides are swapped in later by the island — moves the fetch to
+  phone connection that is most of the wait. Preloading it - and only it, the
+  other two slides are swapped in later by the island - moves the fetch to
   the top of the queue.
 {% endcomment %}
 {% block head %}
@@ -14,10 +14,10 @@
 
 {% block content %}
 
-{# ============ HERO — big scrolling slides (React island w/ static fallback) #}
+{# ============ HERO - big scrolling slides (React island w/ static fallback) #}
 <section class="hero" data-island="hero-slider">
   <div class="hero-media">
-    {# Self-hosted at static/img/hero-1.webp, hero-2.webp, hero-3.webp — swap the files to change the slider. #}
+    {# Self-hosted at static/img/hero-1.webp, hero-2.webp, hero-3.webp - swap the files to change the slider. #}
     {% comment %}
       First slide also set inline so the hero still shows a photo if the
       island never mounts; the slider overwrites it with the same URL.
@@ -49,7 +49,7 @@
     {% comment %}
       The milestone timeline that used to sit here was dropped from the hero.
       Milestones are still a model and still editable in the admin, so this can
-      come back — but nothing renders them now. The rule below was already the
+      come back - but nothing renders them now. The rule below was already the
       designed empty state for this slot.
     {% endcomment %}
     <div class="hero-rule"></div>
@@ -65,8 +65,8 @@
       <p class="eyebrow">What we do</p>
       <h2>Millions of young Africans aspire to build. Too few get the support to succeed.</h2>
       <p>IADEBAYO Foundation is a nonprofit committed to equipping young Africans with the entrepreneurial mindset, practical business education, mentorship, and community they need to build sustainable businesses and create lasting impact.</p>
-      <p>Africa is home to one of the world's youngest populations — an extraordinary opportunity and a pressing challenge. While millions of young Africans aspire to become entrepreneurs, many lack access to quality entrepreneurial education, mentorship, and the support systems needed to build sustainable businesses.</p>
-      <p class="statement">We exist to bridge this gap — turning ideas into thriving ventures that create jobs and strengthen communities.</p>
+      <p>Africa is home to one of the world's youngest populations - an extraordinary opportunity and a pressing challenge. While millions of young Africans aspire to become entrepreneurs, many lack access to quality entrepreneurial education, mentorship, and the support systems needed to build sustainable businesses.</p>
+      <p class="statement">We exist to bridge this gap - turning ideas into thriving ventures that create jobs and strengthen communities.</p>
     </div>
     <div class="reveal">
       <div class="media-frame">
@@ -139,7 +139,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <p style="color:var(--muted)">Alumni video and picture testimonials will appear here — add them in the admin under <strong>Testimonials</strong> and tick “featured”.</p>
+    <p style="color:var(--muted)">Alumni video and picture testimonials will appear here - add them in the admin under <strong>Testimonials</strong> and tick “featured”.</p>
     {% endif %}
     <div class="center" style="margin-top:44px">
       <a class="btn btn-outline" href="{% url 'core:alumni' %}">Meet all our alumni →</a>

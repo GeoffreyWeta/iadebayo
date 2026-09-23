@@ -1,5 +1,5 @@
 """
-IADEBAYO Foundation website — Django settings.
+IADEBAYO Foundation website - Django settings.
 
 Environment-driven so the same codebase runs on:
   * local development (SQLite, console email)
@@ -42,7 +42,7 @@ DEBUG = env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = [h for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 CSRF_TRUSTED_ORIGINS = [o for o in env("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
-# Render sets RENDER_EXTERNAL_HOSTNAME automatically — trust it when present.
+# Render sets RENDER_EXTERNAL_HOSTNAME automatically - trust it when present.
 _render_host = env("RENDER_EXTERNAL_HOSTNAME")
 if _render_host:
     ALLOWED_HOSTS.append(_render_host)
@@ -106,10 +106,10 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ------------------------------------------------------------------- database
-# Default: SQLite (dev). Production: set DB_ENGINE=mysql and the DB_* vars —
+# Default: SQLite (dev). Production: set DB_ENGINE=mysql and the DB_* vars -
 # cPanel gives you MySQL databases; create one in cPanel > MySQL Databases.
 def _db_from_url(url):
-    """Tiny DATABASE_URL parser (postgres:// or mysql://) — no extra deps."""
+    """Tiny DATABASE_URL parser (postgres:// or mysql://) - no extra deps."""
     from urllib.parse import urlparse
     p = urlparse(url)
     engine = {"postgres": "django.db.backends.postgresql",
@@ -155,7 +155,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ------------------------------------------------------------------ staff area
-# The team signs in at /staff/login/ (core.staff), not at the admin's form — same
+# The team signs in at /staff/login/ (core.staff), not at the admin's form - same
 # auth_user table and the same `is_staff` flag, just a page they recognise.
 # LOGIN_URL points there so every @staff_required view and the applicant-video
 # download bounce to the branded form.
@@ -180,7 +180,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Dev: printed to console. Production (cPanel SMTP): set EMAIL_BACKEND=smtp
 # and create a mailbox like noreply@iadebayo.foundation in cPanel > Email.
 #
-# EMAIL_BACKEND=zeptomail sends over ZeptoMail's HTTPS API instead — the one to
+# EMAIL_BACKEND=zeptomail sends over ZeptoMail's HTTPS API instead - the one to
 # use on the droplet, where DigitalOcean blocks outbound SMTP ports. Needs
 # ZEPTOMAIL_TOKEN (the Send Mail token from the ZeptoMail agent's API tab).
 if env("EMAIL_BACKEND", "console") == "zeptomail":
@@ -218,10 +218,10 @@ EMBARK_REPLY_TO = env("EMBARK_REPLY_TO", "") or FOUNDATION_NOTIFY_EMAIL
 RECAPTCHA_SITE_KEY = env("RECAPTCHA_SITE_KEY", "")
 RECAPTCHA_SECRET_KEY = env("RECAPTCHA_SECRET_KEY", "")
 
-# Google Analytics 4 — set GA_MEASUREMENT_ID (e.g. G-XXXXXXXXXX) to activate
+# Google Analytics 4 - set GA_MEASUREMENT_ID (e.g. G-XXXXXXXXXX) to activate
 GA_MEASUREMENT_ID = env("GA_MEASUREMENT_ID", "")
 
-# Meta (Facebook) Pixel — set META_PIXEL_ID to the numeric id from Events
+# Meta (Facebook) Pixel - set META_PIXEL_ID to the numeric id from Events
 # Manager to activate. Left empty, not a line of Facebook's code reaches the
 # page, which is what makes it safe to have in the repo at all: a developer's
 # local run must never report test traffic as real conversions, and an id
@@ -247,7 +247,7 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
-# Demo hosts (Render free tier) have no separate media server — let Django
+# Demo hosts (Render free tier) have no separate media server - let Django
 # serve /media/ when SERVE_MEDIA=True. Real production should use the host's
 # static/media mapping instead.
 SERVE_MEDIA = env_bool("SERVE_MEDIA", False)

@@ -2,15 +2,15 @@
   One horizontal bar list, plus the table view of the same numbers.
 
   Params: title, data (from analytics.breakdown / multi_breakdown), note (opt),
-          unit (opt, default "applicants"), ordinal (opt — "yes" draws the
+          unit (opt, default "applicants"), ordinal (opt - "yes" draws the
           one-hue ramp in band order instead of a single hue).
 
   Every bar is direct-labelled with its count and share. That is not decoration:
   it is the relief channel the palette gate requires, and it means the chart is
   still readable to someone who cannot separate the fill from the track.
 
-  Bars are scaled to the largest row, not to the total — see analytics._as_bars
-  for why — so the printed % and the bar length answer different questions. The
+  Bars are scaled to the largest row, not to the total - see analytics._as_bars
+  for why - so the printed % and the bar length answer different questions. The
   caption says which is which.
 {% endcomment %}
 <figure class="chart chart-bars reveal{% if ordinal %} chart-ordinal{% endif %}">
@@ -37,7 +37,7 @@
   <details class="chart-table">
     <summary>Show data table</summary>
     <table>
-      <caption>{{ title }} — bar length is relative to the largest row; the
+      <caption>{{ title }} - bar length is relative to the largest row; the
         percentage is the share of the {{ data.answered }} who answered.</caption>
       <thead><tr><th scope="col">{{ title }}</th><th scope="col">Count</th><th scope="col">Share</th></tr></thead>
       <tbody>

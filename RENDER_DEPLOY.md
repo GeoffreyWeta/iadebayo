@@ -2,7 +2,7 @@
 
 Great for showing the client a live URL. Note the free tier sleeps after
 ~15 min of inactivity (first visit after that waits ~30-60s), and the demo
-database resets on each redeploy — fine for review, not for launch.
+database resets on each redeploy - fine for review, not for launch.
 
 ## Steps (about 5 minutes)
 
@@ -24,16 +24,16 @@ database resets on each redeploy — fine for review, not for launch.
 
 ## What's preconfigured
 
-- `render.yaml` — the blueprint (service, env vars, free plan)
-- `render-build.sh` — installs deps, collectstatic, migrate, seeds demo content
+- `render.yaml` - the blueprint (service, env vars, free plan)
+- `render-build.sh` - installs deps, collectstatic, migrate, seeds demo content
 - WhiteNoise serves static files; `SERVE_MEDIA=True` lets Django serve
   uploaded media (demo-only pattern)
-- `RENDER_EXTERNAL_HOSTNAME` is trusted automatically — no ALLOWED_HOSTS edits
+- `RENDER_EXTERNAL_HOSTNAME` is trusted automatically - no ALLOWED_HOSTS edits
 
 ## Upgrading the demo to persistent data (optional)
 
 Add a Render PostgreSQL instance, then in the web service set env var
 `DATABASE_URL` to its connection string and add `psycopg2-binary` to
 requirements.txt. Uploaded images still need external storage (e.g.
-Cloudinary/S3) for true persistence — or move to the cPanel/PythonAnywhere
+Cloudinary/S3) for true persistence - or move to the cPanel/PythonAnywhere
 production setup in DEPLOYMENT.md when ready.

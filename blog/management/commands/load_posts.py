@@ -1,6 +1,6 @@
 """Load the five long-form articles supplied on 2026-07-31.
 
-Idempotent — matched on slug, so re-running never duplicates and never
+Idempotent - matched on slug, so re-running never duplicates and never
 overwrites edits made in the admin since.
 
 Two judgement calls worth knowing about, both one line to change:
@@ -9,7 +9,7 @@ Two judgement calls worth knowing about, both one line to change:
   ("one lesson I have learned"), so the model default of "IADEBAYO Foundation"
   would read wrongly. Correct it here if that attribution is wrong.
 * `CATEGORY` is Youth Development for all five, because Category offers only
-  that and AI & Entrepreneurship — and neither actually fits articles about SME
+  that and AI & Entrepreneurship - and neither actually fits articles about SME
   leadership, delegation and scale. See the note the command prints when it
   finishes.
 
@@ -17,7 +17,7 @@ Body format follows Post.body_blocks: a blank line starts a new paragraph, and a
 line beginning "## " becomes a subheading. templates/blog/detail.html renders
 each block as {{ block.text }} with no linebreaks filter, so the author's short
 rhythmic lines ("Later, when revenue improves.") are written as separate
-paragraphs — joining them with single newlines would collapse them into one
+paragraphs - joining them with single newlines would collapse them into one
 run-on line in the browser.
 """
 import shutil
@@ -38,7 +38,7 @@ POSTS = [
         "slug": "roi-of-learning-and-development-for-smbs",
         "title": "The ROI of Learning and Development for Small and Medium-Sized Businesses",
         "excerpt": "Many businesses treat learning and development as something to invest in "
-                   "later — when revenue improves, when the team grows, when there is more "
+                   "later - when revenue improves, when the team grows, when there is more "
                    "time. But waiting comes at a cost, and no business builds capability by "
                    "accident.",
         "seo_title": "The ROI of Learning and Development for SMBs",
@@ -53,7 +53,7 @@ Later, when the team grows.
 
 Later, when there is more time.
 
-For many founders and business leaders, learning and development is seen as a luxury rather than an essential part of building a sustainable business. When resources are limited, investments are understandably directed toward what appears most urgent—operations, sales, technology, or expansion. Developing people is often placed on a list of important things to revisit when circumstances are better.
+For many founders and business leaders, learning and development is seen as a luxury rather than an essential part of building a sustainable business. When resources are limited, investments are understandably directed toward what appears most urgent-operations, sales, technology, or expansion. Developing people is often placed on a list of important things to revisit when circumstances are better.
 
 But waiting often comes at a cost.
 
@@ -152,7 +152,7 @@ What lesson from a great teacher has shaped the way you lead today?""",
     {
         "slug": "the-real-measure-of-scale-is-impact-not-size",
         "title": "The Real Measure of Scale Is Impact, Not Size",
-        "excerpt": "Revenue, headcount, visibility, attention — these tell us whether a "
+        "excerpt": "Revenue, headcount, visibility, attention - these tell us whether a "
                    "business is growing, but not whether it matters. True scale is measured "
                    "by how deeply the work improves outcomes for the people it serves.",
         "seo_title": "The Real Measure of Scale Is Impact, Not Size",
@@ -215,7 +215,7 @@ Because long after attention fades, impact remains.""",
         "slug": "the-difference-between-chasing-traction-and-building-value",
         "title": "The Difference Between Chasing Traction and Building Value",
         "excerpt": "Traction is visible: sign-ups, growth charts, media mentions. Value is "
-                   "quieter. Businesses can achieve traction without creating lasting value — "
+                   "quieter. Businesses can achieve traction without creating lasting value - "
                    "but sustainable businesses are rarely built without it.",
         "seo_title": "Chasing Traction vs Building Value",
         "seo_description": "Traction asks whether people are coming. Value asks whether they "
@@ -343,7 +343,7 @@ The businesses that endure understand the difference.""",
         "slug": "what-founders-learn-too-late-about-delegation-and-trust",
         "title": "What Founders Learn Too Late About Delegation and Trust",
         "excerpt": "One of the quietest reasons companies stall is that founders struggle to "
-                   "let go. Control feels responsible — until it becomes the bottleneck that "
+                   "let go. Control feels responsible - until it becomes the bottleneck that "
                    "limits everything you are trying to build.",
         "seo_title": "What Founders Learn Too Late About Delegation",
         "seo_description": "Delegation is not transferring tasks, it is transferring "
@@ -450,7 +450,7 @@ Because sustainable businesses do not scale through control. They scale through 
 ]
 
 # Excerpt is a TextField and seo_* are CharFields, so SQLite will not complain if
-# a future edit runs long — it would just publish silently truncated metadata.
+# a future edit runs long - it would just publish silently truncated metadata.
 # Check here instead, before anything is written.
 LIMITS = {"excerpt": 300, "seo_title": 70, "seo_description": 160}
 
@@ -491,7 +491,7 @@ class Command(BaseCommand):
                  "after swapping a file in static/img/blog/.")
         parser.add_argument(
             "--drop-demo", action="store_true",
-            help="Delete seed_demo's two placeholder articles. Irreversible — only "
+            help="Delete seed_demo's two placeholder articles. Irreversible - only "
                  "touches those slugs, and only while they still carry the stub author.")
 
     def attach_covers(self, refresh):
@@ -579,7 +579,7 @@ class Command(BaseCommand):
                 self.stdout.write("  no placeholder articles found to remove")
             for slug in kept:
                 self.stdout.write(self.style.WARNING(
-                    f"  ! kept {slug} — author is no longer \"{DEMO_AUTHOR}\", so it "
+                    f"  ! kept {slug} - author is no longer \"{DEMO_AUTHOR}\", so it "
                     f"looks rewritten. Delete it in the admin if it really is a stub."))
         elif Post.objects.filter(slug__in=DEMO_SLUGS, author_name=DEMO_AUTHOR).exists():
             self.stdout.write(self.style.WARNING(
@@ -589,7 +589,7 @@ class Command(BaseCommand):
         if created:
             self.stdout.write(self.style.WARNING(
                 f"\nWorth reviewing in the admin, under Posts:\n"
-                f"  · Author is set to \"{AUTHOR}\" on all {created} — the articles are "
+                f"  · Author is set to \"{AUTHOR}\" on all {created} - the articles are "
                 f"written in the first person, so the\n"
                 f"    \"IADEBAYO Foundation\" default would read wrongly. Change it if that "
                 f"is not right.\n"

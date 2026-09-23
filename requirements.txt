@@ -1,4 +1,4 @@
-# Core — Django 5.2 LTS (supported to April 2028; needs Python 3.10+)
+# Core - Django 5.2 LTS (supported to April 2028; needs Python 3.10+)
 Django>=5.2,<6.0
 Pillow>=10.0            # image fields (team photos, blog covers, gallery)
 
@@ -6,6 +6,6 @@ Pillow>=10.0            # image fields (team photos, blog covers, gallery)
 gunicorn>=22.0
 whitenoise>=6.7         # serves static files from Django itself
 
-# Production database drivers — uncomment what your host needs:
+# Production database drivers - uncomment what your host needs:
 # mysqlclient>=2.2      # cPanel MySQL
 # psycopg2-binary>=2.9  # Render/Heroku PostgreSQL (with DATABASE_URL)

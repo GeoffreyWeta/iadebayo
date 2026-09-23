@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='embarkapplication',
             name='entrepreneurship_view',
-            field=models.TextField(blank=True, help_text='Explain briefly.', verbose_name='What do you think the goal of entrepreneurship is — impact or profit?'),
+            field=models.TextField(blank=True, help_text='Explain briefly.', verbose_name='What do you think the goal of entrepreneurship is - impact or profit?'),
         ),
         migrations.AlterField(
             model_name='embarkapplication',

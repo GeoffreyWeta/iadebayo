@@ -86,7 +86,7 @@ FAQS = [
 ]
 
 # Cohort 5 runs Oct 2026 - Mar 2027. Held as data rather than markup because it
-# appears on two pages, and because the whole table is rewritten each cohort —
+# appears on two pages, and because the whole table is rewritten each cohort -
 # one edit here moves both.
 #
 # The cohort *name* and the application dates live in core.cohort, because the
@@ -129,7 +129,7 @@ def cohort_schedule():
 
     `starts_here` marks the first month an activity appears. Six near-identical
     lists are genuinely hard to read; flagging where each strand joins is what
-    makes the shape legible at a glance — mentorship arriving in January, the
+    makes the shape legible at a glance - mentorship arriving in January, the
     capstone in February, the pitch in March.
     """
     seen, months = set(), []
@@ -187,7 +187,7 @@ def about(request):
 
 
 def embark(request):
-    # No faculty grid here — faculty now live on their own Join Faculty page,
+    # No faculty grid here - faculty now live on their own Join Faculty page,
     # and this slot carries the FAQ instead.
     return render(request, "core/embark.html", {
         "stats": ImpactStat.objects.all(),
@@ -197,7 +197,7 @@ def embark(request):
         "schedule": cohort_schedule(),
         "testimonials": published_testimonials().filter(on_spotlight=True)[:3],
         "meta_title": "Embark Entrepreneurship Academy",
-        "meta_description": "Embark Entrepreneurship Academy — the flagship programme of IADEBAYO Foundation, building entrepreneurs who build Africa.",
+        "meta_description": "Embark Entrepreneurship Academy - the flagship programme of IADEBAYO Foundation, building entrepreneurs who build Africa.",
     })
 
 
@@ -215,7 +215,7 @@ def apply_context(form=None):
         # Set EMBARK_INTRO_VIDEO_URL once the clip is live on YouTube.
         "embark_intro_video": settings.EMBARK_INTRO_VIDEO_URL,
         "meta_title": "Apply to Embark",
-        "meta_description": "Apply to the Embark Entrepreneurship Academy — free, online, and open to undergraduates and recent graduates building businesses in Africa.",
+        "meta_description": "Apply to the Embark Entrepreneurship Academy - free, online, and open to undergraduates and recent graduates building businesses in Africa.",
     }
 
 
@@ -236,7 +236,7 @@ def partner(request):
     return render(request, "core/partner.html", {
         "form": f.PartnershipInquiryForm(),
         "meta_title": "Partner With Us",
-        "meta_description": "Partner with IADEBAYO Foundation — universities, corporations, hubs, foundations, NGOs, and ecosystem partners.",
+        "meta_description": "Partner with IADEBAYO Foundation - universities, corporations, hubs, foundations, NGOs, and ecosystem partners.",
     })
 
 
@@ -245,7 +245,7 @@ def alumni(request):
     return render(request, "core/alumni.html", {
         "alumni": published_testimonials().filter(on_spotlight=True),
         "meta_title": "Embark Alumni",
-        "meta_description": "Meet Embark Entrepreneurship Academy alumni — the ventures "
+        "meta_description": "Meet Embark Entrepreneurship Academy alumni - the ventures "
                             "they are building across Africa, in their own words.",
     })
 
@@ -277,7 +277,7 @@ def volunteer_context(form=None):
     return {
         "form": form if form is not None else f.VolunteerApplicationForm(),
         "meta_title": "Volunteer With Us",
-        "meta_description": "Lend your skills to IADEBAYO Foundation — flexible, mostly remote "
+        "meta_description": "Lend your skills to IADEBAYO Foundation - flexible, mostly remote "
                             "volunteer roles supporting young African entrepreneurs.",
     }
 

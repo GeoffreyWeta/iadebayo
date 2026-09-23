@@ -2,7 +2,7 @@
 {% load static %}
 
 {% comment %}
-  LCP image, and a CSS background — nothing finds it until the style resolves.
+  LCP image, and a CSS background - nothing finds it until the style resolves.
   Preload moves the fetch to the front of the queue.
 {% endcomment %}
 {% block head %}
@@ -19,7 +19,7 @@
     {% comment %}
       One fixed photo, so it is set inline rather than via data-src: the
       hero-slider island only runs where there are slides to rotate, and
-      this page has none — data-src alone left the hero with no image.
+      this page has none - data-src alone left the hero with no image.
     {% endcomment %}
     <div class="hero-slide is-active" style="background-image:url('{% static 'img/embark-hero.webp' %}')"></div>
     <div class="hero-veil"></div>
@@ -31,7 +31,7 @@
     {% comment %}
       Static line + rotating promise. The ghost span holds the longest phrase so
       the hero reserves its height once and never reflows as words cycle.
-      NB: hash-style template comments are single-line only — if one spans
+      NB: hash-style template comments are single-line only - if one spans
       lines Django stops treating it as a comment and prints it on the page.
       Use this block form whenever a note needs more than one line.
     {% endcomment %}
@@ -55,8 +55,8 @@
       <h2>1.3 billion young Africans by 2050. Entrepreneurship has to work.</h2>
       <p>By 2050, Africa is projected to have a population of approximately 2.5 billion people, with around 1.3 billion between the ages of 15 and 34. Entrepreneurship will play a vital role in creating employment for this rapidly growing youth population.</p>
       <p>Yet research consistently shows that many businesses fail because founders lack access to practical business education, experienced mentors, entrepreneurial networks, and strategic guidance.</p>
-      <p class="statement">Embark exists to close this gap — structured learning, mentorship, and a supportive community that equips founders to build resilient, sustainable ventures.</p>
-      <p>We are sector-agnostic and welcome entrepreneurs from all industries — technology, agriculture, education, healthcare, fashion, manufacturing, the creative industries, retail, and beyond.</p>
+      <p class="statement">Embark exists to close this gap - structured learning, mentorship, and a supportive community that equips founders to build resilient, sustainable ventures.</p>
+      <p>We are sector-agnostic and welcome entrepreneurs from all industries - technology, agriculture, education, healthcare, fashion, manufacturing, the creative industries, retail, and beyond.</p>
     </div>
     <div class="reveal">
       <p class="eyebrow" style="color:var(--orange)">Our goals</p>
@@ -162,7 +162,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <p style="color:var(--muted)">Alumni testimonials appear here — add them in the admin under <strong>Testimonials</strong>.</p>
+    <p style="color:var(--muted)">Alumni testimonials appear here - add them in the admin under <strong>Testimonials</strong>.</p>
     {% endif %}
     <div class="center" style="margin-top:44px">
       <a class="btn btn-outline" href="{% url 'core:alumni' %}">Meet all our alumni →</a>

@@ -28,7 +28,7 @@
 
   {# --------------------------------------------------------- window meter #}
   {% comment %}
-    A single ratio against a limit, so it is a meter — not a two-slice pie. The
+    A single ratio against a limit, so it is a meter - not a two-slice pie. The
     copy changes with the state because "0% elapsed" and "opens in 12 days" are
     different facts and only one of them is true before the window starts.
   {% endcomment %}
@@ -36,7 +36,7 @@
     <div class="window-copy">
       <h2 id="window-h">Application window</h2>
       {% if window.state == "open" %}
-      <p><b>Day {{ window.elapsed }}</b> of {{ window.total }} — {{ window.remaining }}
+      <p><b>Day {{ window.elapsed }}</b> of {{ window.total }} - {{ window.remaining }}
         {{ window.remaining|pluralize:"day,days" }} left to apply.</p>
       {% elif window.state == "upcoming" %}
       <p>Opens in <b>{{ window.days_until_open }}</b> {{ window.days_until_open|pluralize:"day,days" }}.</p>
@@ -61,7 +61,7 @@
         {% if t.delta %}
         {# Direction is carried by the arrow and the sign, not by colour alone. #}
         <span class="delta delta-{% if t.delta.value > 0 %}up{% elif t.delta.value < 0 %}down{% else %}flat{% endif %}">
-          <span aria-hidden="true">{% if t.delta.value > 0 %}▲{% elif t.delta.value < 0 %}▼{% else %}—{% endif %}</span>
+          <span aria-hidden="true">{% if t.delta.value > 0 %}▲{% elif t.delta.value < 0 %}▼{% else %}-{% endif %}</span>
           {% if t.delta.value > 0 %}+{% endif %}{{ t.delta.value }}
         </span>
         <span class="delta-vs">was {{ t.delta.was }}</span>
@@ -102,7 +102,7 @@
       scripting off this is still the whole chart, same contract as site.js.
     {% endcomment %}
     <div class="plot-wrap" data-plot>
-      {# Uniform scaling (no preserveAspectRatio override) — "none" would stretch the labels. #}
+      {# Uniform scaling (no preserveAspectRatio override) - "none" would stretch the labels. #}
       <svg class="plot" viewBox="0 0 {{ plot.W }} {{ plot.H }}" role="img"
            aria-label="Applications per day, {{ plot_from|date:'j M Y' }} to {{ plot_to|date:'j M Y' }}. Peak {{ plot.peak }} in one day. The table below this chart lists every day.">
         <defs>
@@ -164,7 +164,7 @@
     <div class="chart-head">
       <div>
         <h2 id="heat-h">The rhythm of the window</h2>
-        <p class="chart-note">Same days, laid out as weeks — the shading is
+        <p class="chart-note">Same days, laid out as weeks - the shading is
           relative to the busiest day ({{ heat.peak }}).</p>
       </div>
       <p class="chart-legend heat-legend">
@@ -185,7 +185,7 @@
           {% for day in week %}
           {% if day %}
           <span class="heat-cell heat-{{ day.level }}"
-                title="{{ day.date|date:'D j M Y' }} — {{ day.value }} application{{ day.value|pluralize }}"></span>
+                title="{{ day.date|date:'D j M Y' }} - {{ day.value }} application{{ day.value|pluralize }}"></span>
           {% else %}
           <span class="heat-cell heat-none" aria-hidden="true"></span>
           {% endif %}
@@ -223,9 +223,9 @@
       {% comment %}
         Connectivity means good → bad (no reliable connection means no live
         classes), so it wears the reserved status scale, and every row carries a
-        written label and a shape — never colour on its own.
+        written label and a shape - never colour on its own.
       {% endcomment %}
-      <p class="chart-note">Reliable internet for live sessions —
+      <p class="chart-note">Reliable internet for live sessions -
         {{ internet.answered }} answered.</p>
       <ul class="status-list">
         {% for r in internet.rows %}
@@ -309,7 +309,7 @@
   </section>
 
   <p class="staff-foot">
-    Every number here is read straight from the submission tables at page load —
+    Every number here is read straight from the submission tables at page load -
     there is no separate analytics store to fall out of step. Percentages are of
     the applicants who answered that question, not of everyone, because most
     fields have been optional since the 2025 form.

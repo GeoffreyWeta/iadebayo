@@ -1,4 +1,4 @@
-# IADEBAYO Foundation — website
+# IADEBAYO Foundation - website
 
 Django site with React "islands", designed to run on inexpensive shared hosting
 (SmartWeb cPanel) while meeting the technical spec: SEO-ready, mobile-first,
@@ -12,7 +12,7 @@ admin-manageable content, six forms with reCAPTCHA + email notifications.
     python manage.py createsuperuser
     python manage.py runserver
 
-Open http://127.0.0.1:8000 — admin at /admin/.
+Open http://127.0.0.1:8000 - admin at /admin/.
 
 ## Project layout
 
@@ -40,12 +40,12 @@ HTML, so SEO and no-JS visitors are unaffected.
 
 Blog posts (with SEO fields), impact numbers, team members, faculty,
 alumni testimonials (text or YouTube), Spotlight videos, gallery photos,
-downloadable resources — and every form submission arrives there too,
+downloadable resources - and every form submission arrives there too,
 with a "reviewed" checkbox for workflow.
 
 ## Images
 
-Every photo is self-hosted WebP — no third-party image hosts. Swap a file in
+Every photo is self-hosted WebP - no third-party image hosts. Swap a file in
 place (same name, same aspect ratio) and the page picks it up:
 
     static/img/hero-1.webp  hero-2.webp  hero-3.webp  (home hero slider, 16:9)

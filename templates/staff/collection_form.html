@@ -9,7 +9,7 @@
 
   `help_text` goes through |safe deliberately, the same way the public form
   templates do it (includes/form_section.html). A few model fields carry markup
-  on purpose — an ordered list of what the applicant video must cover, for one —
+  on purpose - an ordered list of what the applicant video must cover, for one -
   and every word of it is written in models.py. Nothing a user typed reaches it.
 {% endcomment %}
 
@@ -57,7 +57,7 @@
       <div class="staff-field field-{{ field.name }}{% if field.errors %} has-error{% endif %}{% if field.field.widget.input_type == 'checkbox' %} field-check{% endif %}">
 
         {% if field.field.widget.input_type == "checkbox" %}
-        {% comment %} Checkbox first, then its label — the control and the sentence it
+        {% comment %} Checkbox first, then its label - the control and the sentence it
            belongs to read as one line rather than as a heading over a box. {% endcomment %}
         <div class="check-row">
           {{ field }}
@@ -77,7 +77,7 @@
           {% endif %}
           <span>Currently:
             <a href="{{ item.preview.url }}" target="_blank" rel="noopener">{{ item.preview.name }}</a>
-            — choose a file below only if you want to replace it.</span>
+            - choose a file below only if you want to replace it.</span>
         </p>
         {% endif %}
 

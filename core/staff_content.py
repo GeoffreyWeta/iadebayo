@@ -1,8 +1,8 @@
 """What the staff area lets the team change, described once.
 
 Everything in `/staff/` that lists, edits, creates or deletes a row is driven by
-this file. The views in core.staff_views are generic — they take a `Collection`
-and know nothing about team members or blog posts — so adding a new editable
+this file. The views in core.staff_views are generic - they take a `Collection`
+and know nothing about team members or blog posts - so adding a new editable
 thing to the dashboard is a `Collection(...)` here and nothing else.
 
 Why a registry rather than a view per model
@@ -21,7 +21,7 @@ and deleted here, and it changes the public site.
 
 `kind="inbox"` is something the public sent us: an application, a message, a
 subscription. These are records of what a real person submitted, so the staff
-area shows them and lets the team mark them reviewed and export them — it does
+area shows them and lets the team mark them reviewed and export them - it does
 not let anyone edit the answers, because a record you can quietly rewrite is not
 a record. Deleting one needs a superuser (see core.staff_views.can_delete).
 
@@ -52,14 +52,14 @@ class Col:
     `kind` picks how core.staff_views.cell renders the value:
 
       text    plain, truncated by CSS
-      strong  the row's identity — becomes the link into the edit form
+      strong  the row's identity - becomes the link into the edit form
       long    prose, clamped to two lines
       thumb   an ImageField, shown as a 44px square
       file    a FileField, shown as its basename and size
-      bool    a tick or a dash (never colour alone — there is a label too)
+      bool    a tick or a dash (never colour alone - there is a label too)
       switch  a bool the list can flip in place, one POST per click
       when    a datetime, as "3 Sep 2026, 14:20"
-      date    a date with no time — "3 Sep 2026", not "3 Sep 2026, 00:00"
+      date    a date with no time - "3 Sep 2026", not "3 Sep 2026, 00:00"
       chip    a small neutral badge, for choice fields
       link    a URL, shown as its domain and opened in a new tab
       count   an integer, right-aligned with tabular figures
@@ -78,7 +78,7 @@ class Group:
     """One titled block of fields on the edit form.
 
     `note` is the sentence above the block. It is where the thing a form field's
-    own help text cannot say goes — usually "nothing here shows publicly until
+    own help text cannot say goes - usually "nothing here shows publicly until
     X", which is a property of the group, not of any one field.
     """
     title: str
@@ -91,7 +91,7 @@ class Collection:
     slug: str
     model: type
     label: str                      # plural, as it appears in the nav
-    singular: str                   # "team member" — used in buttons and flashes
+    singular: str                   # "team member" - used in buttons and flashes
     blurb: str                      # one line: what this controls
     plural: str = ""                # only where adding "s" would be wrong
     section: str = "content"        # nav section: content | people | inbox
@@ -202,7 +202,7 @@ COHORT = Collection(
     filters=("is_current",),
     ordering=("-applications_open",),
     where=(("core:embark", "Embark page"), ("core:apply", "Application form")),
-    empty="No cohort set — the site is showing the dates built into the code.",
+    empty="No cohort set - the site is showing the dates built into the code.",
     note="Exactly one cohort is used: the most recent one ticked as current. "
          "Leaving last year's row here unticked is fine, and usually handy.",
 )
@@ -235,7 +235,7 @@ TEAM = Collection(
              Col("role", "Role"), Col("order", "Order", "count")),
     groups=(
         Group("Who they are", "", ("name", "role", "photo")),
-        Group("More", "The bio is optional — the About page omits an empty one.",
+        Group("More", "The bio is optional - the About page omits an empty one.",
               ("bio", "linkedin_url", "order")),
     ),
     search=("name", "role"),
@@ -291,12 +291,12 @@ ALUMNI = Collection(
               "between paragraphs.",
               ("story", "quote", "link", "link_label")),
         Group("Video",
-              "Paste any YouTube link — watch page, youtu.be, or a Short. "
+              "Paste any YouTube link - watch page, youtu.be, or a Short. "
               "Shorts are framed vertically automatically.",
               ("kind", "youtube_url", "orientation")),
         Group("Where it appears",
               "Nothing here reaches the public site until media release consent "
-              "is ticked — that is a promise to the person, not a display setting.",
+              "is ticked - that is a promise to the person, not a display setting.",
               ("media_consent", "on_spotlight", "featured", "order")),
     ),
     search=("name", "business", "story", "quote", "cohort"),
@@ -336,7 +336,7 @@ SPOTLIGHT = Collection(
     blurb="Spotlight Show extracts on the Media page.",
     columns=(Col("title", "Title", "strong"), Col("youtube_url", "Video", "link"),
              Col("order", "Order", "count")),
-    groups=(Group("The video", "Any YouTube link works — watch page, youtu.be, "
+    groups=(Group("The video", "Any YouTube link works - watch page, youtu.be, "
                                "or a Short.", ("title", "youtube_url", "order")),),
     search=("title",),
     ordering=("order", "-id"),
@@ -427,7 +427,7 @@ PROMOS = Collection(
     filters=("is_active",),
     ordering=("-updated_at",),
     where=(("core:home", "Every public page"),),
-    empty="No promo popups yet — no campaign modal is showing.",
+    empty="No promo popups yet - no campaign modal is showing.",
 )
 
 SEO = Collection(
@@ -442,12 +442,12 @@ SEO = Collection(
              Col("description", "Meta description", "long")),
     groups=(Group("The page",
                   "The path must match the URL exactly, leading and trailing "
-                  "slash included — '/about/', not 'about'. A path with no row "
+                  "slash included - '/about/', not 'about'. A path with no row "
                   "here uses the built-in default.",
                   ("path", "title", "description")),),
     search=("path", "title", "description"),
     ordering=("path",),
-    empty="No overrides — every page uses its built-in title and description.",
+    empty="No overrides - every page uses its built-in title and description.",
 )
 
 
@@ -620,7 +620,7 @@ EMAIL_TEMPLATES = Collection(
              Col("updated_at", "Last edited", "when")),
     groups=(
         Group("What this template is for",
-              "The name is yours — the applicant never sees it.",
+              "The name is yours - the applicant never sees it.",
               ("name", "purpose", "is_default")),
         Group("The message",
               "Write it as you would write the email. " + PLACEHOLDER_NOTE,

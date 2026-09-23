@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if ImpactStat.objects.exists():
-            self.stdout.write("Content already exists — skipping.")
+            self.stdout.write("Content already exists - skipping.")
             return
 
         ImpactStat.sync_canonical()
@@ -40,13 +40,13 @@ class Command(BaseCommand):
         Testimonial.objects.create(
             kind="text", name="Amina O.", business="AgroLink, Nigeria", featured=True,
             quote="Embark gave me the structure and mentorship I didn't know my business was missing. We doubled revenue during the programme.")
-        SpotlightVideo.objects.create(title="Spotlight Show — Sample episode",
+        SpotlightVideo.objects.create(title="Spotlight Show - Sample episode",
                                       youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         Post.objects.create(
             title="Why every African undergraduate should learn entrepreneurship",
             slug="why-learn-entrepreneurship",
             category="youth-development",
-            excerpt="Entrepreneurial skills pay off whether or not you ever register a company — here's why.",
+            excerpt="Entrepreneurial skills pay off whether or not you ever register a company - here's why.",
             body="Africa's youth population is its greatest asset.\n\n## The case for starting early\nStudents who learn business fundamentals early make better decisions when opportunity arrives.\n\nMentorship compounds these gains dramatically.",
             published=True, published_at=timezone.now())
         Post.objects.create(

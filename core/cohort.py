@@ -10,8 +10,8 @@ meter can never disagree about when applications close.
 Where the dates live
 --------------------
 In the database, as a `core.Cohort` row the team edits at /staff/c/cohort/. The
-module constants below are the fallback for when there is no row — a fresh
-install, or a test database — and nothing else. They are not the source of
+module constants below are the fallback for when there is no row - a fresh
+install, or a test database - and nothing else. They are not the source of
 truth; `current()` is.
 
 That change was the point of the staff area. A cohort's dates slipping by a week
@@ -50,8 +50,8 @@ def current():
     """The cohort being advertised, or the built-in dates if none is set.
 
     Deliberately tolerant of a database that cannot answer. This is called while
-    rendering the public Embark page, and a missing table during a deploy — or
-    the moment between `migrate` creating it and the team filling it in — should
+    rendering the public Embark page, and a missing table during a deploy - or
+    the moment between `migrate` creating it and the team filling it in - should
     degrade to the shipped dates, not take the page down.
     """
     from django.db import DatabaseError
@@ -95,7 +95,7 @@ def window_progress(today=None, dates=None):
 
     Returns a state of "upcoming" before the window opens, so the meter can say
     "opens in N days" rather than drawing a 0% bar that looks like failure.
-    `elapsed`/`total` count days inclusive of both ends — day one is 1/42, not
+    `elapsed`/`total` count days inclusive of both ends - day one is 1/42, not
     0/42, which is what someone reading "day 4 of 42" expects.
     """
     d = dates or current()

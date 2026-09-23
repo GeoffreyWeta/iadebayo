@@ -1,7 +1,7 @@
 """Tests for the staff area: who gets in, and whether the numbers are right.
 
 The analytics assertions deliberately go through `analytics.*` rather than
-scraping the rendered page — the arithmetic is the part that can be wrong in a
+scraping the rendered page - the arithmetic is the part that can be wrong in a
 way nobody notices, and it is worth pinning down separately from the markup.
 """
 import datetime as dt
@@ -117,7 +117,7 @@ class StaffAccessTests(TestCase):
         from .staff import LOCK_ATTEMPTS
         for _ in range(LOCK_ATTEMPTS):
             self.client.post(url, {"username": "staffer", "password": "wrong"})
-        # The real password now fails too — that is the point of the throttle.
+        # The real password now fails too - that is the point of the throttle.
         response = self.client.post(url, {"username": "staffer", "password": PASSWORD})
         self.assertFalse(response.context["user"].is_authenticated)
         self.assertContains(response, "Too many sign-in attempts")
@@ -178,7 +178,7 @@ class AnalyticsNumbersTests(TestCase):
         self.assertEqual(result["rows"][0]["pct"], 100)
 
     def test_a_state_without_a_country_keeps_its_bare_name(self):
-        """Legacy rows only — the form requires country — but a label reading
+        """Legacy rows only - the form requires country - but a label reading
         "Kano, " would look like a truncation bug."""
         make_application(state="Kano", country="")
         rows = analytics.region_breakdown(EmbarkApplication.objects.all())["rows"]
@@ -315,7 +315,7 @@ class PlotGeometryTests(TestCase):
 
 class CohortWindowTests(TestCase):
     """The dates now come from a `Cohort` row, so these read them through
-    `current()` — which with an empty table is the shipped fallback."""
+    `current()` - which with an empty table is the shipped fallback."""
 
     def setUp(self):
         self.dates = cohort.current()
@@ -334,7 +334,7 @@ class CohortWindowTests(TestCase):
         self.assertEqual(after["days_since_close"], 2)
 
     def test_the_public_key_dates_still_read_the_way_they_shipped(self):
-        """These strings are on /embark/ and /embark/apply/ — deriving them from
+        """These strings are on /embark/ and /embark/apply/ - deriving them from
         dates must not change what an applicant sees."""
         self.assertEqual(cohort.key_dates(), [
             ("Applications open", "1 August – 30 September 2026"),
@@ -642,7 +642,7 @@ class ApplicantEmailTests(TestCase):
 
 
 class ZeptoMailBackendTests(TestCase):
-    """The HTTP call is mocked — these pin the payload shape, not delivery."""
+    """The HTTP call is mocked - these pin the payload shape, not delivery."""
 
     def send(self, message, **backend_kwargs):
         from .mail_backends import ZeptoMailBackend

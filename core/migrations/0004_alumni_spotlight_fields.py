@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='testimonial',
             name='link',
-            field=models.URLField(blank=True, help_text='Their website or social page — linked from the spotlight page'),
+            field=models.URLField(blank=True, help_text='Their website or social page - linked from the spotlight page'),
         ),
         migrations.AddField(
             model_name='testimonial',
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='testimonial',
             name='orientation',
-            field=models.CharField(choices=[('auto', 'Detect automatically (Shorts are treated as vertical)'), ('landscape', 'Landscape — 16:9'), ('portrait', 'Vertical — 9:16')], default='auto', help_text='Only change this if a vertical clip was uploaded as a normal video.', max_length=10),
+            field=models.CharField(choices=[('auto', 'Detect automatically (Shorts are treated as vertical)'), ('landscape', 'Landscape - 16:9'), ('portrait', 'Vertical - 9:16')], default='auto', help_text='Only change this if a vertical clip was uploaded as a normal video.', max_length=10),
         ),
         migrations.AddField(
             model_name='testimonial',
@@ -48,6 +48,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='testimonial',
             name='youtube_url',
-            field=models.URLField(blank=True, help_text='Paste any YouTube link — watch page, youtu.be, or a Short'),
+            field=models.URLField(blank=True, help_text='Paste any YouTube link - watch page, youtu.be, or a Short'),
         ),
     ]

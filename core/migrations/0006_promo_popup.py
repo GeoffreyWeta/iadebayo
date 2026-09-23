@@ -14,10 +14,10 @@ class Migration(migrations.Migration):
             name='PromoPopup',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(help_text="Internal label, and the modal's accessible name. e.g. “Embark Cohort 5 — applications open”", max_length=140)),
+                ('title', models.CharField(help_text="Internal label, and the modal's accessible name. e.g. “Embark Cohort 5 - applications open”", max_length=140)),
                 ('image', models.ImageField(help_text='The flier itself. Portrait or square reads best; it is shown at up to 460px wide and scales down on phones.', upload_to='promos/')),
                 ('image_alt', models.CharField(help_text='What the flier SAYS, for screen readers and when images fail to load. The artwork carries the message, so repeat it here in words.', max_length=250)),
-                ('link_url', models.CharField(blank=True, help_text='Leave blank to send people to the Embark application, which is almost always what you want. Override only to point somewhere else — a path like /get-involved/faculty/ or a full https:// URL.', max_length=200, verbose_name='Button link')),
+                ('link_url', models.CharField(blank=True, help_text='Leave blank to send people to the Embark application, which is almost always what you want. Override only to point somewhere else - a path like /get-involved/faculty/ or a full https:// URL.', max_length=200, verbose_name='Button link')),
                 ('link_label', models.CharField(default='Apply now', max_length=60, verbose_name='Button text')),
                 ('is_active', models.BooleanField(default=False, help_text='Untick to pull the popup immediately, site-wide.')),
                 ('starts_at', models.DateTimeField(blank=True, help_text='Optional. Leave blank to start as soon as it is active.', null=True)),

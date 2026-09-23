@@ -2,14 +2,14 @@
 <html lang="en">
 {% comment %}
   Shell for the staff area. Deliberately NOT extending base.html: the marketing
-  chrome — nav, footer, promo modal, the floating Apply pill — is all wrong on a
+  chrome - nav, footer, promo modal, the floating Apply pill - is all wrong on a
   working dashboard, and base.html's context (page_meta, newsletter form, promo)
   comes from the public views.
 
   site.css still loads first, for two reasons: the brand tokens and type live
   there, and so does the scroll-reveal machinery, so dashboard cards animate
   through the same system the public pages use rather than a second copy of it.
-  staff.css is the layer on top. Same for site.js — its nav/promo/pill sections
+  staff.css is the layer on top. Same for site.js - its nav/promo/pill sections
   no-op with none of that markup present, and section 3 gives us the reveals.
 {% endcomment %}
 <head>
@@ -20,7 +20,7 @@
   {# Applicant data behind this login must never reach an index or a cache. #}
   <meta name="robots" content="noindex, nofollow, noarchive">
   <script>document.documentElement.classList.add('js');</script>
-  <title>{{ page_title }} — {{ SITE_NAME }} staff</title>
+  <title>{{ page_title }} - {{ SITE_NAME }} staff</title>
   <link rel="icon" href="{% static 'img/favicon.png' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +46,7 @@
     {% comment %}
       Only the two places that are not a list of something: the dashboard and the
       numbers. Everything else the team edits is in the rail on the left (see
-      staff/manage_base.html), where it can be grouped and can carry a count —
+      staff/manage_base.html), where it can be grouped and can carry a count -
       eighteen collections across the top bar would be a scrolling strip nobody
       can find anything in.
     {% endcomment %}

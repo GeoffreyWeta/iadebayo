@@ -1,4 +1,4 @@
-"""`manage.py send_test_email` — prove the mail transport works, loudly.
+"""`manage.py send_test_email` - prove the mail transport works, loudly.
 
 This exists because every other way of testing mail on this project lies to you.
 The form views swallow send failures on purpose (a dead SMTP host must not 500 a
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             ("EMAIL_USE_SSL", getattr(settings, "EMAIL_USE_SSL", "(unset)")),
             ("EMAIL_USE_TLS", getattr(settings, "EMAIL_USE_TLS", "(unset)")),
             ("EMAIL_HOST_USER", getattr(settings, "EMAIL_HOST_USER", "") or "(empty)"),
-            # Never the password itself — only whether one is present. This
+            # Never the password itself - only whether one is present. This
             # command gets run over SSH and pasted into chats when it fails.
             ("EMAIL_HOST_PASSWORD", "set" if getattr(settings, "EMAIL_HOST_PASSWORD", "") else "(empty)"),
             ("ZEPTOMAIL_TOKEN", "set" if getattr(settings, "ZEPTOMAIL_TOKEN", "") else "(unset)"),
@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
         # The console backend is the default, so this is the state a droplet
         # lands in when .env is missing or EMAIL_BACKEND was never set. It looks
-        # like success — the message renders and the command exits 0 — which is
+        # like success - the message renders and the command exits 0 - which is
         # exactly the confusion this command exists to end.
         if "console" in backend or "locmem" in backend or "dummy" in backend:
             self.stdout.write("")
@@ -73,7 +73,7 @@ class Command(BaseCommand):
 
         try:
             sent = send_mail(
-                subject="IADEBAYO Foundation — mail transport test",
+                subject="IADEBAYO Foundation - mail transport test",
                 message=(
                     "If you are reading this, the site can send email.\n\n"
                     f"Sent by manage.py send_test_email via {getattr(settings, 'EMAIL_HOST', backend)}."
@@ -99,5 +99,5 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"  Accepted for delivery to {to}."))
         self.stdout.write(
-            "\nAccepted is not the same as delivered — check the inbox, the spam\n"
+            "\nAccepted is not the same as delivered - check the inbox, the spam\n"
             "folder, and the provider's activity feed before calling this done.")

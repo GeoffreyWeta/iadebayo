@@ -8,7 +8,7 @@ urlpatterns = [
     path("embark/", views.embark, name="embark"),
     path("embark/apply/", views.apply, name="apply"),
     # Not /media/: that is MEDIA_URL, and nginx maps the prefix straight to the
-    # uploads directory, so a request for /media/ never reaches Django — it just
+    # uploads directory, so a request for /media/ never reaches Django - it just
     # 403s on a directory listing it will not index. Keep this page off it.
     path("gallery/", views.gallery, name="gallery"),
     path("embark/alumni/", views.alumni, name="alumni"),

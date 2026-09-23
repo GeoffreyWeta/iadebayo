@@ -2,7 +2,7 @@
 
 Nothing here touches the request. Every function takes a queryset or a date
 window and returns plain dicts, which is what makes the numbers testable without
-going through a view, and what lets the template stay declarative — it renders
+going through a view, and what lets the template stay declarative - it renders
 geometry it is handed rather than doing arithmetic in `{% %}`.
 
 Two deliberate choices worth knowing about:
@@ -94,7 +94,7 @@ def breakdown(qs, field, choices=None, limit=None, blank_ok=False):
     `choices` maps stored codes to the labels the applicant actually saw; values
     with no entry pass through as themselves (free-typed countries, legacy
     sectors). `limit` folds the tail into a single "Other" row rather than
-    inventing more colours for it — the dashboard draws these as one-hue bars, so
+    inventing more colours for it - the dashboard draws these as one-hue bars, so
     a long tail costs legibility, not palette slots.
     """
     labels = dict(choices or [])
@@ -113,7 +113,7 @@ def region_breakdown(qs, limit=None):
     """Counts per state/region, qualified by the country it sits in.
 
     The state picker stores a bare subdivision name, and those repeat across
-    countries — ISO 3166-2 has a "Central" in Botswana, Ghana, Kenya and Zambia,
+    countries - ISO 3166-2 has a "Central" in Botswana, Ghana, Kenya and Zambia,
     and a "Northern" in half a dozen more. Keying on `state` alone would add four
     unrelated places into one bar and label it with whichever country the reader
     happened to assume, so the key is the (state, country) pair and the label
@@ -142,7 +142,7 @@ def _ranked(rows, answered, limit=None):
     """Biggest first, with the tail folded into a single "Other" row.
 
     Shared by the plain and country-qualified breakdowns so the two order and
-    truncate identically — someone reading "States and regions" against
+    truncate identically - someone reading "States and regions" against
     "Countries" should not have to work out whether "Other" was cut the same way
     in both.
     """
@@ -157,7 +157,7 @@ def multi_breakdown(qs, field, choices):
     """Counts for a comma-separated multi-select (the growth blockers).
 
     `answered` counts *people*, not ticks, so the bar percentages read as "share
-    of applicants who named this" — which is the only reading that makes sense
+    of applicants who named this" - which is the only reading that makes sense
     when one applicant can tick four boxes. The total will exceed 100%; the
     template says so under the chart.
     """
@@ -178,7 +178,7 @@ def _as_bars(pairs, answered):
     """Shared shape for every bar list: value, share, and bar width.
 
     `width` is scaled to the biggest row rather than to the total, because these
-    charts answer "which is largest" — scaling to the total leaves every bar a
+    charts answer "which is largest" - scaling to the total leaves every bar a
     stub whenever the field has a long tail. `pct` stays the true share so the
     printed number and the bar length are answering different questions on
     purpose, and the template labels both.
@@ -286,7 +286,7 @@ class Plot:
     def _nice_ceiling(peak):
         """A round number at or above the peak, so gridline labels are readable.
 
-        1/2/5 × a power of ten — the same ladder every axis library uses, because
+        1/2/5 × a power of ten - the same ladder every axis library uses, because
         a y-axis topping out at "37" gives the reader nothing to measure against.
         """
         if peak <= 4:
@@ -385,7 +385,7 @@ class Plot:
 
 
 def sparkline(values, w=104, h=28):
-    """Tiny trend line for a stat tile. No axes, no labels — shape only.
+    """Tiny trend line for a stat tile. No axes, no labels - shape only.
 
     A flat series still has to draw *something*, so a single-value or all-equal
     series is pinned to the vertical middle rather than dividing by a zero range.
@@ -413,7 +413,7 @@ def heat_grid(series):
 
     Level 0–4 indexes the one-hue ramp in staff.css. Levels are cut on the
     series' own peak, so a quiet cohort still shows contrast instead of one flat
-    block — the legend states the top of the scale so nobody reads the shading
+    block - the legend states the top of the scale so nobody reads the shading
     as an absolute.
     """
     if not series:
@@ -442,7 +442,7 @@ def dashboard(range_key=None, today=None):
     # preset cannot disagree if the row is edited between two queries.
     cohort_dates = cohort.current()
     key, label, start, end = resolve_range(range_key, today, cohort_dates)
-    # An "all time" or future-ending window still plots up to today — drawing a
+    # An "all time" or future-ending window still plots up to today - drawing a
     # flat tail out to 30 September would read as weeks of zero applications.
     plot_end = min(end, today) if end else today
 
@@ -490,7 +490,7 @@ def _tiles(apps, start, end, plot_start, plot_end, today):
     """The KPI row: a number, a comparison, and a shape for each source.
 
     The comparison is against the *previous window of the same length*, which is
-    the only honest one — "up 12 on last month" means nothing if last month was
+    the only honest one - "up 12 on last month" means nothing if last month was
     measured over a different number of days. An open-ended window has nothing to
     compare against and says so by omitting the delta.
     """
@@ -522,7 +522,7 @@ def _funnel(apps):
     "Reviewable" means there is something to watch: a pasted link, or a file from
     before the August 2026 switch to links. An application without either cannot
     be assessed, and the gap between stage one and two is the number staff need
-    to see — it is a chase list, not a statistic.
+    to see - it is a chase list, not a statistic.
     """
     total = apps.count()
     watchable = apps.exclude(business_video_url="", business_video="").count()
@@ -541,7 +541,7 @@ def _internet(apps):
 
     This one series genuinely means good → bad (an applicant with no reliable
     connection cannot attend a live class), so it wears status tokens rather than
-    series colours, each with its own written label — never colour alone.
+    series colours, each with its own written label - never colour alone.
     """
     order = [("yes", "Reliable", "good"), ("sometimes", "Sometimes", "warning"),
              ("no", "Not reliable", "critical")]
@@ -555,7 +555,7 @@ def _internet(apps):
 
 
 def _rate(qs, **filters):
-    """A single ratio — drawn as a meter, not a two-slice pie."""
+    """A single ratio - drawn as a meter, not a two-slice pie."""
     total = qs.count()
     hit = qs.filter(**filters).count()
     return {"value": hit, "total": total,

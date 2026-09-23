@@ -18,7 +18,7 @@ class Post(models.Model):
     author_name = models.CharField(max_length=120, default="IADEBAYO Foundation")
     published = models.BooleanField(default=False)
     published_at = models.DateTimeField(default=timezone.now)
-    # Per-page SEO — required by the technical spec (editable titles + meta descriptions)
+    # Per-page SEO - required by the technical spec (editable titles + meta descriptions)
     seo_title = models.CharField(max_length=70, blank=True, help_text="Optional. Overrides the browser/search title")
     seo_description = models.CharField(max_length=160, blank=True, help_text="Optional. Meta description for search engines")
 

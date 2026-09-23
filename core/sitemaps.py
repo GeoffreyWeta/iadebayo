@@ -10,7 +10,7 @@ class StaticPagesSitemap(Sitemap):
 
     def items(self):
         # "core:resources" and "core:gallery" are deliberately absent while their
-        # links are hidden — no point advertising a page to search engines before
+        # links are hidden - no point advertising a page to search engines before
         # it is announced, or while its content is out of date.
         return ["core:home", "core:about", "core:embark", "core:apply",
                 "core:partner", "core:get_involved", "core:contact",

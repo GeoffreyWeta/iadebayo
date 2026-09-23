@@ -1,5 +1,5 @@
 {% comment %}
-  Meta (Facebook) Pixel. Renders nothing at all unless META_PIXEL_ID is set —
+  Meta (Facebook) Pixel. Renders nothing at all unless META_PIXEL_ID is set -
   see config/settings/base.py.
 
   What this sends, and what it deliberately does not:
@@ -7,7 +7,7 @@
     * Every page view, as Meta's standard PageView. That is the baseline the
       ads platform needs to know a visit happened.
     * One conversion event on the page a form redirects to after a *successful*
-      submission — `meta_pixel_event`, set by submissions.views and handed over
+      submission - `meta_pixel_event`, set by submissions.views and handed over
       by core.context_processors. That is what turns "3,000 clicks" into "eleven
       of them applied", which is the only reason to run a pixel on this site.
     * Nothing else. In particular, no advanced matching: Meta's install flow
@@ -18,7 +18,7 @@
       be matched to an advertising profile, and the privacy policy says we share
       personal information only for the purpose it was given for. Turning
       matching on would make that untrue. The event names below carry no
-      applicant data — they say *that* someone applied, never who.
+      applicant data - they say *that* someone applied, never who.
 
   The event name is always one of the fixed strings in submissions.views, never
   anything a visitor typed.

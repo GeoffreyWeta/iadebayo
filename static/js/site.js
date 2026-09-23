@@ -2,7 +2,7 @@
 
    Everything here is additive: with the script blocked the page is the same
    server-rendered document it always was. The one thing CSS needs to know is
-   whether we ran at all — base.html sets `html.js` inline in <head>, and the
+   whether we ran at all - base.html sets `html.js` inline in <head>, and the
    v23 block in site.css unwinds every animation start state when that class
    is missing, so a failed script can never leave content invisible.
 
@@ -132,9 +132,9 @@
   /* ================================================= 3. scroll reveals */
   /* Two mechanisms, one observer:
 
-       .reveal      — hand-placed in templates. Fades and rises, staggered
+       .reveal      - hand-placed in templates. Fades and rises, staggered
                       against its siblings.
-       .stagger     — added here to lists and grids whose children carry no
+       .stagger     - added here to lists and grids whose children carry no
                       .reveal of their own, so every page animates without
                       editing every template.
 
@@ -142,7 +142,7 @@
      what that means (a rule drawing itself, a curtain lifting off a photo).
   */
 
-  // Containers worth staggering — skipped when their children already reveal.
+  // Containers worth staggering - skipped when their children already reveal.
   // .faq-columns is excluded on purpose: its <details> already animate their
   // own panel open, and it is a multi-column container, which is the one
   // place stacking two effects on a fragmented child tends to misrender.
@@ -164,7 +164,7 @@
   var watch = [];
 
   document.querySelectorAll(STAGGER).forEach(function (el) {
-    // Already animating from the template — a second layer would fight it.
+    // Already animating from the template - a second layer would fight it.
     if (el.querySelector(":scope > .reveal")) return;
     if (el.classList.contains("reveal")) return;
     el.classList.add("stagger");
@@ -201,7 +201,7 @@
   /* ============================================== 4. floating actions */
   /* The apply pill and the back-to-top badge share the bottom-right corner
      on a phone. They fade out together over the footer, which already
-     carries every link they offer and is where the newsletter field lives —
+     carries every link they offer and is where the newsletter field lives -
      a pill parked on top of the Subscribe button is the whole reason. */
 
   body.classList.add("js-float");
@@ -263,7 +263,7 @@
 
     // Private browsing and locked-down settings make localStorage throw on
     // access, not just on write. A visitor there should still see the flier
-    // and still be able to close it — they just see it again next visit.
+    // and still be able to close it - they just see it again next visit.
     function seen() {
       try { return window.localStorage.getItem(KEY) === "1"; } catch (e) { return false; }
     }

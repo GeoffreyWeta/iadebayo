@@ -12,7 +12,7 @@ which is any of:
 All of them reduce to an eleven-character video id, so parse the id once and
 build the URLs we need from it. The previous per-model implementations pattern
 matched on the URL text instead and silently passed Shorts links straight
-through, so the iframe pointed at the watch page — which YouTube refuses to
+through, so the iframe pointed at the watch page - which YouTube refuses to
 frame, leaving a blank box on the page.
 """
 from urllib.parse import parse_qs, urlparse
@@ -43,7 +43,7 @@ def video_id(url):
 
 
 def is_short(url):
-    """True for a /shorts/ link — the one shape we know is filmed vertically."""
+    """True for a /shorts/ link - the one shape we know is filmed vertically."""
     if not url:
         return False
     return "/shorts/" in urlparse(url.strip()).path

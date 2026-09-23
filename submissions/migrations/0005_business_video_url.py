@@ -1,7 +1,7 @@
 """Applicants link their video instead of uploading it.
 
 The 10 GB droplet cannot hold 64 MB per applicant: roughly seventy applications
-would fill the disk, and a full disk stops SQLite writing at all — the site
+would fill the disk, and a full disk stops SQLite writing at all - the site
 would start refusing every form, not just the video. Section B now asks for a
 Google Drive link.
 
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             field=models.FileField(
                 blank=True, upload_to="applications/videos/",
                 validators=[submissions.models.validate_application_video],
-                help_text="Legacy — superseded by the video link.",
+                help_text="Legacy - superseded by the video link.",
                 verbose_name="One-minute business video (uploaded, pre-2026-08)"),
         ),
     ]

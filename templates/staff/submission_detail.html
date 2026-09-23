@@ -123,9 +123,9 @@
     <div class="detail-row{% if r.long %} detail-row-wide{% endif %}{% if r.empty %} is-empty{% endif %}">
       <dt>{{ r.label }}</dt>
       <dd>
-        {% if r.empty %}<span class="cell-none">— not answered —</span>
+        {% if r.empty %}<span class="cell-none">- not answered -</span>
         {% elif r.is_bool %}<span class="flag flag-{{ r.value|yesno:"yes,no" }}">
-            <span aria-hidden="true">{{ r.value|yesno:"✓,—" }}</span> {{ r.value|yesno:"Yes,No" }}</span>
+            <span aria-hidden="true">{{ r.value|yesno:"✓,-" }}</span> {{ r.value|yesno:"Yes,No" }}</span>
         {% elif r.is_url %}<a href="{{ r.value }}" target="_blank" rel="noopener noreferrer">{{ r.value }} ↗</a>
         {% elif r.is_file %}<a href="{% url 'submissions:download_video' obj.pk %}">Download {{ r.value.name }}</a>
         {% elif r.long %}<div class="detail-prose">{{ r.value|linebreaks }}</div>
@@ -153,7 +153,7 @@
 {% if may_delete %}
 <p class="detail-danger">
   <a class="form-delete" href="{% url 'staff:delete' c.slug obj.pk %}">Delete this {{ c.singular }}</a>
-  — it is the only copy, and the analytics are counted from it.
+  - it is the only copy, and the analytics are counted from it.
 </p>
 {% endif %}
 

@@ -182,7 +182,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="embarkapplication",
             name="business_description",
-            field=models.TextField(blank=True, help_text="Legacy — superseded by the video"),
+            field=models.TextField(blank=True, help_text="Legacy - superseded by the video"),
         ),
         migrations.AlterField(
             model_name="embarkapplication",

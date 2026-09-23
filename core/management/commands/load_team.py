@@ -3,13 +3,13 @@
 Names follow the banner, with one correction: it prints "WETTA" but the About
 page copy and the repo's own git author both spell it "Weta". If the banner is
 right, fix it here and in templates/core/about.html together. Roles are left blank
-on purpose — the banner does not state them and inventing a job title for a real
+on purpose - the banner does not state them and inventing a job title for a real
 colleague is worse than an empty field. Fill them in under Team members.
 
 Dare Adebayo is the one exception: the About page's own copy says he founded the
 Foundation, so that title is on the record rather than a guess.
 
-Idempotent — matched on name, so re-running never duplicates and never
+Idempotent - matched on name, so re-running never duplicates and never
 overwrites a role or photo that has been filled in since.
 """
 from django.core.management.base import BaseCommand
@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 name=name, defaults={"role": role, "order": index})
             if was_created:
                 created += 1
-                self.stdout.write(f"  + {name}" + (f" — {role}" if role else ""))
+                self.stdout.write(f"  + {name}" + (f" - {role}" if role else ""))
             else:
                 skipped += 1
 

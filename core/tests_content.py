@@ -1,4 +1,4 @@
-"""Tests for the staff content admin — the part of /staff/ that changes the site.
+"""Tests for the staff content admin - the part of /staff/ that changes the site.
 
 Two things are worth pinning down here, and they are different in kind.
 
@@ -97,7 +97,7 @@ class EveryCollectionRendersTests(TestCase):
             with self.subTest(collection=c.slug):
                 response = self.client.get(reverse("staff:new", args=[c.slug]))
                 self.assertEqual(response.status_code, 200)
-                # Every declared field reaches the page — a group that names a
+                # Every declared field reaches the page - a group that names a
                 # field the form dropped would otherwise fail silently.
                 for name in c.form_fields:
                     self.assertContains(response, f'name="{name}"')
@@ -163,7 +163,7 @@ class ContentEditingTests(TestCase):
 
 @SSL_REDIRECT_OFF
 class SubmissionsAreRecordsTests(TestCase):
-    """A submission can be read, marked and exported — never rewritten."""
+    """A submission can be read, marked and exported - never rewritten."""
 
     def setUp(self):
         self.user = a_staff_user(self.client)

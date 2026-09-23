@@ -1,16 +1,16 @@
 /* ============================================================
-   IADEBAYO Foundation — staff area (sign-in + analytics)
+   IADEBAYO Foundation - staff area (sign-in + analytics)
 
    Loads AFTER site.css and every rule is scoped under `.staff-body`. Both
    halves of that matter: the scope keeps `.card`, `.grid-2` and friends from
    colliding with the marketing site's versions of the same names (site.css has
    26 `.card` rules), and it guarantees nothing here can leak the other way.
 
-   Brand tokens, type and the scroll-reveal machinery all come from site.css —
+   Brand tokens, type and the scroll-reveal machinery all come from site.css -
    this file adds the dashboard layer and the chart palette.
 
    ------------------------------------------------------------
-   CHART PALETTE — derived from the brand hues, then validated.
+   CHART PALETTE - derived from the brand hues, then validated.
 
    Not eyeballed. The categorical slots and the ordinal ramp were run through
    the six colour checks (OKLab CVD separation under protanopia/deuteranopia,
@@ -26,7 +26,7 @@
    put yellow beside orange, which is the one pair that reliably collapses under
    deuteranopia. Anything needing a fourth series folds into "Other" instead.
 
-   The ordinal ramp is one hue — the brand blue — in monotone lightness steps,
+   The ordinal ramp is one hue - the brand blue - in monotone lightness steps,
    used wherever the categories are *ordered* (funnel stages, age bands, heatmap
    density). Ordered data gets one ramp so the reader sees the order in the
    colour; unordered bars all get slot 1, because colouring nominal bars by
@@ -42,7 +42,7 @@
   --viz-2: #ef5c31;
   --viz-3: #029393;
 
-  /* ordinal / sequential ramp — brand-blue hue, light to dark */
+  /* ordinal / sequential ramp - brand-blue hue, light to dark */
   --viz-r1: #a0abfe;
   --viz-r2: #818af7;
   --viz-r3: #676ed8;
@@ -54,7 +54,7 @@
   --viz-warn: #fab219;
   --viz-crit: #d03b3b;
 
-  /* chart chrome — warm neutrals, to sit with the brand's cream/red world */
+  /* chart chrome - warm neutrals, to sit with the brand's cream/red world */
   --plane: #F6F4F1;
   --surface: #FFFFFF;
   --viz-track: #ECEAF4;
@@ -131,7 +131,7 @@
 
 /* ==================================================== 2. sign-in page */
 .staff-body.staff-login-body { background: var(--surface-darker); }
-/* Centred in the viewport rather than pinned to the top — on a laptop the form
+/* Centred in the viewport rather than pinned to the top - on a laptop the form
    otherwise sits in the upper third with a long empty field of red under it. */
 .staff-body .staff-login {
   max-width: 1000px; margin: 0 auto; padding: 46px 22px 60px;
@@ -262,7 +262,7 @@
 }
 
 /* Cards. `.card` is scoped, so site.css's marketing card (and its hover lift)
-   does not reach in here — a dashboard full of cards that jump on hover is
+   does not reach in here - a dashboard full of cards that jump on hover is
    noise, so only the tiles move, and only slightly. */
 .staff-body .card {
   background: var(--surface); border: 1px solid var(--card-ring);
@@ -324,7 +324,7 @@
 
 
 /* ==================================================== 5. stat tiles */
-/* Six sources, six equal columns, no spanning — a hero that spans two units
+/* Six sources, six equal columns, no spanning - a hero that spans two units
    makes seven, which never divides into the row and drops one tile onto a line
    of its own. The lead tile earns its emphasis from weight and tint instead. */
 .staff-body .tile-row {
@@ -381,7 +381,7 @@
   gap: 12px; align-items: center;
 }
 /* Wrap to two lines rather than truncate. "Undergraduate" and "Lack of business
-   knowledge" ARE the labels — an ellipsis in the middle of a chart someone is
+   knowledge" ARE the labels - an ellipsis in the middle of a chart someone is
    reading for meaning is worse than a row that is a few pixels taller. */
 .staff-body .bar-label {
   font-size: .84rem; font-weight: 600; line-height: 1.28; color: var(--viz-ink);
@@ -411,14 +411,14 @@
 .staff-body .chart-ordinal .bar-row:nth-child(5n+4) .bar-fill { background: var(--viz-r4); }
 .staff-body .chart-ordinal .bar-row:nth-child(5n+5) .bar-fill { background: var(--viz-r5); }
 
-/* Row hover: the track lifts, not the card. Pointer-only — on a phone :hover
+/* Row hover: the track lifts, not the card. Pointer-only - on a phone :hover
    sticks after the tap and leaves a row highlighted for no reason. */
 @media (hover: hover) and (pointer: fine) {
   .staff-body .bar-row:hover .bar-track { background: #EDEAF6; }
   .staff-body .bar-row:hover .bar-fill { filter: brightness(1.06); }
 }
 
-/* The table view — the relief channel, and the accessible read of every chart */
+/* The table view - the relief channel, and the accessible read of every chart */
 .staff-body .chart-table { margin-top: 16px; }
 .staff-body .chart-table summary {
   font-size: .78rem; font-weight: 700; color: var(--viz-1); cursor: pointer;
@@ -519,7 +519,7 @@
 .staff-body .plot-tip-date { color: rgba(255,255,255,.72); font-weight: 600; }
 
 /* A uniformly scaled SVG shrinks its own text, so the label size is bumped in
-   user units as the column narrows — the rendered size stays about 10px. */
+   user units as the column narrows - the rendered size stays about 10px. */
 @media (max-width: 900px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 14px; } }
 @media (max-width: 620px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 19px; } }
 @media (max-width: 430px) { .staff-body .plot-ylab, .staff-body .plot-xlab { font-size: 24px; } }
@@ -584,7 +584,7 @@
    12. MOTION
 
    Every animation is a transition off `.is-visible`, which site.js adds when
-   the card scrolls in (section 3 of that file) — so nothing animates until it
+   the card scrolls in (section 3 of that file) - so nothing animates until it
    is actually on screen, and with scripting off the `html:not(.js)` rules in
    site.css leave everything in its final state.
 
@@ -607,7 +607,7 @@
 .staff-body .is-visible .funnel-fill,
 .staff-body .is-visible .status-fill { width: var(--w); }
 .staff-body .is-visible .meter-fill { width: var(--pct); }
-/* No script, no reveal class to flip — show the final geometry. */
+/* No script, no reveal class to flip - show the final geometry. */
 html:not(.js) .staff-body .bar-fill,
 html:not(.js) .staff-body .funnel-fill,
 html:not(.js) .staff-body .status-fill { width: var(--w); }
@@ -619,7 +619,7 @@ html:not(.js) .staff-body .meter-fill { width: var(--pct); }
 
    The 7-day average is deliberately NOT in this group: its dashes ARE its
    identity (that is what the legend promises), and a draw-on needs
-   stroke-dasharray for itself — it would overwrite the pattern and render the
+   stroke-dasharray for itself - it would overwrite the pattern and render the
    average as a solid orange line indistinguishable in form from the daily one.
    It fades in on a delay instead. */
 .staff-body .plot-line, .staff-body .spark-line {
@@ -647,7 +647,7 @@ html:not(.js) .staff-body .spark-area { opacity: .12; transform: none; }
 
 .staff-body .plot-focus { transition: opacity var(--dur-1) ease; }
 
-/* Heatmap cells pop in a column at a time — the calendar fills up week by week. */
+/* Heatmap cells pop in a column at a time - the calendar fills up week by week. */
 .staff-body .heat-week .heat-cell {
   opacity: 0; transform: scale(.4);
   transition: opacity var(--dur-2) ease var(--cell-delay, 0ms),
@@ -710,7 +710,7 @@ html:not(.js) .staff-body .heat-week .heat-cell { opacity: 1; transform: none; }
 @media (max-width: 420px) {
   .staff-body .tile-value { font-size: 1.8rem; }
   .staff-body .tile-hero .tile-value { font-size: 2.5rem; }
-  /* "was 13" is the first thing to go — the arrow and signed number still say
+  /* "was 13" is the first thing to go - the arrow and signed number still say
      the direction, and the tiles are two-up at this width. The sparkline stays:
      it is the only thing giving a 150px tile any shape. */
   .staff-body .delta-vs { display: none; }

@@ -1,12 +1,12 @@
 /* ============================================================
-   IADEBAYO Foundation — staff area enhancements
+   IADEBAYO Foundation - staff area enhancements
 
    Same contract as site.js: everything here is additive. The dashboard is fully
-   drawn by the server (see core/analytics.py — geometry is computed in Python
+   drawn by the server (see core/analytics.py - geometry is computed in Python
    and rendered as inline SVG), so with this file blocked you lose the crosshair
    read-out, the count-up and the password toggle, and nothing else.
 
-   Reveal animations are NOT here — they ride on site.js section 3, which the
+   Reveal animations are NOT here - they ride on site.js section 3, which the
    staff shell already loads.
 
    Sections: 1. password reveal · 2. plot crosshair + tooltip · 3. count-up
@@ -37,7 +37,7 @@
       input.type = hidden ? "text" : "password";
       button.textContent = hidden ? "Hide" : "Show";
       button.setAttribute("aria-label", (hidden ? "Hide" : "Show") + " password");
-      // Keep the caret where the user left it — flipping `type` moves it to the
+      // Keep the caret where the user left it - flipping `type` moves it to the
       // start in several browsers, which feels like the field was cleared.
       var end = input.value.length;
       input.focus();
@@ -56,7 +56,7 @@
     if (!svg || !tip || !cursor || !hits.length) return;
 
     // The SVG scales to the column, so user units are not pixels. One ratio,
-    // recomputed per pointer entry rather than per move — it only changes when
+    // recomputed per pointer entry rather than per move - it only changes when
     // the column resizes, and reading offsetWidth on every mousemove is what
     // turns a hover into a layout thrash.
     var scale = 1;
@@ -113,7 +113,7 @@
   });
 
   /* ============================================ 3. tile count-up */
-  /* The final number is already in the HTML — this replaces it for the length of
+  /* The final number is already in the HTML - this replaces it for the length of
      the animation only, so a failure here (or reduced motion, or no
      IntersectionObserver) leaves the correct figure on screen. */
   if (!REDUCED && "IntersectionObserver" in window) {

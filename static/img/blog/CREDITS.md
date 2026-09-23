@@ -1,4 +1,4 @@
-# Blog cover images — sources and licence
+# Blog cover images - sources and licence
 
 All five are from **Unsplash**, under the [Unsplash
 Licence](https://unsplash.com/license): free to use commercially, no permission
@@ -25,7 +25,7 @@ cards show them uncropped and they stay sharp on retina screens.
 
 ## Why these five
 
-The site's photography is African throughout, so the covers had to match — a
+The site's photography is African throughout, so the covers had to match - a
 generic corporate stock look would read as borrowed. Four of the five show Black
 or African subjects in working contexts; the fifth is a handshake, chosen for
 "delegation and trust" because it carries the idea without putting a face to it.

@@ -4,13 +4,13 @@ Ubuntu 24.04 + Nginx + Gunicorn + PostgreSQL + Let's Encrypt.
 Cost: ~$6/month droplet (+ $1.20 optional backups). Domain stays at Namecheap.
 
 Everything below assumes the domain `iadebayo.foundation` and the repo
-`https://github.com/GeoffreyWeta/iadebayo.git` — substitute your own if different.
+`https://github.com/GeoffreyWeta/iadebayo.git` - substitute your own if different.
 
 **Order matters.** Do Phase 0 → 9 in sequence; each ends with a check you can run.
 
 ---
 
-## Phase 0 — Before you start
+## Phase 0 - Before you start
 
 You need:
 
@@ -21,7 +21,7 @@ You need:
   its own mail server: DigitalOcean blocks port 25 on new accounts, and a fresh
   IP has no sending reputation, so mail it sent directly would land in spam even
   if the port were open. Two ways round that, and the app supports both with no
-  code change — it is entirely a matter of what you put in `.env`:
+  code change - it is entirely a matter of what you put in `.env`:
   - **SendGrid (recommended).** Sign up, create an API key with *Mail Send*
     permission, then complete **Domain Authentication** for
     `iadebayo.foundation` under Settings → Sender Authentication. That step
@@ -34,7 +34,7 @@ You need:
     Private Email `mail.privateemail.com` port 465 SSL.
 - **Know where your email DNS lives.** If mail is working today, the MX records
   are somewhere. This guide keeps DNS at Namecheap precisely so you never touch
-  those records — you only change the two A records that point at the web server.
+  those records - you only change the two A records that point at the web server.
 
 ### 0.1 Create an SSH key (on your Windows machine)
 
@@ -46,13 +46,13 @@ Press Enter at each prompt (a passphrase is fine too). Then print the public key
 
     Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub
 
-Copy that whole line — you'll paste it into DigitalOcean next.
+Copy that whole line - you'll paste it into DigitalOcean next.
 
 ### 0.2 Get the current code onto GitHub
 
 The droplet installs by cloning GitHub (Phase 5.1) and updates by pulling from it
 (*Shipping updates later*). GitHub is the only channel between your machine and the
-server — **whatever isn't pushed doesn't deploy.** So push before you build the
+server - **whatever isn't pushed doesn't deploy.** So push before you build the
 droplet, not after.
 
 Confirm the remote is wired:
@@ -70,7 +70,7 @@ Then commit and push:
 github.com. If `git push` asks for a password, use a Personal Access Token
 (GitHub → Settings → Developer settings → Tokens), not your account password.
 
-Two things that deliberately do **not** travel through git — `.gitignore` excludes
+Two things that deliberately do **not** travel through git - `.gitignore` excludes
 them, and that is correct:
 
 | Path | Why it's ignored | How it reaches the droplet |
@@ -80,11 +80,11 @@ them, and that is correct:
 | `/staticfiles/` | build output of `collectstatic` | regenerated in Phase 5.5 |
 
 `static/` itself **is** tracked, so committed artwork (`static/img/*.webp`,
-`static/js/islands.js`) ships with a normal `git push` — only *uploads* need scp.
+`static/js/islands.js`) ships with a normal `git push` - only *uploads* need scp.
 
 ### 0.3 Public or private repo?
 
-Check on github.com — the label sits next to the repo name.
+Check on github.com - the label sits next to the repo name.
 
 - **Public:** nothing to do. The `https://` clone in Phase 5.1 works as written.
 - **Private:** the droplet needs its own read-only key. After Phase 2.6, as `deploy`:
@@ -102,7 +102,7 @@ Check on github.com — the label sits next to the repo name.
 
 ---
 
-## Phase 1 — Create the droplet
+## Phase 1 - Create the droplet
 
 DigitalOcean control panel → **Create** → **Droplets**:
 
@@ -113,7 +113,7 @@ DigitalOcean control panel → **Create** → **Droplets**:
 | Droplet type | **Basic** → **Regular (SSD)** → **$6/mo** (1 GB RAM / 1 vCPU / 25 GB) |
 | Authentication | **SSH Key** → *New SSH Key* → paste the key from 0.1 |
 | Hostname | `iadebayo-web` |
-| Backups | Tick **Enable weekly backups** (+$1.20/mo — worth it) |
+| Backups | Tick **Enable weekly backups** (+$1.20/mo - worth it) |
 | Monitoring | Tick it (free) |
 
 Click **Create Droplet**, wait ~45 seconds, and copy the **public IPv4 address**.
@@ -129,7 +129,7 @@ Type `yes` at the fingerprint prompt.
 
 ---
 
-## Phase 2 — Harden the server
+## Phase 2 - Harden the server
 
 Run these as `root`.
 
@@ -155,7 +155,7 @@ required, run `reboot`, wait a minute, and SSH back in.
 
 Use the raw port numbers, not `ufw allow 'Nginx Full'`. UFW application profiles
 live in `/etc/ufw/applications.d/` and are installed *by* the package that defines
-them, so the `Nginx Full` profile does not exist until Phase 3 installs nginx —
+them, so the `Nginx Full` profile does not exist until Phase 3 installs nginx -
 running it here fails with `ERROR: Could not find a profile matching 'Nginx Full'`.
 `Nginx Full` is only a friendly alias for 80,443/tcp, so opening the ports
 directly is equivalent and has no ordering dependency.
@@ -188,23 +188,23 @@ Without swap, `pip install` and `collectstatic` can get OOM-killed.
 
 ---
 
-## Phase 3 — Install the system packages
+## Phase 3 - Install the system packages
 
     sudo apt install -y python3-venv python3-dev build-essential \
         nginx postgresql postgresql-contrib git curl
 
 **Check:**
 
-    python3 --version        # 3.12.x — fine, the project needs 3.10+
+    python3 --version        # 3.12.x - fine, the project needs 3.10+
     systemctl is-active postgresql nginx     # both print "active"
 
 ---
 
-## Phase 4 — Create the database
+## Phase 4 - Create the database
 
 ### 4.1 PostgreSQL role and database
 
-Pick a strong password with **letters and digits only** — the settings file parses
+Pick a strong password with **letters and digits only** - the settings file parses
 `DATABASE_URL` with `urlparse`, so `@ : / # ?` in a password will break it.
 
     sudo -u postgres psql
@@ -219,7 +219,7 @@ At the `postgres=#` prompt, paste these one block at a time (replace the passwor
     GRANT ALL PRIVILEGES ON DATABASE iadebayo TO iadebayo;
 
 Then connect to the new database and grant schema rights (**required on
-PostgreSQL 15+, which Ubuntu 24.04 ships** — skipping this causes
+PostgreSQL 15+, which Ubuntu 24.04 ships** - skipping this causes
 `permission denied for schema public` during migrate):
 
     \c iadebayo
@@ -228,13 +228,13 @@ PostgreSQL 15+, which Ubuntu 24.04 ships** — skipping this causes
 
 > **Simpler alternative:** this is a low-traffic content site, so SQLite would
 > genuinely cope. To stay on SQLite, skip Phase 4 entirely and just omit
-> `DATABASE_URL` from the `.env` in Phase 5 — `config/settings/base.py` falls back
+> `DATABASE_URL` from the `.env` in Phase 5 - `config/settings/base.py` falls back
 > to `db.sqlite3` in the project root. You lose concurrent-write safety and easy
 > `pg_dump` backups. Postgres is the recommendation.
 
 ---
 
-## Phase 5 — Deploy the code
+## Phase 5 - Deploy the code
 
 ### 5.1 Clone
 
@@ -265,7 +265,7 @@ Copy the output.
     nano /srv/iadebayo/.env
 
 Paste this, filling in the three passwords and the secret key. Note
-`DJANGO_SSL_REDIRECT=False` and `YOUR_IP` in ALLOWED_HOSTS — both are
+`DJANGO_SSL_REDIRECT=False` and `YOUR_IP` in ALLOWED_HOSTS - both are
 temporary so you can test over plain HTTP before DNS and TLS exist.
 
     # --- Django core ---
@@ -282,7 +282,7 @@ temporary so you can test over plain HTTP before DNS and TLS exist.
     # --- Database ---
     DATABASE_URL=postgres://iadebayo:ReplaceWithLongRandomPassword123@127.0.0.1:5432/iadebayo
 
-    # --- Email (SendGrid SMTP relay — do NOT run a mail server here) ---
+    # --- Email (SendGrid SMTP relay - do NOT run a mail server here) ---
     # EMAIL_HOST_USER is the literal word "apikey"; the API key is the password.
     EMAIL_BACKEND=smtp
     EMAIL_HOST=smtp.sendgrid.net
@@ -310,7 +310,7 @@ temporary so you can test over plain HTTP before DNS and TLS exist.
     # --- Embark explainer video ---
     EMBARK_INTRO_VIDEO_URL=
 
-Save with `Ctrl+O`, `Enter`, `Ctrl+X`. Then lock it down — it holds your DB and
+Save with `Ctrl+O`, `Enter`, `Ctrl+X`. Then lock it down - it holds your DB and
 mail passwords:
 
     chmod 600 /srv/iadebayo/.env
@@ -344,7 +344,7 @@ in the project folder:
     scp data.json deploy@YOUR_IP:/srv/iadebayo/
     scp -r media deploy@YOUR_IP:/srv/iadebayo/
 
-The `media` copy is not optional if you have uploaded images — `/media/` is in
+The `media` copy is not optional if you have uploaded images - `/media/` is in
 `.gitignore`, so uploaded photos are **not** in the repo and will 404 otherwise.
 
 Back on the droplet:
@@ -376,7 +376,7 @@ In a **second** PowerShell window:
 
 ---
 
-## Phase 6 — Run Gunicorn as a service
+## Phase 6 - Run Gunicorn as a service
 
 ### 6.1 The systemd unit
 
@@ -385,7 +385,7 @@ In a **second** PowerShell window:
 Paste:
 
     [Unit]
-    Description=IADEBAYO Foundation — Gunicorn
+    Description=IADEBAYO Foundation - Gunicorn
     After=network.target postgresql.service
 
     [Service]
@@ -420,7 +420,7 @@ Gunicorn reads `.env` through `config/settings/base.py` (which resolves it from
 
 ---
 
-## Phase 7 — Nginx
+## Phase 7 - Nginx
 
 ### 7.1 Site config
 
@@ -441,12 +441,12 @@ Paste:
 
         location /static/ {
             alias /srv/iadebayo/staticfiles/;
-            expires 1d;                     # filenames aren't hashed — keep it short
+            expires 1d;                     # filenames aren't hashed - keep it short
             access_log off;
         }
 
         # The site's press page lives at /media/ AND uploads are served from
-        # /media/ — an exact-match location beats the prefix one below, so the
+        # /media/ - an exact-match location beats the prefix one below, so the
         # page keeps working. Without this, /media/ is a 403 directory listing.
         location = /media/ {
             proxy_pass http://127.0.0.1:8000;
@@ -462,7 +462,7 @@ Paste:
             access_log off;
         }
 
-        # The public gallery is at /gallery/, NOT /media/ — this prefix belongs to
+        # The public gallery is at /gallery/, NOT /media/ - this prefix belongs to
         # MEDIA_URL. Keep any Django page off it: a request for a bare /media/
         # matches the block above, Nginx tries to list the uploads directory,
         # autoindex is off, and the visitor gets 403 without Django ever seeing it.
@@ -473,7 +473,7 @@ Paste:
         }
 
         # Applicant videos are personal data. Longest-prefix wins, so this
-        # blocks them from the public /media/ mapping above — staff download
+        # blocks them from the public /media/ mapping above - staff download
         # them through /forms/applications/<id>/video/, which checks the login.
         location /media/applications/ {
             return 404;
@@ -492,7 +492,7 @@ Paste:
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;   # required — settings.py
+            proxy_set_header X-Forwarded-Proto $scheme;   # required - settings.py
                                                           # trusts this header
             proxy_redirect off;
         }
@@ -506,12 +506,12 @@ Paste:
     sudo systemctl reload nginx
 
 **Check:** open `http://YOUR_IP/` in a browser. The site loads with CSS and images.
-No styling means `collectstatic` didn't run or the `alias` path is wrong —
+No styling means `collectstatic` didn't run or the `alias` path is wrong -
 `sudo tail -20 /var/log/nginx/error.log`.
 
 ---
 
-## Phase 8 — Point Namecheap at the droplet
+## Phase 8 - Point Namecheap at the droplet
 
 Log in to Namecheap → **Domain List** → **Manage** next to `iadebayo.foundation`.
 
@@ -540,7 +540,7 @@ Go to the **Advanced DNS** tab → *Host Records*.
 | A Record | `@` | `YOUR_IP` | Automatic |
 | A Record | `www` | `YOUR_IP` | Automatic |
 
-**Do not touch** any `MX Record`, or the `TXT` records for SPF/DKIM/DMARC — those
+**Do not touch** any `MX Record`, or the `TXT` records for SPF/DKIM/DMARC - those
 keep your email alive.
 
 Click the green checkmark on each row to save.
@@ -552,12 +552,12 @@ Usually 5–30 minutes on Namecheap. Check from PowerShell:
     nslookup iadebayo.foundation 8.8.8.8
     nslookup www.iadebayo.foundation 8.8.8.8
 
-**Check:** both return `YOUR_IP`. **Do not start Phase 9 until they do** — Let's
+**Check:** both return `YOUR_IP`. **Do not start Phase 9 until they do** - Let's
 Encrypt validates by connecting to the domain, and a failed run burns rate limit.
 
 ---
 
-## Phase 9 — HTTPS
+## Phase 9 - HTTPS
 
 ### 9.1 Issue the certificate
 
@@ -597,8 +597,8 @@ Then:
 - `/admin/` logs you in.
 - Open an Embark application that has a video → the **⬇ Download video** button
   saves the file. Opening `https://iadebayo.foundation/media/applications/…`
-  directly returns 404 — that's the point.
-- The **Media** page at `/media/` loads (not a 403 — see the exact-match block
+  directly returns 404 - that's the point.
+- The **Media** page at `/media/` loads (not a 403 - see the exact-match block
   in 7.1).
 - **Submit a real Embark application with a ~50 MB video.** This is the one form
   that can fail purely on infrastructure: too small a `client_max_body_size` and
@@ -609,17 +609,17 @@ Then:
 
   It prints the resolved settings, opens the connection and the send as separate
   steps, and exits non-zero with the real reason if either fails. Run it *first*
-  — a form submission tells you nothing useful, because the view deliberately
+  - a form submission tells you nothing useful, because the view deliberately
   catches send failures so a dead mail host cannot 500 a submission that already
   saved. The failure only reaches the log, never the page.
 - Then submit one form on the live site and confirm the notification actually
   arrives at `hello@iadebayo.foundation`. "Accepted for delivery" is not
-  "delivered" — check the spam folder and SendGrid's Activity feed too.
+  "delivered" - check the spam folder and SendGrid's Activity feed too.
 - `https://iadebayo.foundation/sitemap.xml` renders.
 
 ---
 
-## Phase 10 — Optional but recommended
+## Phase 10 - Optional but recommended
 
 ### 10.1 Pick one canonical hostname
 
@@ -665,7 +665,7 @@ down to your machine:
 
 Once the droplet has served the live domain for a few days without issues, delete
 the Render service so you stop paying for it and so nothing accidentally serves a
-stale copy. Keep `render.yaml` and `render-build.sh` in the repo — they cost
+stale copy. Keep `render.yaml` and `render-build.sh` in the repo - they cost
 nothing and document the alternative.
 
 ---
@@ -707,7 +707,7 @@ submission was received would be false.
 Going forward no backfill is needed. The live forms already send on submission
 and stamp the row as they go.
 
-## Shipping updates later — automatic deploy on push
+## Shipping updates later - automatic deploy on push
 
 `.github/workflows/deploy.yml` runs the tests on every push to `master` and, only
 if they pass, SSHes into the droplet and runs `deploy/deploy.sh`. Both files are
@@ -718,7 +718,7 @@ Once the four steps below are done, a release is just:
     git push origin master
 
 Watch it in the repo's **Actions** tab. A red test job means nothing was
-deployed — the site keeps running the previous commit.
+deployed - the site keeps running the previous commit.
 
 ### 11.1 Give the deploy its own SSH key
 
@@ -728,7 +728,7 @@ Do **not** reuse your personal key. On your Windows machine:
 
 Authorise the public half on the droplet:
 
-    # prints the public key — copy it
+    # prints the public key - copy it
     type $env:USERPROFILE\.ssh\iadebayo_deploy.pub
 
     # on the droplet, as the deploy user
@@ -739,7 +739,7 @@ Authorise the public half on the droplet:
 ### 11.2 Let the deploy user restart the service without a password
 
 Without this the deploy hangs at a hidden password prompt and times out.
-Confirm where `systemctl` lives first — the path must be exact:
+Confirm where `systemctl` lives first - the path must be exact:
 
     command -v systemctl journalctl      # expect /usr/bin/...
 
@@ -753,7 +753,7 @@ Paste (adjust the paths if the previous command disagreed):
     deploy ALL=(root) NOPASSWD: /usr/bin/journalctl -u iadebayo -n 40 --no-pager
 
 `visudo` refuses to save a file with a syntax error, which is why it is used
-here rather than `nano` — a broken sudoers file locks everyone out of `sudo`.
+here rather than `nano` - a broken sudoers file locks everyone out of `sudo`.
 
 Check it works, with no password prompt:
 
@@ -767,7 +767,7 @@ Check it works, with no password prompt:
 |---|---|---|
 | `DEPLOY_HOST` | the droplet's IP or hostname | yes |
 | `DEPLOY_USER` | `deploy` | yes |
-| `DEPLOY_SSH_KEY` | the **entire** private key file, `iadebayo_deploy` — including the `BEGIN`/`END` lines | yes |
+| `DEPLOY_SSH_KEY` | the **entire** private key file, `iadebayo_deploy` - including the `BEGIN`/`END` lines | yes |
 | `DEPLOY_KNOWN_HOSTS` | output of `ssh-keyscan -H YOUR_IP` | strongly recommended |
 | `DEPLOY_HEALTHCHECK_URL` | `https://iadebayo.foundation/` | recommended |
 | `DEPLOY_PORT` | only if SSH is not on 22 | no |
@@ -798,7 +798,7 @@ at SSH, and confirm:
 
 ### What the deploy actually does
 
-`deploy/deploy.sh`, in order: `git reset --hard origin/master` (not `pull` — the
+`deploy/deploy.sh`, in order: `git reset --hard origin/master` (not `pull` - the
 server's tree must match origin exactly, and a pull can stop on a conflict from
 someone's quick edit on the box), install requirements, `migrate`,
 `collectstatic`, `check --deploy`, restart Gunicorn, then poll
@@ -815,7 +815,7 @@ once you have read them.
 
 ### Deploying by hand
 
-The workflow pipes the script over SSH rather than running the server's copy —
+The workflow pipes the script over SSH rather than running the server's copy -
 the `reset --hard` rewrites the working tree, and a script edited while bash is
 still reading it fails in confusing ways. Do the same by hand:
 
@@ -826,7 +826,7 @@ Or use **Actions → CI / Deploy → Run workflow** to redeploy `master` untouch
 ### The React islands
 
 If you edited anything under `frontend/src/`, run `npm run build` in `frontend/`
-and commit the updated `static/js/islands.js` **before** pushing — the droplet
+and commit the updated `static/js/islands.js` **before** pushing - the droplet
 does not run vite. CI rebuilds the bundle and warns if the committed copy has
 drifted, but that check is advisory: vite output is not always byte-identical
 across machines, so it reports rather than blocks.
@@ -851,7 +851,7 @@ across machines, so it reports rather than blocks.
 | **Video download saves a 0-byte file** | `X_ACCEL_REDIRECT=True` but the `internal` `/protected-media/` location is missing from the Nginx config. Add it (Phase 7.1), or set `X_ACCEL_REDIRECT=False` to let Django stream instead. |
 | **`permission denied for schema public`** | You skipped the `GRANT ALL ON SCHEMA public` in Phase 4.1. |
 | **Certbot: "challenge failed"** | DNS hasn't propagated, or port 80 is closed. Re-check Phase 8.3 and `sudo ufw status`. |
-| **Forms send nothing at all** | `EMAIL_BACKEND=smtp` must be set — it defaults to `console`, which renders mail to stdout and sends none of it. `send_test_email` refuses to run under the console backend and tells you so, rather than reporting a false success. |
+| **Forms send nothing at all** | `EMAIL_BACKEND=smtp` must be set - it defaults to `console`, which renders mail to stdout and sends none of it. `send_test_email` refuses to run under the console backend and tells you so, rather than reporting a false success. |
 | **Out of memory during pip/collectstatic** | Swap isn't on. Re-run Phase 2.4, confirm with `free -h`. |
 
 Useful logs:

@@ -1,27 +1,27 @@
 /* ============================================================
-   IADEBAYO Foundation — design system
+   IADEBAYO Foundation - design system
    Brand: red #ED3237 / blue #3E4095 (from foundation logo SVG)
    Embark sub-brand: gold #FCC015 / orange #F1592C / cream #FAEDCC
    Type: Archivo (headlines + body) · Fraunces italic (accents)
 
-   COLOUR ROLES (inverted Jul 2026 — red leads, blue complements):
-     --surface-dark   RED   — header, dark sections, page heads (major bg)
-     --surface-darker RED   — footer, hero base
+   COLOUR ROLES (inverted Jul 2026 - red leads, blue complements):
+     --surface-dark   RED   - header, dark sections, page heads (major bg)
+     --surface-darker RED   - footer, hero base
      --ink / --ink-2  deep red-black inks for TEXT (headings, quotes)
-     --accent         BLUE  — eyebrows, icons, ticks, primary buttons
-     --secondary      RED   — links, statements, secondary buttons
+     --accent         BLUE  - eyebrows, icons, ticks, primary buttons
+     --secondary      RED   - links, statements, secondary buttons
    The role names are deliberately hue-free: swapping the brand
    emphasis again means editing these values, nothing else.
    Contrast: white on --surface-dark 7.7:1, on --surface-darker 10.2:1.
    ============================================================ */
 
 :root {
-  --brand-red: #ED3237;  /* logo red  — the leading brand hue */
-  --brand-blue: #3E4095; /* logo blue — the complement */
+  --brand-red: #ED3237;  /* logo red  - the leading brand hue */
+  --brand-blue: #3E4095; /* logo blue - the complement */
   --secondary: #ED3237;
   --surface-dark: #A31A1E;
   --surface-darker: #821417;
-  --ink: #4A1114;        /* deep red-black — heading & quote text */
+  --ink: #4A1114;        /* deep red-black - heading & quote text */
   --ink-2: #370C0F;
   --accent: #3E4095;
   --accent-dark: #2E3078;
@@ -317,7 +317,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-grid .full { grid-column: 1 / -1; }
 /* Pins a field to column 1 so the one after it sits alongside rather than
-   wrapping to the next row — see BaseStyledForm.ROW_START_FIELDS. */
+   wrapping to the next row - see BaseStyledForm.ROW_START_FIELDS. */
 .form-grid .row-start { grid-column: 1; }
 .form-field label { display: block; font-weight: 700; font-size: .88rem; color: var(--ink); margin-bottom: 6px; }
 .form-input {
@@ -330,7 +330,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .form-help strong { color: var(--ink); font-weight: 800; }
 /* The video brief (see EmbarkApplication.business_video_url). Three numbered
    points the applicant can tick off, rather than instructions buried in a
-   paragraph they will skim — this is the most-missed field on the form, so the
+   paragraph they will skim - this is the most-missed field on the form, so the
    field also takes a full grid row (FULL_WIDTH_FIELDS) to give it the width.
 
    Stacked at every size on purpose: the form card is roughly half the page on
@@ -442,7 +442,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 }
 
 /* ============================================================
-   v2 — motion & imagery upgrades
+   v2 - motion & imagery upgrades
    ============================================================ */
 
 /* Ken Burns slow zoom on the active hero slide */
@@ -513,10 +513,10 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 }
 
 /* ============================================================
-   v3 — client-reference alignment
+   v3 - client-reference alignment
    ============================================================ */
 
-/* Eyebrow: client style — "• LABEL" with a short rule BELOW */
+/* Eyebrow: client style - "• LABEL" with a short rule BELOW */
 .eyebrow { display: block; }
 .eyebrow::before { content: "• "; color: currentColor; animation: none; font-size: inherit; }
 .eyebrow::after {
@@ -541,7 +541,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   text-shadow: 0 2px 22px rgba(0,0,0,.45);
 }
 
-/* Gold spark badge — back to top (reference image 1, right edge) */
+/* Gold spark badge - back to top (reference image 1, right edge) */
 .spark-top {
   position: fixed; right: 0; top: 45vh; z-index: 96;
   width: 44px; height: 44px; display: grid; place-items: center;
@@ -562,7 +562,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 }
 
 /* ============================================================
-   v4 — discipline pass: one accent, calmer type, more air
+   v4 - discipline pass: one accent, calmer type, more air
    ============================================================ */
 :root {
   --display: "Plus Jakarta Sans", system-ui, sans-serif;
@@ -619,7 +619,7 @@ p { margin: 0 0 1.2em; }
 .brand-word em { font-style: normal; font-weight: 500; color: rgba(255,255,255,.8); margin-left: 6px; }
 
 /* ============================================================
-   v5 — RESPONSIVE CONSOLIDATION (must stay last in this file)
+   v5 - RESPONSIVE CONSOLIDATION (must stay last in this file)
    Earlier appended rules were overriding media queries; every
    breakpoint rule is re-asserted here, in order, wide → narrow.
    ============================================================ */
@@ -721,7 +721,7 @@ p { margin: 0 0 1.2em; }
 }
 
 /* ============================================================
-   v6 — button system, header fix, margin rhythm, Embark orange
+   v6 - button system, header fix, margin rhythm, Embark orange
    (self-contained: re-asserts its own breakpoints)
    ============================================================ */
 
@@ -792,7 +792,7 @@ h2 { margin: 0 0 .5em; }
 }
 
 /* ============================================================
-   v7 — EMBARK THEME: charcoal / cream / orange only.
+   v7 - EMBARK THEME: charcoal / cream / orange only.
    Scoped to .theme-embark (Embark + Apply pages). The global
    header/footer stay Foundation ink as site chrome.
    ============================================================ */
@@ -853,11 +853,11 @@ h2 { margin: 0 0 .5em; }
 .theme-embark .subbrand-note { background: rgba(241,89,44,.16); border-color: rgba(241,89,44,.55); color: var(--em-orange-soft); }
 .theme-embark ::selection { background: var(--em-orange); color: #fff; }
 
-/* v8 — hamburger: stack the bars (flex defaults to row, oops) */
+/* v8 - hamburger: stack the bars (flex defaults to row, oops) */
 .nav-toggle { flex-direction: column; }
 
 /* ============================================================
-   v19 — EMBARK CHROME (supersedes v9, which kept the Foundation
+   v19 - EMBARK CHROME (supersedes v9, which kept the Foundation
    red header/footer on every page).
 
    Embark pages now carry their own header and footer: charcoal
@@ -871,7 +871,7 @@ h2 { margin: 0 0 .5em; }
    ============================================================ */
 .theme-embark .site-header {
   background: var(--em-dark);
-  border-bottom: 1px solid rgba(255,255,255,.08);   /* page-head is the same charcoal — keep the bar legible */
+  border-bottom: 1px solid rgba(255,255,255,.08);   /* page-head is the same charcoal - keep the bar legible */
 }
 .theme-embark .site-header a, .theme-embark .site-header .brand-word { color: rgba(255,255,255,.88); }
 .theme-embark .site-header a:hover, .theme-embark .site-header a:focus-visible { color: #fff; }
@@ -887,7 +887,7 @@ h2 { margin: 0 0 .5em; }
 .footer-logo-embark { height: 44px; }
 
 .theme-embark .site-footer { background: var(--em-dark-2); }
-/* .theme-embark h3 paints headings charcoal for light sections — same-specificity
+/* .theme-embark h3 paints headings charcoal for light sections - same-specificity
    as .footer-col h3 and declared later, so it was winning here and rendering the
    column headings charcoal-on-charcoal. The footer is dark: keep them white. */
 .theme-embark .footer-col h3 { color: #fff; }
@@ -902,19 +902,19 @@ h2 { margin: 0 0 .5em; }
 .theme-embark .footer-subbrand a { color: var(--em-orange-soft); }
 
 @media (max-width: 960px) {
-  /* Slide-in mobile menu panel — red by default, charcoal here */
+  /* Slide-in mobile menu panel - red by default, charcoal here */
   .theme-embark .main-nav { background: var(--em-dark); }
   .brand-logo-embark { height: 28px; }
 }
 
-/* v10 — nav decrowded: fewer items, roomier links; dropdown machinery retired */
+/* v10 - nav decrowded: fewer items, roomier links; dropdown machinery retired */
 .main-nav a { padding: 10px 15px; font-size: .92rem; }
 /* Translate widget retired. The dropdown machinery is back in use for
-   Get Involved (see v18) — do not fold .has-sub/.caret back in here. */
+   Get Involved (see v18) - do not fold .has-sub/.caret back in here. */
 .translate-slot { display: none !important; }
 @media (max-width: 1080px) { .main-nav a { padding: 10px 11px; font-size: .88rem; } }
 
-/* v11 — nav links never wrap to two lines */
+/* v11 - nav links never wrap to two lines */
 .main-nav ul { flex-wrap: nowrap; }
 .main-nav a { white-space: nowrap; }
 .brand-word { white-space: nowrap; }
@@ -927,15 +927,15 @@ h2 { margin: 0 0 .5em; }
   .main-nav a { padding: 10px 7px; font-size: .84rem; }
 }
 
-/* v12 — rotating hero word pops in brand red, brightened for dark bg */
+/* v12 - rotating hero word pops in brand red, brightened for dark bg */
 .hero .accent-primary { color: #A9ACFF; }
 
-/* v13 — every framed image fits its position regardless of source shape */
+/* v13 - every framed image fits its position regardless of source shape */
 .media-frame img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; }
 .split .media-frame img { aspect-ratio: 4 / 3; }
 
 /* ============================================================
-   v14 — EXCELLENCE PASS: order, alignment, rhythm
+   v14 - EXCELLENCE PASS: order, alignment, rhythm
    ============================================================ */
 
 /* Checklists: one consistent style everywhere (about, embark, apply) */
@@ -981,7 +981,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 .page-head .lead { max-width: 62ch; }
 
 /* ============================================================
-   v15 — Rotating headline (home + Embark heroes)
+   v15 - Rotating headline (home + Embark heroes)
 
    The fixed line and the changing phrase must not share a line
    box: `text-wrap: balance` re-wraps a whole block whenever its
@@ -990,7 +990,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 
    So .rotator is a block on its own line. Inside it, a hidden
    ghost holding the longest phrase reserves the height, and the
-   live phrase sits in the same grid cell — the row is then as
+   live phrase sits in the same grid cell - the row is then as
    tall as the taller of the two, so a phrase can never spill onto
    the paragraph below even if the ghost drifts out of sync with
    the longest data-words entry.
@@ -1010,7 +1010,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* Headings that must not break across lines on desktop. Below the
-   breakpoint they wrap normally — nowrap on a phone would overflow. */
+   breakpoint they wrap normally - nowrap on a phone would overflow. */
 @media (min-width: 961px) {
   h1.one-line, h2.one-line, h3.one-line, p.one-line {
     white-space: nowrap;
@@ -1019,7 +1019,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v16 — Sectioned (multi-step) forms
+   v16 - Sectioned (multi-step) forms
    Used by the Embark application. Everything degrades: with JS
    off all fieldsets are visible and the form posts in one go.
    ============================================================ */
@@ -1106,9 +1106,9 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v17 — HERO LEGIBILITY over photography
+   v17 - HERO LEGIBILITY over photography
    The hero photos are bright (market stalls, white baskets, sunlit
-   walls), and the old veil only went dark at the bottom — so the
+   walls), and the old veil only went dark at the bottom - so the
    headline sat on near-white and the accent word vanished. Two fixes:
 
    1. The scrim is now weighted to the text side (left) as well as
@@ -1116,7 +1116,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
       on the right of frame stays visible.
    2. Accents on photography need light tints of the brand hues. The
       solid hues are too dark to read here: brand blue #3E4095 measures
-      1.00:1 against the veil (identical luminance — invisible), and
+      1.00:1 against the veil (identical luminance - invisible), and
       Embark orange #F1592C lands orange-on-orange where the duotone
       veil is warmest, at 2.21:1.
 
@@ -1128,7 +1128,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
       Embark      white 7.4 → 10.9  accent #FF9B76 3.6 → 5.3   subject .015 → .015
    The photo ends up marginally brighter, not darker: the old veil-2
    dimmed the whole frame bottom-up, this one is weighted to one side.
-   The v12 hero blue needed no new value — the scrim was too thin, not
+   The v12 hero blue needed no new value - the scrim was too thin, not
    the colour.
    ============================================================ */
 .hero-veil-2 {
@@ -1149,14 +1149,14 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 /* Hero headings are always over photography, so they are always white.
    `.theme-embark h1` (v7) and `.hero h1` (base) both score 0-1-1, so the
    theme rule won on source order alone and painted the Embark hero
-   headline charcoal #231F20 on a charcoal hero — invisible. The Apply
+   headline charcoal #231F20 on a charcoal hero - invisible. The Apply
    page escaped it only because .page-head carries `on-dark`. */
 .theme-embark .hero h1,
 .theme-embark .hero h2 { color: #fff; }
 
 /* Embark's rotating phrase takes the soft orange the theme already uses
    on dark surfaces (see .theme-embark .on-dark .eyebrow). Scoped to
-   .hero — on cream and white sections solid --em-orange is correct. */
+   .hero - on cream and white sections solid --em-orange is correct. */
 .theme-embark .hero .accent-orange,
 .theme-embark .hero .accent-primary { color: var(--em-orange-soft); }
 
@@ -1164,13 +1164,13 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 .hero .lead { color: rgba(255,255,255,.92); }
 .hero h1, .hero .lead { text-shadow: 0 1px 18px rgba(20,6,8,.45); }
 
-/* Phones: the scrim goes full-width — there is no side room for the
+/* Phones: the scrim goes full-width - there is no side room for the
    subject once the copy spans the viewport. But full-width previously also
    meant *everywhere*: the lightest stop was .46, so under .hero-veil's
    multiply pass the photo sat at roughly a tenth of its brightness across the
    whole hero and read as a flat maroon block. Desktop keeps a window (veil-2
    reaches full transparency at 80% of its 100deg sweep); phones get the same
-   courtesy turned ninety degrees — clear at the top, heavy at the bottom
+   courtesy turned ninety degrees - clear at the top, heavy at the bottom
    where the copy actually is. .hero is align-items: flex-end, so the window
    costs no legibility: the measurements above were taken in the headline box,
    which still sits under .88–.72. */
@@ -1206,7 +1206,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v17 — Programme cards: all five on one row (desktop)
+   v17 - Programme cards: all five on one row (desktop)
 
    auto-fit with minmax(240px, 1fr) only fits 4 columns in the
    1112px container, so the fifth card orphaned onto its own row.
@@ -1214,7 +1214,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
    and padding, slightly smaller type.
 
    The 1140px floor is set by the longest title, "Pitch
-   Competition" — any narrower and it wraps to two lines while its
+   Competition" - any narrower and it wraps to two lines while its
    siblings stay on one, which reads as a mistake. Between 641px
    and there we pin 3 columns (a deliberate 3 + 2) because plain
    auto-fit swings back to 4 around 1100px and re-orphans the
@@ -1234,12 +1234,12 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v18 — About: team group photo
+   v18 - About: team group photo
    Sits above the per-person grid on the dark section. Capped and
    centred rather than spanning the full 1160px container, which
    would tower over the profile tiles underneath it.
    ============================================================ */
-/* OUR TEAM banner. 16:9 and full container width — the previous 720px cap put
+/* OUR TEAM banner. 16:9 and full container width - the previous 720px cap put
    eight faces at ~90px each, which made the names printed on the artwork
    unreadable. Matted on white because the artwork's own background is near-white
    and needs to read as a deliberate inset panel on the red section, not a slab. */
@@ -1250,7 +1250,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 /* Deliberately NOT wrapped in .media-frame: that class forces `aspect-ratio: 4/3`
    with `object-fit: cover`, which centre-crops a 16:9 banner and slices off the
-   first and last person — their faces and names sit flush with the edges. The
+   first and last person - their faces and names sit flush with the edges. The
    matte below is what .media-frame would have provided. */
 .team-photo img { width: 100%; height: auto; border-radius: 4px; }
 .team-photo + .people-grid { margin-top: 0; }
@@ -1259,7 +1259,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v18 — Get Involved dropdown, calmer textareas, new layouts
+   v18 - Get Involved dropdown, calmer textareas, new layouts
    ============================================================ */
 
 /* --- Nav dropdown (Get Involved → Join Faculty / Volunteer).
@@ -1320,7 +1320,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v19 — Alumni spotlight: video posters, portrait clips, story cards
+   v19 - Alumni spotlight: video posters, portrait clips, story cards
    ============================================================ */
 
 /* --- Click-to-play poster. The box keeps its aspect ratio whether it holds
@@ -1389,7 +1389,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 
 /* ============================================================
-   v20 — Campaign promo modal (admin-managed, see PromoPopup)
+   v20 - Campaign promo modal (admin-managed, see PromoPopup)
    ============================================================ */
 
 /* Off-screen but still announced. The promo dialog needs a heading for its
@@ -1426,7 +1426,7 @@ h1, h2, .statement, .band-quote { text-wrap: balance; }
 }
 .promo-backdrop.is-open .promo-dialog { transform: none; }
 
-/* Artwork is the whole point — it fills the dialog, corners clipped to match. */
+/* Artwork is the whole point - it fills the dialog, corners clipped to match. */
 .promo-art { display: block; border-radius: 14px 14px 0 0; overflow: hidden; }
 .promo-art img { display: block; width: 100%; height: auto; }
 
@@ -1467,7 +1467,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
 }
 
 /* ============================================================
-   v21 — Cohort schedule timeline (Embark + Apply)
+   v21 - Cohort schedule timeline (Embark + Apply)
    Six month-columns strung on a rail. The rail is a pseudo-element
    on the list, inset by half a column so it starts and ends at the
    first and last node centres rather than the container edges.
@@ -1479,7 +1479,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
 }
 .schedule::before {
   content: ""; position: absolute; z-index: 0;
-  left: 8.333%; right: 8.333%;      /* half of 1/6 — lands on the node centres */
+  left: 8.333%; right: 8.333%;      /* half of 1/6 - lands on the node centres */
   top: 22px; height: 2px;
   background: linear-gradient(90deg, var(--gold), var(--orange));
   opacity: .5;
@@ -1508,7 +1508,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
   border: 1px solid rgba(255,255,255,.13);
   color: rgba(255,255,255,.82);
 }
-/* The month a strand joins — the thing worth seeing in six similar lists. */
+/* The month a strand joins - the thing worth seeing in six similar lists. */
 .schedule-item.starts-here {
   background: rgba(241,89,44,.2);
   border-color: var(--orange);
@@ -1604,7 +1604,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
 .key-date-when { font-size: .95rem; font-weight: 700; color: #fff; }
 
 /* ============================================================
-   v23 — MOBILE-FIRST POLISH & MOTION SYSTEM
+   v23 - MOBILE-FIRST POLISH & MOTION SYSTEM
    (must stay last: it re-asserts a handful of earlier rules)
 
    Three jobs, in this order:
@@ -1612,7 +1612,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
      1. MOBILE ERGONOMICS. Everything a thumb touches is at least
         44px, the header gives space back as you read, the two
         floating buttons stop fighting the footer, and hero height
-        never depends on `vh` — iOS resizes that mid-scroll.
+        never depends on `vh` - iOS resizes that mid-scroll.
 
      2. TOUCH CORRECTNESS. Every hover effect in this file was
         written for a mouse. On a phone `:hover` sticks after the
@@ -1626,7 +1626,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
         effects behind @supports so they cost nothing where they
         are not understood.
 
-   All of it opts out under prefers-reduced-motion — the global
+   All of it opts out under prefers-reduced-motion - the global
    rule at the top of this file kills the durations, and the
    scroll-driven block below is wrapped in `no-preference`.
    Content is never hidden behind JS: `html:not(.js)` unwinds the
@@ -1646,7 +1646,7 @@ body.promo-open { overflow: hidden; }   /* stop the page scrolling behind it */
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
-  /* Lets `height: auto` animate — needed by the FAQ panel below. A
+  /* Lets `height: auto` animate - needed by the FAQ panel below. A
      capability switch only; it changes no static layout. */
   interpolate-size: allow-keywords;
 }
@@ -1676,7 +1676,7 @@ a, button, summary, label, input, select, textarea, [role="button"] {
 :focus-visible { outline-offset: 3px; }
 
 /* `hidden` must win. The UA sheet's `[hidden] { display: none }` loses to any
-   author rule that sets display — `.btn { display: inline-block }` in this
+   author rule that sets display - `.btn { display: inline-block }` in this
    file, which meant the application form showed Back, Next *and* Submit on
    every step: form-steps.js was setting `.hidden` and nothing happened. */
 [hidden] { display: none !important; }
@@ -1684,7 +1684,7 @@ a, button, summary, label, input, select, textarea, [role="button"] {
 /* The horizontal gutter, stated once and last.
 
    `.hero-inner` and `.footer-grid` are both `.container` elements, and both
-   were given a `padding` *shorthand* (v6) to set their vertical rhythm —
+   were given a `padding` *shorthand* (v6) to set their vertical rhythm -
    which silently zeroed the 24px gutter `.container` provides. Below the
    1160px container width there is no auto margin left to stand in for it, so
    on a phone the hero headline and every footer link sat flush against the
@@ -1708,7 +1708,7 @@ html:not(.js) .article-cover::after { display: none; }
 html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 
 /* --------------------------------- 22.3 touch vs hover behaviour */
-/* Mouse: keep — and sharpen — the lifts. The specificity is deliberate:
+/* Mouse: keep - and sharpen - the lifts. The specificity is deliberate:
    `.reveal.is-visible { transform: none }` is declared after the original
    `.card:hover`, so on any revealed card the lift never actually landed. */
 @media (hover: hover) and (pointer: fine) {
@@ -1761,7 +1761,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
   /* No `will-change` here: it would make the header a containing block, and
      the fixed mobile nav panel inside it would then size to the header
      instead of the viewport. Same reason `.header-hidden` excludes
-     `.nav-open` — a transformed header must never hold an open panel. */
+     `.nav-open` - a transformed header must never hold an open panel. */
   transition: transform .34s var(--ease-out), box-shadow var(--dur-2) ease;
 }
 .header-inner { min-height: var(--header-h); transition: min-height var(--dur-2) var(--ease-out); }
@@ -1769,7 +1769,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 .header-scrolled .site-header { box-shadow: 0 8px 28px rgba(0, 0, 0, .3); }
 .header-scrolled .header-inner { min-height: calc(var(--header-h) - 8px); }
 /* The nav panel is inset by the full bar height, so the bar must not be
-   condensed underneath it — that opened an 8px strip of page at the top. */
+   condensed underneath it - that opened an 8px strip of page at the top. */
 .nav-open .header-inner { min-height: var(--header-h); }
 /* Reading progress, drawn along the bottom edge of the bar. */
 .site-header::after {
@@ -1838,7 +1838,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 }
 
 /* ------------------------------------------------ 22.6 hero sizing */
-/* `svh` is the small viewport height — the one that does not change when the
+/* `svh` is the small viewport height - the one that does not change when the
    mobile URL bar hides, so the hero cannot jump mid-scroll. */
 .hero { min-height: min(88svh, 760px); }
 .hero-compact { min-height: min(74svh, 660px); }
@@ -1848,7 +1848,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 }
 @media (max-width: 640px) {
   .hero, .hero-compact { min-height: min(84svh, 640px); }
-  /* padding-block, not the shorthand — .hero-inner is a .container and the
+  /* padding-block, not the shorthand - .hero-inner is a .container and the
      shorthand would wipe the gutter set in 22.2. */
   .hero-inner { padding-block: 92px 48px; }
   .hero-cta { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -1860,7 +1860,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 /* ------------------------------------- 22.7 floating action stack */
 /* Two fixed buttons on a 360px screen have to behave as one group: arrive
    together, stack rather than overlap, clear the home indicator, and get out
-   of the way once the footer — which repeats every link they offer — is on
+   of the way once the footer - which repeats every link they offer - is on
    screen. `.js-float` is set by site.js, so with no script they stay put and
    visible exactly as before. */
 /* A flat distance, not a percentage: these buttons sit 16–78px above the
@@ -1875,8 +1875,8 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 .js-float .sticky-apply { opacity: 0; transform: translateY(var(--float-hide)); }
 .js-float.show-apply .sticky-apply { opacity: 1; transform: none; }
 /* Over the footer the pill goes: the footer repeats every link it offers and
-   the newsletter field sits exactly where it parks. Back-to-top stays — it is
-   most wanted at the bottom of a page — and drops into the vacated slot. */
+   the newsletter field sits exactly where it parks. Back-to-top stays - it is
+   most wanted at the bottom of a page - and drops into the vacated slot. */
 .js-float.near-footer .sticky-apply { opacity: 0; transform: translateY(var(--float-hide)); pointer-events: none; }
 .js-float.nav-open .sticky-apply,
 .js-float.nav-open .spark-top { opacity: 0; pointer-events: none; }
@@ -1923,7 +1923,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 [data-reveal="blur"]  { --rv-y: 18px; --rv-blur: 7px; }
 
 /* Container-level stagger, for lists and grids whose children carry no
-   .reveal of their own. site.js tags these — and skips any container whose
+   .reveal of their own. site.js tags these - and skips any container whose
    children are already revealing, so nothing animates twice. */
 .stagger > * {
   opacity: 0; transform: translateY(18px);
@@ -1984,7 +1984,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
 .media-frame.is-visible::after, .article-cover.is-visible::after { transform: scaleY(0); }
 
 /* Cohort strands: each bar wipes in from the left, so what animates is the
-   thing the chart is actually saying — how long an activity runs.
+   thing the chart is actually saying - how long an activity runs.
 
    clip-path rather than scaleX: scaling the bar would squash the date label
    inside it. The row already carries .reveal (see cohort_schedule.html) and
@@ -1994,7 +1994,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
    Above 860px only. Below that the theme drops the bar to plain right-aligned
    text with no background, and there is nothing left to wipe.
 
-   (This replaced a rail-draw on .schedule — the v21 month-column timeline the
+   (This replaced a rail-draw on .schedule - the v21 month-column timeline the
    strands superseded. That markup is gone; the v21 block above it is now dead
    too and can go whenever someone is in here.) */
 @media (min-width: 861px) {
@@ -2066,7 +2066,7 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
    `content: "• "`, which a flex container would trim away. */
 .chip { min-height: 40px; display: inline-flex; align-items: center; gap: .3em; }
 @media (max-width: 960px) {
-  /* 9px of block padding on a 27px line box clears 44. Measured, not guessed —
+  /* 9px of block padding on a 27px line box clears 44. Measured, not guessed -
      5px left every footer link at 37. */
   .footer-col a, .footer-bottom a, .footer-subbrand a { display: inline-block; padding-block: 9px; }
   .footer-col ul { gap: 0; }
@@ -2111,13 +2111,13 @@ html:not(.js) .impact-grid { border-top-color: rgba(255, 255, 255, .28); }
   /* 16px is the threshold below which iOS zooms the page on focus. */
   .form-input, .form-textarea, select.form-input { font-size: 16px; }
   .form-textarea { min-height: 110px; }
-  /* Bare numbers are ambiguous three steps in — name the one you are on. */
+  /* Bare numbers are ambiguous three steps in - name the one you are on. */
   .step-rail-item.is-current .step-rail-label {
     display: block; font-size: .68rem; letter-spacing: .02em;
   }
   /* Back/Next follow you down a long section instead of living at the end.
      Side by side, not stacked: v16 stacks them column-reverse, which is right
-     at the foot of a page but costs ~140px of a sticky bar — a sixth of the
+     at the foot of a page but costs ~140px of a sticky bar - a sixth of the
      screen, permanently. Back takes only the width of its label. */
   .form-steps .form-actions {
     position: sticky; bottom: 0; z-index: 5;

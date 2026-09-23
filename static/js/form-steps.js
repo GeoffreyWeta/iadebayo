@@ -1,9 +1,9 @@
 /* Multi-step form: one section at a time, a browser-local draft so an applicant
-   can close the tab and come back, and — once they have left contact details —
+   can close the tab and come back, and - once they have left contact details -
    a quiet copy of the same draft on the server so the Foundation can reach the
    ones who never come back.
 
-   Progressive enhancement — with JS off, every fieldset is visible, Back/Next
+   Progressive enhancement - with JS off, every fieldset is visible, Back/Next
    stay hidden, and the form submits in one go exactly as before. */
 (function () {
   "use strict";
@@ -38,7 +38,7 @@
 
   /* Restart the entrance animation on the section being revealed. The class
      has to come off and go back on with a reflow in between, or the browser
-     sees no change and replays nothing. Skipped for the initial call — the
+     sees no change and replays nothing. Skipped for the initial call - the
      page has its own entrance and does not need the form sliding too. */
   var settled = false;
   function animateIn(step, goingBack) {
@@ -148,7 +148,7 @@
     });
     try {
       localStorage.setItem(storageKey, JSON.stringify({ saved: Date.now(), data: data }));
-    } catch (err) { /* private mode / quota — drafting is a bonus, not a promise */ }
+    } catch (err) { /* private mode / quota - drafting is a bonus, not a promise */ }
   }
 
   function restoreDraft() {
@@ -195,7 +195,7 @@
   /* Most people who open this form never reach the end of it, and the draft
      above only helps the ones who come back. So once the applicant has typed
      something we could actually contact them on, the same answers go to the
-     server too — see submissions.models.PartialApplication for what is kept.
+     server too - see submissions.models.PartialApplication for what is kept.
 
      Deliberately quiet: no spinner, no "saved" tick, nothing that could read as
      "your application is in". It is not. The only thing on screen that changes
@@ -218,7 +218,7 @@
 
     /* One id per browser, kept beside the local draft, so an applicant filling
        the form over three evenings updates one row instead of leaving three.
-       randomUUID needs a secure context and is missing on older Androids —
+       randomUUID needs a secure context and is missing on older Androids -
        hence the fallback, which does not have to be cryptographic, only
        unlikely to collide. */
     function draftId() {
@@ -270,7 +270,7 @@
       var print = fingerprint(data);
       if (print === lastSent) return;
       lastSent = print;
-      // On the way out there is no time for a response — sendBeacon survives
+      // On the way out there is no time for a response - sendBeacon survives
       // the page going away, which is exactly the applicant we most want to
       // have captured.
       if (leaving && navigator.sendBeacon && navigator.sendBeacon(url, data)) return;
@@ -279,7 +279,7 @@
       var options = { method: "POST", body: data, credentials: "same-origin" };
       if (leaving) options.keepalive = true;
       fetch(url, options)
-        .catch(function () { lastSent = ""; });   // offline — try again next time
+        .catch(function () { lastSent = ""; });   // offline - try again next time
     }
 
     // Carried on the real submit too, so the server can mark this person's
@@ -307,9 +307,9 @@
   })();
 
   /* --------------------------------------------- country → region picker */
-  /* Pick a country and the region field becomes that country's own list —
+  /* Pick a country and the region field becomes that country's own list -
      37 states for Nigeria, 47 counties for Kenya, 9 provinces for South
-     Africa — with the label renamed to the word that country actually uses.
+     Africa - with the label renamed to the word that country actually uses.
 
      The `state` text input remains the only control that submits. A <select>
      with NO `name` sits in front of it and writes into it. Three things fall
@@ -319,7 +319,7 @@
          text, so every legacy row, and every region ISO has never heard of,
          stays valid. A dropdown that could reject a real place name would be
          worse than the text box it replaced.
-       * Nothing can ever submit two values for one field — the failure you get
+       * Nothing can ever submit two values for one field - the failure you get
          by naming the picker and forgetting to disable the input.
        * With this script off, or on a country we have no list for, the
          applicant just types, exactly as before.
@@ -327,7 +327,7 @@
      Runs after restoreDraft() on purpose: a restored or server-re-rendered
      value has to be reflected in the picker, not overwritten by it.
 
-     Data: static/js/subdivisions.js — generated from ISO 3166-2, top-level
+     Data: static/js/subdivisions.js - generated from ISO 3166-2, top-level
      subdivisions only, 66 countries. Anywhere else falls back to the text box.
   */
   (function regionPicker() {
@@ -399,7 +399,7 @@
           return;
         }
       }
-      if (current) {                      // theirs is not on the list — keep it
+      if (current) {                      // theirs is not on the list - keep it
         picker.value = OTHER;
         showTextBox("Your " + entry.label.toLowerCase());
       } else {
@@ -419,7 +419,7 @@
         stateInput.value = picker.value;
       }
       // Setting .value in script fires nothing, and the draft saver listens for
-      // real events — tell it explicitly or the choice is not saved.
+      // real events - tell it explicitly or the choice is not saved.
       form.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
@@ -430,7 +430,7 @@
   /* ------------------------------------------------------------- submit */
 
   form.addEventListener("submit", function (e) {
-    // Answers on a hidden step can be wrong too — check every section and
+    // Answers on a hidden step can be wrong too - check every section and
     // jump to the first that fails rather than round-tripping to the server.
     for (var i = 0; i < steps.length; i++) {
       var wasHidden = steps[i].hidden;

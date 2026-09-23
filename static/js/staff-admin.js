@@ -1,15 +1,15 @@
 /* ============================================================
-   IADEBAYO Foundation — staff area, management enhancements
+   IADEBAYO Foundation - staff area, management enhancements
 
    Same contract as site.js and staff.js: everything here is additive, and the
    pages work with this file blocked. That is not a slogan, it is the reason the
-   markup looks the way it does —
+   markup looks the way it does -
 
      · the on/off switches in a list are <form>s with a submit button, not
        checkboxes this file has to post;
      · reordering has ▲▼ submit buttons, and the drag handler below is a
        shortcut on top of them (native drag-and-drop has no touch equivalent, so
-       on a phone the buttons are not a fallback — they are the mechanism);
+       on a phone the buttons are not a fallback - they are the mechanism);
      · the filter bar has an Apply button, so the selects are never controls
        that appear to do nothing;
      · the nav rail is a <details>, which opens without any script at all.
@@ -74,7 +74,7 @@
 
   /* ============================================ 3. confirm before destroying */
   /* Only on the bulk delete. Deleting one row already goes through a
-     confirmation *page* that shows what is about to go — a browser dialog on
+     confirmation *page* that shows what is about to go - a browser dialog on
      top of that would be a second "are you sure" with less information in it. */
   document.querySelectorAll("[data-confirm]").forEach(function (button) {
     button.addEventListener("click", function (event) {
@@ -110,7 +110,7 @@
 
       var label = document.createElement("span");
       label.textContent = "New: " + file.name +
-        " (" + Math.max(1, Math.round(file.size / 1024)) + " KB) — not saved yet";
+        " (" + Math.max(1, Math.round(file.size / 1024)) + " KB) - not saved yet";
       box.appendChild(label);
       input.parentNode.appendChild(box);
     });
@@ -122,7 +122,7 @@
     if (!source) return;
 
     // Never touch a slug someone typed, and never touch one that already has a
-    // value — a published post's URL is a promise to everyone who linked to it.
+    // value - a published post's URL is a promise to everyone who linked to it.
     var auto = slug.value === "";
     slug.addEventListener("input", function () { auto = false; });
 

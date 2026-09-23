@@ -6,7 +6,7 @@
   The box already holds the real message: the view substitutes the applicant's
   details into the chosen template before this page is rendered, so what is on
   screen is what will arrive. There is no second "preview" step for that reason
-  — a preview that shows something different from the box is worse than none,
+  - a preview that shows something different from the box is worse than none,
   and one that shows the same thing is a click for nothing.
 
   Nothing on this page sends automatically, and nothing sends on load. The
@@ -43,7 +43,7 @@
 {% if sent_at %}
 <p class="staff-caveat">
   This applicant has already been sent a decision email. Sending another is
-  allowed — people do ask for the details again — but check first that you are
+  allowed - people do ask for the details again - but check first that you are
   not writing to someone twice about the same thing.
 </p>
 {% endif %}
@@ -70,7 +70,7 @@
       <div class="staff-field">
         <label for="template-pick">Template</label>
         <select id="template-pick" name="template" class="staff-input staff-select">
-          <option value="">— start from an empty message —</option>
+          <option value="">- start from an empty message -</option>
           {% for t in templates %}
           <option value="{{ t.pk }}"{% if chosen and t.pk == chosen.pk %} selected{% endif %}>
             {{ t.name }} ({{ t.get_purpose_display|lower }})
@@ -104,7 +104,7 @@
   <section class="card form-block">
     <h2>The message</h2>
     <p class="chart-note">
-      This is exactly what {{ obj.name|default:"the applicant" }} will receive —
+      This is exactly what {{ obj.name|default:"the applicant" }} will receive -
       their details have already been filled in. Read it before you send it.
     </p>
 
@@ -131,7 +131,7 @@
     <h2>Placeholders you can type</h2>
     <p class="chart-note">
       The template already filled these in. They are here for anything you add
-      by hand — type one and it is replaced when you press send. Anything this
+      by hand - type one and it is replaced when you press send. Anything this
       site cannot fill in stops the send rather than going out blank.
     </p>
     <dl class="detail-list">

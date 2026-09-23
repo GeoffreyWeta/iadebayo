@@ -42,7 +42,7 @@ class TestimonialAdmin(admin.ModelAdmin):
             "fields": ("story", "quote", "link", "link_label"),
         }),
         ("Video", {
-            "description": "Paste any YouTube link — watch page, youtu.be, or a Short. "
+            "description": "Paste any YouTube link - watch page, youtu.be, or a Short. "
                            "Shorts are detected and framed vertically.",
             "fields": ("kind", "youtube_url", "orientation", "video_preview"),
         }),
@@ -61,9 +61,9 @@ class TestimonialAdmin(admin.ModelAdmin):
         a blank box on the live page.
         """
         if not obj.youtube_url:
-            return "—"
+            return "-"
         if not obj.youtube_embed_url:
-            return "Could not read a video id from that link — check the URL."
+            return "Could not read a video id from that link - check the URL."
         shape = "vertical (9:16)" if obj.is_portrait else "landscape (16:9)"
         return f"{obj.youtube_embed_url}  ·  {shape}"
 
@@ -96,7 +96,7 @@ class MilestoneAdmin(admin.ModelAdmin):
 class CohortAdmin(admin.ModelAdmin):
     """Kept in step with the staff area, which is where the team edits this.
 
-    See core.models.Cohort — the dates drive the public schedule band and the
+    See core.models.Cohort - the dates drive the public schedule band and the
     staff dashboard's countdown, so only one row is ever used.
     """
     list_display = ("name", "applications_open", "applications_close",
@@ -137,7 +137,7 @@ class PromoPopupAdmin(admin.ModelAdmin):
 
     @admin.display(boolean=True, description="Showing now")
     def live_now(self, obj):
-        """Active AND inside its date window — the dates catch people out."""
+        """Active AND inside its date window - the dates catch people out."""
         return obj.is_live()
 
 

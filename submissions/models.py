@@ -7,7 +7,7 @@ from django.db import models
 from django.utils.text import slugify
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".avi", ".mkv"}
-VIDEO_MAX_BYTES = 64 * 1024 * 1024  # 64 MB — ample for a phone-shot minute
+VIDEO_MAX_BYTES = 64 * 1024 * 1024  # 64 MB - ample for a phone-shot minute
 
 
 def validate_application_video(f):
@@ -57,7 +57,7 @@ class DiallingCodeMixin(models.Model):
     number remain readable. `phone_display` is what the admin and the team
     notification emails show.
 
-    Mix this in *after* TimestampedSubmission — Django resolves Meta through the
+    Mix this in *after* TimestampedSubmission - Django resolves Meta through the
     MRO, so listing it first makes this Meta win and silently drops the
     `ordering = ["-created_at"]` that every submission list relies on.
     """
@@ -74,7 +74,7 @@ class DiallingCodeMixin(models.Model):
 class DecisionMixin(models.Model):
     """Whether the team said yes, and whether they have told the person yet.
 
-    A decision is a mark the team puts *on* a submission, like `reviewed` — it
+    A decision is a mark the team puts *on* a submission, like `reviewed` - it
     is not an edit of what the applicant wrote, so it does not break the rule
     that submissions are read-only in the staff area (see core.staff_views).
 
@@ -137,7 +137,7 @@ class ContactMessage(TimestampedSubmission):
     message = models.TextField()
 
     def __str__(self):
-        return f"{self.name} — {self.subject}"
+        return f"{self.name} - {self.subject}"
 
 
 class NewsletterSubscriber(TimestampedSubmission):
@@ -205,8 +205,8 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
     # all, and a required field they cannot fill is a wall, not a signal. It is
     # still validated *if* supplied (see EmbarkApplicationForm.clean_linkedin),
     # because a wrong link in this field is worse than an empty one. The two
-    # free handles take whatever the applicant actually uses — Instagram, X,
-    # TikTok — so the form does not have to guess the platform list.
+    # free handles take whatever the applicant actually uses - Instagram, X,
+    # TikTok - so the form does not have to guess the platform list.
     #
     # `social_handle` predates the split and was labelled "Business or personal",
     # so a handful of pre-2026-08 rows may hold a business handle in it. Nothing
@@ -229,11 +229,11 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
         help_text=
         "<strong>Your video should answer three things:</strong>"
         "<ol class='form-help-brief'>"
-        "<li><b>Who you are</b> — your name, where you are, what you study or studied.</li>"
-        "<li><b>What your business does</b> — what you sell, to whom, and how it is going.</li>"
-        "<li><b>Why you should be chosen</b> — what Embark would change for your venture.</li>"
+        "<li><b>Who you are</b> - your name, where you are, what you study or studied.</li>"
+        "<li><b>What your business does</b> - what you sell, to whom, and how it is going.</li>"
+        "<li><b>Why you should be chosen</b> - what Embark would change for your venture.</li>"
         "</ol>"
-        "About a minute is plenty, and filmed on a phone is perfectly fine — we are "
+        "About a minute is plenty, and filmed on a phone is perfectly fine - we are "
         "listening to what you say, not judging the production. "
         "<strong>How to share it:</strong> upload the clip to Google Drive, open it, "
         "choose Share, set it to “Anyone with the link”, then paste that link here. "
@@ -279,7 +279,7 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
     # ------------------- Legacy fields from the 2025 form, kept for history
     #
     # `business_video` held the clip itself until 2026-08-01, when the 10 GB
-    # droplet made storing 64 MB per applicant untenable — roughly seventy
+    # droplet made storing 64 MB per applicant untenable - roughly seventy
     # applications would have filled the disk, and a full disk stops SQLite
     # writing at all. Applicants now paste a Drive link into
     # `business_video_url` instead. The column, the staff download view and the
@@ -288,8 +288,8 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
     business_video = models.FileField(
         "One-minute business video (uploaded, pre-2026-08)", upload_to="applications/videos/",
         blank=True, validators=[validate_application_video],
-        help_text="Legacy — superseded by the video link.")
-    business_description = models.TextField(blank=True, help_text="Legacy — superseded by the video")
+        help_text="Legacy - superseded by the video link.")
+    business_description = models.TextField(blank=True, help_text="Legacy - superseded by the video")
     business_sector = models.CharField(
         "Which sector does your business operate in?", max_length=120,
         choices=SECTOR_CHOICES, blank=True)
@@ -297,14 +297,14 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
                                   help_text="Legacy")
 
     def __str__(self):
-        return f"{self.name} — {self.business_name}"
+        return f"{self.name} - {self.business_name}"
 
     @property
     def video_download_name(self):
         """Filename the team gets when they download the video.
 
         Applicants upload things called `IMG_2453.mp4`, which is useless in a
-        folder of eighty of them — name the copy after the person and business
+        folder of eighty of them - name the copy after the person and business
         instead. The pk keeps it unique inside a bulk ZIP when two applicants
         slugify the same.
         """
@@ -325,7 +325,7 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
 class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
     """An Embark application that was typed but never submitted.
 
-    Most people who open the application form never reach the end of it — they
+    Most people who open the application form never reach the end of it - they
     run out of data, they have not recorded the video yet, or the tab dies. The
     browser-local draft (see form-steps.js) lets *them* come back, but it leaves
     the Foundation with nothing: no name, no email, no way to say "you were
@@ -336,7 +336,7 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
     keep typing. Two consequences worth being deliberate about:
 
       * **Rows are keyed on `draft_id`**, a random id the browser keeps beside
-        the local draft — not on email, which is often typed last, and not on
+        the local draft - not on email, which is often typed last, and not on
         the Django session, which a phone browser drops. One person filling the
         form over three evenings updates one row.
       * **A row is only created once there is a way to reach the person.** A
@@ -382,7 +382,7 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
 
     def __str__(self):
         who = self.name or self.email or self.phone_display or "Anonymous"
-        return f"{who} — step {self.furthest_step}"
+        return f"{who} - step {self.furthest_step}"
 
     @property
     def is_complete(self):
@@ -394,7 +394,7 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
 
         Keys are form field names, so the model's own labels are what the team
         should see. Anything unrecognised (a field renamed since the row was
-        written) falls back to its raw key rather than being dropped — an old
+        written) falls back to its raw key rather than being dropped - an old
         answer is still an answer.
         """
         labels = {f.name: f.verbose_name for f in self._meta.model._meta.fields}

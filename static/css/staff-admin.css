@@ -1,5 +1,5 @@
 /* ============================================================
-   IADEBAYO Foundation — staff area, management layer
+   IADEBAYO Foundation - staff area, management layer
 
    Loads after staff.css and, like it, every rule is scoped under `.staff-body`.
    It adds no colours of its own: the tokens (--viz-1, --plane, --surface,
@@ -14,7 +14,7 @@
    One deliberate constraint runs through the whole file: nothing here needs
    JavaScript to work. The switches are forms, the reorder arrows are submit
    buttons, the filters have an Apply button, and the rail is a <details>.
-   staff-admin.js only adds shortcuts on top — see the head of that file.
+   staff-admin.js only adds shortcuts on top - see the head of that file.
 
    Sections
      1. shell and nav rail      5. edit forms
@@ -63,7 +63,7 @@
 }
 .staff-body .staff-rail-burger::before { top: -5px; }
 .staff-body .staff-rail-burger::after { top: 5px; }
-/* Open, the three bars fold to an X — the control says which way it goes next. */
+/* Open, the three bars fold to an X - the control says which way it goes next. */
 .staff-body .staff-rail[open] .staff-rail-burger { background: transparent; }
 .staff-body .staff-rail[open] .staff-rail-burger::before { transform: translateY(5px) rotate(45deg); }
 .staff-body .staff-rail[open] .staff-rail-burger::after { transform: translateY(-5px) rotate(-45deg); }
@@ -126,7 +126,7 @@
 .staff-body .head-where a { color: var(--viz-1); font-weight: 700; text-decoration: none; }
 .staff-body .head-where a:hover { text-decoration: underline; }
 
-/* A standing caveat about a whole collection — the unfinished-applications
+/* A standing caveat about a whole collection - the unfinished-applications
    warning, the newsletter-purpose note. Bordered rather than tinted so it reads
    as a note from the people who built this, not as an error. */
 .staff-body .staff-caveat {
@@ -323,7 +323,7 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 0 22px;
 }
-/* Anything you write in prose gets the full width — a 280px column is a bad
+/* Anything you write in prose gets the full width - a 280px column is a bad
    place to compose three paragraphs. */
 .staff-body .form-grid .staff-field:has(textarea),
 .staff-body .form-grid .field-check,
@@ -426,7 +426,7 @@
   color: var(--viz-muted); text-transform: uppercase; line-height: 1.5;
 }
 .staff-body .detail-row dd { margin: 0; font-size: .94rem; line-height: 1.6; word-break: break-word; }
-/* An unanswered optional question is shown, not hidden — the gap is information
+/* An unanswered optional question is shown, not hidden - the gap is information
    to whoever is comparing two applications. It is just quieter. */
 .staff-body .detail-row.is-empty dd { color: var(--viz-base); }
 .staff-body .detail-row-wide { grid-template-columns: 1fr; gap: 6px; }
@@ -552,4 +552,4 @@
 
 /* Reveal animations come from site.js / site.css, same as the analytics cards.
    Without scripting the .reveal class never flips, and those files already
-   leave everything in its final state — nothing here re-implements that. */
+   leave everything in its final state - nothing here re-implements that. */

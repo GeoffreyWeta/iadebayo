@@ -14,7 +14,7 @@ feels:
     collection instead of one undifferentiated stack of inputs.
 
 Model `help_text` is rendered through `|safe` in the template, exactly as the
-public form templates already do (see includes/form_section.html) — a couple of
+public form templates already do (see includes/form_section.html) - a couple of
 fields carry deliberate markup, most notably EmbarkApplication.business_video_url.
 Nothing user-supplied ever reaches help text; it is all written in models.py.
 """
@@ -77,7 +77,7 @@ class StaffModelForm(forms.ModelForm):
         existing = widget.attrs.get("class", "")
         widget.attrs["class"] = " ".join(filter(None, [existing, *classes]))
 
-        # A required field is marked in the label, so tell the browser too — but
+        # A required field is marked in the label, so tell the browser too - but
         # not for file inputs on an edit form, where the existing upload already
         # satisfies the requirement and `required` would refuse to submit.
         if field.required and not isinstance(widget, (forms.ClearableFileInput,
@@ -88,7 +88,7 @@ class StaffModelForm(forms.ModelForm):
             widget.attrs.setdefault("data-slug-from", "title")
 
         # The order column is a position, not an answer. The model declares it
-        # `default=0`, which makes it a *required* form field — so a team member
+        # `default=0`, which makes it a *required* form field - so a team member
         # adding a milestone would have to invent a number before they could
         # save, and every new row would land at 0 and jump to the top. Optional
         # here, and filled in by `clean` and by staff_views._place_new_at_end.
@@ -96,7 +96,7 @@ class StaffModelForm(forms.ModelForm):
             field.required = False
             widget.attrs.pop("required", None)
             field.help_text = field.help_text or (
-                "Lower numbers come first. Leave it blank to put this last — you "
+                "Lower numbers come first. Leave it blank to put this last - you "
                 "can drag rows into place on the list afterwards.")
 
     def clean(self):
@@ -138,7 +138,7 @@ class StaffModelForm(forms.ModelForm):
         """The form's fields as the collection's declared blocks.
 
         Each entry is the bound field plus whatever the template cannot work out
-        for itself — currently the existing upload. Anything the collection
+        for itself - currently the existing upload. Anything the collection
         forgot to list still gets rendered, in a final "Other" block: a field
         that exists on the form but appears in no group would otherwise be
         silently unfillable, which for a required field means a form that can
@@ -177,7 +177,7 @@ class ApplicantEmailForm(forms.Form):
     Not a ModelForm: nothing here is saved. The subject and body arrive already
     substituted for this applicant (the compose view renders the chosen template
     before it ever reaches the browser), so what a staff member reads in these
-    two boxes is what the applicant receives — no second pass, no surprise.
+    two boxes is what the applicant receives - no second pass, no surprise.
 
     Placeholders are still substituted once more on send, so that someone who
     types `{{ first_name }}` into the box by hand gets what they expect. By then
@@ -194,7 +194,7 @@ class ApplicantEmailForm(forms.Form):
         """Refuse a placeholder nothing can fill, rather than mail it out.
 
         EmailTemplate.clean already blocks these when the template is saved, but
-        this box is free text — someone can type one straight in here, and this
+        this box is free text - someone can type one straight in here, and this
         is the last point before it is somebody's email.
         """
         cleaned = super().clean()

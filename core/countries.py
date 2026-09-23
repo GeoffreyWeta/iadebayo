@@ -6,7 +6,7 @@ both, since that is where nearly every applicant, mentor, and volunteer is.
 The stored value is the country *name*, not the ISO code: form submissions
 are read by humans in the admin and in notification emails, and applications
 predating these dropdowns already hold free-typed names. For the same reason
-the choices live on the form, never on the model — a legacy row holding
+the choices live on the form, never on the model - a legacy row holding
 "Nigeria " or "Cote d'Ivoire" must stay valid.
 """
 
@@ -237,7 +237,7 @@ def dial_code_choices():
     """Grouped dialling-code choices, e.g. ("+234", "Nigeria (+234)").
 
     Several countries share a code (+212 Morocco and Western Sahara, +7 Russia
-    and Kazakhstan, +1 US and Canada), which is fine — the value stored is the
+    and Kazakhstan, +1 US and Canada), which is fine - the value stored is the
     code, and duplicate values in a <select> are legal. Each keeps its own
     label so the person choosing can find their country by name.
     """
@@ -249,5 +249,5 @@ def dial_code_choices():
 
 
 def valid_dial_codes():
-    """The set of accepted codes — duplicates collapsed."""
+    """The set of accepted codes - duplicates collapsed."""
     return {dial for _, _, dial in ALL}

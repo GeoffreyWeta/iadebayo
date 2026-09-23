@@ -1,6 +1,6 @@
 {% comment %}
-  One table cell. Which branch runs was decided in Python — core.staff_views.cell
-  resolved the field to a `kind` and everything the branch needs — so this file
+  One table cell. Which branch runs was decided in Python - core.staff_views.cell
+  resolved the field to a `kind` and everything the branch needs - so this file
   is only shapes, and adding a column to a collection never means touching it.
 
   Params: cell, row, c (the collection), here (where to come back to).
@@ -18,9 +18,9 @@
 
 {% elif cell.kind == "strong" %}
   {% if c.is_inbox %}
-  <a href="{% url 'staff:detail' c.slug row.pk %}">{{ cell.text|default:"— no name given —" }}</a>
+  <a href="{% url 'staff:detail' c.slug row.pk %}">{{ cell.text|default:"- no name given -" }}</a>
   {% else %}
-  <a href="{% url 'staff:edit' c.slug row.pk %}">{{ cell.text|default:"— untitled —" }}</a>
+  <a href="{% url 'staff:edit' c.slug row.pk %}">{{ cell.text|default:"- untitled -" }}</a>
   {% endif %}
 
 {% elif cell.kind == "switch" %}
@@ -42,25 +42,25 @@
 
 {% elif cell.kind == "bool" %}
   <span class="flag flag-{{ cell.on|yesno:"yes,no" }}">
-    <span aria-hidden="true">{{ cell.on|yesno:"✓,—" }}</span> {{ cell.text }}
+    <span aria-hidden="true">{{ cell.on|yesno:"✓,-" }}</span> {{ cell.text }}
   </span>
 
 {% elif cell.kind == "when" %}
   {% if cell.value %}<time datetime="{{ cell.value|date:'c' }}">{{ cell.value|date:"j M Y, H:i" }}</time>
-  {% else %}<span class="cell-none">—</span>{% endif %}
+  {% else %}<span class="cell-none">-</span>{% endif %}
 
 {% elif cell.kind == "date" %}
   {% comment %}A DateField has no time, and rendering one as "00:00" invents a
      precision that is not in the data.{% endcomment %}
   {% if cell.value %}<time datetime="{{ cell.value|date:'Y-m-d' }}">{{ cell.value|date:"j M Y" }}</time>
-  {% else %}<span class="cell-none">—</span>{% endif %}
+  {% else %}<span class="cell-none">-</span>{% endif %}
 
 {% elif cell.kind == "chip" %}
-  {% if cell.text %}<span class="chip">{{ cell.text }}</span>{% else %}<span class="cell-none">—</span>{% endif %}
+  {% if cell.text %}<span class="chip">{{ cell.text }}</span>{% else %}<span class="cell-none">-</span>{% endif %}
 
 {% elif cell.kind == "link" %}
   {% if cell.url %}<a href="{{ cell.url }}" target="_blank" rel="noopener noreferrer">{{ cell.text|default:cell.url }} ↗</a>
-  {% else %}<span class="cell-none">—</span>{% endif %}
+  {% else %}<span class="cell-none">-</span>{% endif %}
 
 {% elif cell.kind == "file" %}
   {% if cell.missing %}
@@ -68,14 +68,14 @@
   {% elif cell.url %}
   <a href="{{ cell.url }}" target="_blank" rel="noopener">{{ cell.text }}</a>
   <span class="cell-none">{{ cell.size|filesizeformat }}</span>
-  {% else %}<span class="cell-none">— none —</span>{% endif %}
+  {% else %}<span class="cell-none">- none -</span>{% endif %}
 
 {% elif cell.kind == "long" %}
-  <span class="cell-long">{{ cell.text|default:"—" }}</span>
+  <span class="cell-long">{{ cell.text|default:"-" }}</span>
 
 {% elif cell.kind == "count" %}
   <span class="cell-count">{{ cell.text|default:"0" }}</span>
 
 {% else %}
-  {{ cell.text|default:"—" }}
+  {{ cell.text|default:"-" }}
 {% endif %}

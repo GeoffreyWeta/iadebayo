@@ -24,7 +24,7 @@ PASSWORD = "pw-for-tests-only"
 # SECURE_SSL_REDIRECT, and SecurityMiddleware then answers every request with a
 # 301 to https. `follow=True` re-issues a redirected POST as a GET, so each
 # @require_POST submission view rejects it with 405 and roughly thirty
-# assertions fail — but only when the suite happens to run with DEBUG=False.
+# assertions fail - but only when the suite happens to run with DEBUG=False.
 # Pinning it here keeps the result the same on a developer's machine, in CI, and
 # against a production-shaped .env.
 SSL_REDIRECT_OFF = override_settings(SECURE_SSL_REDIRECT=False)
@@ -163,7 +163,7 @@ EMBARK = {
     "business_video_url": "https://drive.google.com/file/d/1AbCdEf/view?usp=sharing",
     "major_challenge": "Cold-chain logistics; we partnered with a local courier.",
     "growth_limits": ["funding", "customers"],
-    "entrepreneurship_view": "Impact first — profit is what makes the impact repeatable.",
+    "entrepreneurship_view": "Impact first - profit is what makes the impact repeatable.",
     "device": "laptop", "will_participate": "yes", "reliable_internet": "yes",
     "heard_about": "linkedin", "media_consent": "on",
 }
@@ -269,7 +269,7 @@ class PublicFormTests(TestCase):
     # -------------------------------------------- personal & business links
     def test_embark_does_not_require_linkedin(self):
         """Plenty of real founders run their venture off Instagram and have no
-        LinkedIn at all — a required field they cannot fill is a wall."""
+        LinkedIn at all - a required field they cannot fill is a wall."""
         self.submit("apply", dict(EMBARK, linkedin=""))
         application = models.EmbarkApplication.objects.get()
         self.assertEqual(application.linkedin, "")
@@ -313,7 +313,7 @@ class PublicFormTests(TestCase):
     def test_region_is_still_free_text_on_the_server(self):
         """The picker is a browser convenience. If the server ever started
         validating `state` against the ISO list, a legacy row or a region ISO
-        has not caught up with would be rejected — so a value that is on no
+        has not caught up with would be rejected - so a value that is on no
         list has to keep saving."""
         self.submit("apply", dict(EMBARK, country="Nigeria",
                                   state="Somewhere Not On Any List"))
@@ -376,7 +376,7 @@ class PublicFormTests(TestCase):
 @override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
 @SSL_REDIRECT_OFF
 class UnfinishedApplicationTests(TestCase):
-    """The apply form's background save — see models.PartialApplication.
+    """The apply form's background save - see models.PartialApplication.
 
     What matters here is the boundary: enough typed to reach someone gets kept,
     less than that does not, and nobody is ever chased about an application they
@@ -676,7 +676,7 @@ class MetaPixelTests(TestCase):
 
     @override_settings(META_PIXEL_ID=PIXEL_ID)
     def test_a_rejected_application_reports_nothing(self):
-        """No row saved, no conversion — or the cost-per-application figure in
+        """No row saved, no conversion - or the cost-per-application figure in
         Ads Manager counts forms that failed validation."""
         response = self.client.post(reverse("submissions:apply"),
                                     dict(EMBARK, institution=""), follow=True)
@@ -697,7 +697,7 @@ class MetaPixelTests(TestCase):
                 self.assertContains(response, f"fbq('track', '{event}')")
 
     def test_a_conversion_is_not_stored_when_no_pixel_is_configured(self):
-        """No id, no session write — a visitor to a site running no pixel should
+        """No id, no session write - a visitor to a site running no pixel should
         not be handed a session cookie because of one."""
         self.client.post(reverse("submissions:apply"), EMBARK, follow=True)
         self.assertNotIn("meta_pixel_event", self.client.session)

@@ -24,7 +24,7 @@ class BaseStyledForm(forms.ModelForm):
 
     # Fields that span both grid columns whatever their widget. Width by widget
     # type is the right default, but it cannot know that one text input carries
-    # far more help text than the others — in a half-width column the video
+    # far more help text than the others - in a half-width column the video
     # brief renders as a tall thin ribbon nobody reads.
     FULL_WIDTH_FIELDS = ()
 
@@ -51,7 +51,7 @@ class BaseStyledForm(forms.ModelForm):
                 continue
             # Radio / checkbox groups: no class here. Django copies widget.attrs
             # onto every option input, so styling hangs off the wrapping
-            # .form-field.is-choices instead. (RadioSelect is not a Select —
+            # .form-field.is-choices instead. (RadioSelect is not a Select -
             # check it first.)
             if isinstance(field.widget, (forms.RadioSelect, forms.CheckboxSelectMultiple)):
                 continue
@@ -177,7 +177,7 @@ class NewsletterForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if models.NewsletterSubscriber.objects.filter(email=email).exists():
-            raise forms.ValidationError("You're already subscribed — thank you!")
+            raise forms.ValidationError("You're already subscribed - thank you!")
         return email
 
 
@@ -185,7 +185,7 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     """The three-section Embark application."""
 
     SECTIONS = [
-        ("Section A — About the applicant",
+        ("Section A - About the applicant",
          "Tell us who you are. Use an email address you check often; that is where "
          "every update about your application will go.",
          # Country before state, and adjacent to it: the region field becomes
@@ -195,9 +195,9 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
          ["name", "gender", "applicant_status", "email", "phone_code", "phone",
           "date_of_birth", "institution", "country", "state", "city",
           "linkedin", "social_handle", "social_handle_2"]),
-        ("Section B — Business information",
+        ("Section B - Business information",
          "Now the venture itself. Your video carries as much weight as the written "
-         "answers, so give it a minute of thought before you record — the brief is "
+         "answers, so give it a minute of thought before you record - the brief is "
          "under the link field. Filmed on a phone is perfectly fine.",
          ["business_name", "business_sector", "business_video_url",
           "business_website", "business_social_handle", "year_established",
@@ -270,18 +270,18 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
                              "may be used by IADEBAYO Foundation.",
         }
         help_texts = {
-            "linkedin": "Optional. If you have one, paste the profile URL — "
+            "linkedin": "Optional. If you have one, paste the profile URL - "
                         "“linkedin.com/in/…” is enough.",
-            "social_handle": "Optional. Instagram, X, TikTok — whichever you actually use.",
+            "social_handle": "Optional. Instagram, X, TikTok - whichever you actually use.",
             "social_handle_2": "Optional. A second platform, if you have one.",
-            "business_website": "Optional — leave blank if the business has no site yet.",
+            "business_website": "Optional - leave blank if the business has no site yet.",
             "business_social_handle": "Optional. Where customers find the business.",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["media_consent"].error_messages["required"] = (
-            "We need this consent to enrol you — photos and video are part of how the "
+            "We need this consent to enrol you - photos and video are part of how the "
             "programme is documented.")
         # Nothing in the future: no unborn applicants, no unfounded businesses.
         today = date.today()
@@ -320,7 +320,7 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         host = urlparse(url).netloc.lower().removeprefix("www.")
         if host != "linkedin.com" and not host.endswith(".linkedin.com"):
             raise forms.ValidationError(
-                "That is not a LinkedIn address. Paste your LinkedIn profile here — "
+                "That is not a LinkedIn address. Paste your LinkedIn profile here - "
                 "any other platform goes in the handle fields below.")
         return url
 
@@ -348,10 +348,10 @@ class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
         if "other" in (cleaned.get("growth_limits") or "").split(",") \
                 and not cleaned.get("growth_limits_other"):
             self.add_error("growth_limits_other",
-                           "You ticked “Other” above — please tell us what it is.")
+                           "You ticked “Other” above - please tell us what it is.")
         if cleaned.get("heard_about") == "other" and not cleaned.get("heard_about_other"):
             self.add_error("heard_about_other",
-                           "You chose “Other” — please tell us where you heard about Embark.")
+                           "You chose “Other” - please tell us where you heard about Embark.")
         if cleaned.get("will_participate") == "no":
             self.add_error("will_participate",
                            "Embark is a commitment-based programme, so we can only accept "
