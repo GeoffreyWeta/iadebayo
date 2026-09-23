@@ -165,6 +165,44 @@
 }
 .staff-body .filter-clear:hover { color: var(--viz-1); }
 
+/* Filters fold away behind a disclosure. Eight dropdowns reading "Any" is a
+   wall; the count on the summary is what stops a narrowed list looking like an
+   unnarrowed one when the panel is shut. */
+.staff-body .filter-more { flex: 0 0 auto; }
+.staff-body .filter-toggle {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  list-style: none; min-height: 46px; padding: 11px 16px; border-radius: 10px;
+  background: #fff; border: 1.5px solid #D8D5CE;
+  font-size: .84rem; font-weight: 700; color: var(--viz-muted);
+  transition: color var(--dur-1) ease, border-color var(--dur-1) ease;
+}
+.staff-body .filter-toggle::-webkit-details-marker { display: none; }
+.staff-body .filter-toggle::after {
+  content: "▾"; font-size: .7rem; transition: transform var(--dur-1) ease;
+}
+.staff-body .filter-more[open] .filter-toggle::after { transform: rotate(180deg); }
+.staff-body .filter-toggle:hover { color: var(--viz-1); border-color: var(--viz-1); }
+.staff-body .filter-more[open] .filter-toggle { border-color: var(--viz-1); color: var(--viz-1); }
+.staff-body .filter-count {
+  min-width: 20px; padding: 1px 6px; border-radius: 999px;
+  background: var(--viz-1); color: #fff; font-size: .7rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.staff-body .filter-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; align-items: end;
+  margin-top: 12px; padding: 16px 18px; border-radius: 12px;
+  background: #fff; border: 1px solid var(--card-ring); box-shadow: var(--card-shadow);
+}
+/* A filter that is doing something is marked, so a shut panel is never the only
+   evidence that the list has been narrowed. */
+.staff-body .filter-pick.is-set label { color: var(--viz-1); }
+.staff-body .filter-pick.is-set select { border-color: var(--viz-1); }
+.staff-body .filter-actions {
+  display: flex; gap: 10px; align-items: center; grid-column: 1 / -1;
+  padding-top: 4px; border-top: 1px solid var(--viz-grid); margin-top: 2px;
+}
+
 .staff-body .list-count {
   margin: 0 0 12px; font-size: .84rem; color: var(--viz-muted); font-weight: 600;
 }

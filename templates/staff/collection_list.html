@@ -46,6 +46,13 @@
 
 {# ------------------------------------------------------------- search + filters #}
 {% if c.search or c.filters %}
+{% comment %}
+  Search is always visible because it is what people reach for; the filters fold
+  away behind a disclosure because there can be eight of them and a row of eight
+  dropdowns all reading "Any" is a wall, not a control panel. The panel opens by
+  itself whenever a filter is actually applied, so a narrowed list can never
+  look like an unnarrowed one.
+{% endcomment %}
 <form method="get" class="filter-bar" role="search">
   {% if c.search %}
   <div class="filter-search">
@@ -55,22 +62,35 @@
   </div>
   {% endif %}
 
-  {% for f in filters %}
-  <div class="filter-pick">
-    <label for="filter-{{ f.name }}">{{ f.label }}</label>
-    {% comment %} Auto-submits with staff-admin.js; the Apply button is what makes it work
-       without it, so the select is never a control that does nothing. {% endcomment %}
-    <select id="filter-{{ f.name }}" name="{{ f.name }}" data-autosubmit>
-      <option value="">Any</option>
-      {% for value, label in f.options %}
-      <option value="{{ value }}"{% if value == f.current %} selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% endfor %}
+  <button type="submit" class="staff-btn staff-btn-quiet">Search</button>
 
-  <button type="submit" class="staff-btn staff-btn-quiet">Apply</button>
-  {% if has_narrowing %}
+  {% if filters %}
+  <details class="filter-more"{% if active_filters %} open{% endif %}>
+    <summary class="filter-toggle">
+      Filters{% if active_filters %} <span class="filter-count">{{ active_filters }}</span>{% endif %}
+    </summary>
+    <div class="filter-grid">
+      {% for f in filters %}
+      <div class="filter-pick{% if f.current %} is-set{% endif %}">
+        <label for="filter-{{ f.name }}">{{ f.label }}</label>
+        {# Auto-submits with staff-admin.js; Apply is what makes it work without. #}
+        <select id="filter-{{ f.name }}" name="{{ f.name }}" data-autosubmit>
+          <option value="">Any</option>
+          {% for value, label in f.options %}
+          <option value="{{ value }}"{% if value == f.current %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+      <div class="filter-actions">
+        <button type="submit" class="staff-btn staff-btn-quiet">Apply</button>
+        {% if has_narrowing %}<a class="filter-clear" href="{{ c.url }}">Clear all</a>{% endif %}
+      </div>
+    </div>
+  </details>
+  {% endif %}
+
+  {% if has_narrowing and not filters %}
   <a class="filter-clear" href="{{ c.url }}">Clear</a>
   {% endif %}
 </form>
@@ -97,8 +117,8 @@
   <input type="hidden" name="next" value="{{ here }}">
   <span class="bulk-note" data-bulk-count>Tick rows to act on them</span>
   {% if c.mailable %}
-  {# formaction, so the same ticked boxes can go to a different view without a
-     second form or a line of JavaScript. #}
+  {% comment %} formaction, so the same ticked boxes can go to a different view without a
+     second form or a line of JavaScript. {% endcomment %}
   <button type="submit" formaction="{% url 'staff:email_many' c.slug %}"
           class="staff-btn staff-btn-quiet">Write to ticked</button>
   {% endif %}

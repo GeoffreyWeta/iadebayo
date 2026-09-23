@@ -167,6 +167,32 @@ def _distinct_values(collection, name):
     return [(str(v), str(v)) for v in values]
 
 
+# A filter is a dropdown in a row of dropdowns, so its label has to survive
+# being read at a glance in about 14 characters. The model's verbose_name is
+# written for a form, where "Device you will use for the programme" is exactly
+# right and here is a wall. Anything unlisted falls back to its first two words.
+SHORT_FILTER_LABELS = {
+    "applicant_status": "Status",
+    "business_sector": "Sector",
+    "decision": "Decision",
+    "device": "Device",
+    "faculty_option": "Wants to",
+    "furthest_step": "Reached step",
+    "heard_about": "Heard via",
+    "media_consent": "Consent",
+    "on_spotlight": "On spotlight",
+    "reliable_internet": "Internet",
+}
+
+
+def _short_label(name, field):
+    if name in SHORT_FILTER_LABELS:
+        return SHORT_FILTER_LABELS[name]
+    words = str(field.verbose_name).split()
+    label = " ".join(words[:2]) if len(str(field.verbose_name)) > 16 else str(field.verbose_name)
+    return label[:1].upper() + label[1:]
+
+
 def filter_specs(collection, selected):
     """Every declared filter, as a dropdown the template can render."""
     specs = []
@@ -182,7 +208,7 @@ def filter_specs(collection, selected):
             options = _distinct_values(collection, name)
         specs.append({
             "name": name,
-            "label": field.verbose_name.capitalize(),
+            "label": _short_label(name, field),
             "options": options,
             "current": selected.get(name, ""),
         })
@@ -372,6 +398,7 @@ def collection_list(request, slug):
         total=paginator.count, total_label=collection.count_label(paginator.count),
         query=query, pages=page_links(request, page),
         filters=filter_specs(collection, selected),
+        active_filters=len(selected),
         has_narrowing=bool(query or selected),
         public_links=_public_links(collection),
         may_delete=can_delete(request.user, collection),

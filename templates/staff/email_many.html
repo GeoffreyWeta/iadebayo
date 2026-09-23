@@ -86,8 +86,8 @@
         {% endfor %}
 
         <div class="form-actions">
-          {# The name is what the view checks, so a stray Enter in the subject
-             box cannot be a send. #}
+          {% comment %} The name is what the view checks, so a stray Enter in the subject
+             box cannot be a send. {% endcomment %}
           <button type="submit" name="send" value="1"
                   class="staff-btn staff-btn-primary staff-btn-inline"
                   data-confirm="Send this message to {{ rows|length }} people? It cannot be taken back.">
@@ -127,7 +127,7 @@
           <tbody>
             {% for r in rows %}
             <tr>
-              <th scope="row">{{ r.name|default:"— no name —" }}</th>
+              <th scope="row">{{ r.name|default:"- no name -" }}</th>
               <td>{{ r.email }}</td>
             </tr>
             {% endfor %}

@@ -256,7 +256,7 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
         help_text="Stored as comma-separated codes; set by the application form.")
     growth_limits_other = models.CharField("Other limiting factor", max_length=160, blank=True)
     entrepreneurship_view = models.TextField(
-        "What do you think the goal of entrepreneurship is \u2014 impact or profit?",
+        "What do you think the goal of entrepreneurship is - impact or profit?",
         blank=True, help_text="Explain briefly.")
 
     # ------------------------------------------------------ Commitment
