@@ -639,3 +639,100 @@ class ApplicantEmailTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/staff/login/", response["Location"])
+
+
+class ZeptoMailBackendTests(TestCase):
+    """The HTTP call is mocked — these pin the payload shape, not delivery."""
+
+    def send(self, message, **backend_kwargs):
+        from .mail_backends import ZeptoMailBackend
+        backend = ZeptoMailBackend(token="Zoho-enczapikey tok123", **backend_kwargs)
+        with mock.patch("urllib.request.urlopen") as urlopen:
+            sent = backend.send_messages([message])
+        return sent, urlopen
+
+    def test_builds_the_request_zeptomail_expects(self):
+        import json
+        message = mail.EmailMessage(
+            "Hello", "Plain body", "IADEBAYO Foundation <noreply@iadebayo.foundation>",
+            ["Jane Doe <jane@example.com>"], reply_to=["hello@iadebayo.foundation"])
+        sent, urlopen = self.send(message)
+
+        self.assertEqual(sent, 1)
+        request = urlopen.call_args.args[0]
+        # Prefix pasted along with the token is stripped, not doubled.
+        self.assertEqual(request.get_header("Authorization"), "Zoho-enczapikey tok123")
+        payload = json.loads(request.data)
+        self.assertEqual(payload["from"], {"address": "noreply@iadebayo.foundation",
+                                           "name": "IADEBAYO Foundation"})
+        self.assertEqual(payload["to"], [{"email_address": {
+            "address": "jane@example.com", "name": "Jane Doe"}}])
+        self.assertEqual(payload["reply_to"], [{"address": "hello@iadebayo.foundation"}])
+        self.assertEqual(payload["textbody"], "Plain body")
+        self.assertNotIn("htmlbody", payload)
+
+    def test_a_rejection_raises_with_zeptomail_s_explanation(self):
+        import io
+        import urllib.error
+        from .mail_backends import ZeptoMailBackend, ZeptoMailError
+        error = urllib.error.HTTPError(
+            "url", 400, "Bad Request", {}, io.BytesIO(b'{"error":"sender not verified"}'))
+        backend = ZeptoMailBackend(token="tok")
+        message = mail.EmailMessage("s", "b", "a@iadebayo.foundation", ["x@example.com"])
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaisesMessage(ZeptoMailError, "sender not verified"):
+                backend.send_messages([message])
+
+
+@SSL_REDIRECT_OFF
+class DecisionPagesRenderTests(TestCase):
+    """The screens themselves, because a template error is invisible to unit tests."""
+
+    def setUp(self):
+        cache.clear()
+        User.objects.create_user("dare", password=PASSWORD, is_staff=True)
+        self.client.login(username="dare", password=PASSWORD)
+        self.app = make_application(name="Chidi Okafor", email="chidi@example.com")
+
+    def _detail(self):
+        return self.client.get(reverse(
+            "staff:detail", kwargs={"slug": "applications", "pk": self.app.pk}))
+
+    def test_an_undecided_application_offers_both_decisions(self):
+        page = self._detail().content.decode()
+        self.assertIn("Approve", page)
+        self.assertIn("Decline", page)
+        self.assertIn("No decision yet", page)
+
+    def test_an_approved_application_warns_until_the_person_is_told(self):
+        self.app.decision = "approved"
+        self.app.decided_at = timezone.now()
+        self.app.save()
+        page = self._detail().content.decode()
+        self.assertIn("has not been told", page)
+        self.assertIn("Send email", page)
+
+    def test_the_decision_is_not_listed_as_something_they_submitted(self):
+        """Our own decision is not one of the applicant's answers."""
+        page = self._detail().content.decode()
+        self.assertNotIn("Decision email sent at", page)
+
+    def test_a_submission_without_decisions_shows_no_decision_card(self):
+        message = ContactMessage.objects.create(
+            name="Ada", email="a@example.com", subject="Hi", message="Hello")
+        page = self.client.get(reverse(
+            "staff:detail", kwargs={"slug": "messages", "pk": message.pk})
+        ).content.decode()
+        self.assertNotIn("Send email", page)
+
+    def test_the_templates_collection_is_reachable_and_listed(self):
+        EmailTemplate.objects.create(name="Cohort offer", subject="Hi",
+                                     body="Dear {{ first_name }},")
+        page = self.client.get(
+            reverse("staff:list", kwargs={"slug": "email-templates"})).content.decode()
+        self.assertIn("Cohort offer", page)
+
+    def test_the_template_form_lists_the_placeholders_that_exist(self):
+        page = self.client.get(
+            reverse("staff:new", kwargs={"slug": "email-templates"})).content.decode()
+        self.assertIn("{{ first_name }}", page)

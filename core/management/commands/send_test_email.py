@@ -37,6 +37,7 @@ class Command(BaseCommand):
             # Never the password itself — only whether one is present. This
             # command gets run over SSH and pasted into chats when it fails.
             ("EMAIL_HOST_PASSWORD", "set" if getattr(settings, "EMAIL_HOST_PASSWORD", "") else "(empty)"),
+            ("ZEPTOMAIL_TOKEN", "set" if getattr(settings, "ZEPTOMAIL_TOKEN", "") else "(unset)"),
             ("DEFAULT_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL),
             ("recipient", to),
         ]:
@@ -50,7 +51,7 @@ class Command(BaseCommand):
             self.stdout.write("")
             raise CommandError(
                 f"{backend} does not send anything.\n"
-                "Nothing left this machine. Set EMAIL_BACKEND=smtp in .env "
+                "Nothing left this machine. Set EMAIL_BACKEND=zeptomail (or smtp) in .env "
                 "(and restart gunicorn) before trusting this test.")
 
         # Open the connection separately from the send so a refused TCP/TLS
@@ -86,7 +87,7 @@ class Command(BaseCommand):
             raise CommandError(
                 f"Connected, but the send was rejected.\n"
                 f"  {type(exc).__name__}: {exc}\n\n"
-                f"Usually: the API key lacks Mail Send permission, or "
+                f"Usually: the API key/token is wrong or lacks Mail Send permission, or "
                 f"{settings.DEFAULT_FROM_EMAIL} is not a verified sender on the "
                 "provider. Providers accept the login and then refuse the "
                 "From address, which is why this failed here and not above.") from exc

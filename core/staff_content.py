@@ -108,6 +108,10 @@ class Collection:
     per_page: int = 25
     export: bool = False            # offer "Download CSV"
     review_field: str = ""          # inbox only: the boolean the list toggles
+    # Setting `decision_field` means the model uses submissions.DecisionMixin:
+    # the views read this column, and write the `decided_at` / `decided_by` /
+    # `decision_email_sent_at` stamps that come with it as a set. Naming the one
+    # column rather than a bare bool is what lets the list show and filter on it.
     decision_field: str = ""        # inbox only: the approved/declined column
     mailable: bool = False          # inbox only: offer "Send email" on the detail page
     icon: str = "•"

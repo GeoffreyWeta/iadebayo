@@ -179,7 +179,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ---------------------------------------------------------------------- email
 # Dev: printed to console. Production (cPanel SMTP): set EMAIL_BACKEND=smtp
 # and create a mailbox like noreply@iadebayo.foundation in cPanel > Email.
-if env("EMAIL_BACKEND", "console") == "smtp":
+#
+# EMAIL_BACKEND=zeptomail sends over ZeptoMail's HTTPS API instead — the one to
+# use on the droplet, where DigitalOcean blocks outbound SMTP ports. Needs
+# ZEPTOMAIL_TOKEN (the Send Mail token from the ZeptoMail agent's API tab).
+if env("EMAIL_BACKEND", "console") == "zeptomail":
+    EMAIL_BACKEND = "core.mail_backends.ZeptoMailBackend"
+    ZEPTOMAIL_TOKEN = env("ZEPTOMAIL_TOKEN", "")
+elif env("EMAIL_BACKEND", "console") == "smtp":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = env("EMAIL_HOST", "mail.iadebayo.foundation")
     EMAIL_PORT = int(env("EMAIL_PORT", "465"))
