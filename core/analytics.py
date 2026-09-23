@@ -54,7 +54,7 @@ DEFAULT_RANGE = "cohort"
 
 
 # --------------------------------------------------------------- window helpers
-def resolve_range(key, today=None):
+def resolve_range(key, today=None, dates=None):
     """Turn a `?range=` value into (key, label, start_date, end_date).
 
     `start`/`end` are dates or None for open-ended. An unknown key falls back to
@@ -66,7 +66,8 @@ def resolve_range(key, today=None):
         key = DEFAULT_RANGE
     label, days = RANGES[key][0], RANGES[key][1]
     if key == "cohort":
-        return key, label, cohort.APPLICATIONS_OPEN, cohort.APPLICATIONS_CLOSE
+        dates = dates or cohort.current()
+        return key, label, dates.applications_open, dates.applications_close
     if days:
         return key, label, today - dt.timedelta(days=days - 1), today
     return key, label, None, None
@@ -437,9 +438,12 @@ def heat_grid(series):
 def dashboard(range_key=None, today=None):
     """Everything the analytics template renders, in one dict."""
     today = today or timezone.localdate()
-    key, label, start, end = resolve_range(range_key, today)
+    # Read once and passed down, so the window meter and the "This cohort" range
+    # preset cannot disagree if the row is edited between two queries.
+    cohort_dates = cohort.current()
+    key, label, start, end = resolve_range(range_key, today, cohort_dates)
     # An "all time" or future-ending window still plots up to today — drawing a
-    # flat tail out to 11 September would read as forty days of zero applications.
+    # flat tail out to 30 September would read as weeks of zero applications.
     plot_end = min(end, today) if end else today
 
     apps_all = EmbarkApplication.objects.all()
@@ -458,8 +462,8 @@ def dashboard(range_key=None, today=None):
         "today": today,
         "plot_from": plot_start,
         "plot_to": plot_end,
-        "cohort_name": cohort.NAME,
-        "window": cohort.window_progress(today),
+        "cohort_name": cohort_dates.name,
+        "window": cohort.window_progress(today, cohort_dates),
         "tiles": _tiles(apps, start, end, plot_start, plot_end, today),
         "plot": plot,
         "series": series,

@@ -1,0 +1,88 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One submission, whole, read-only.
+
+  Read-only is the point rather than a limitation: this is the record of what a
+  person actually typed, and it is what every figure on the analytics page is
+  counted from. If the team could edit it here, "what the applicant said" and
+  "what somebody later decided they said" would be the same field.
+
+  Empty answers are shown as empty instead of being hidden. On a form where most
+  fields are optional, "they did not answer this" is itself an answer, and a
+  reviewer comparing two applications needs to see the gap.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow"><a href="{{ c.url }}">{{ c.label }}</a></p>
+    <h1>{{ obj }}</h1>
+    <p class="staff-head-sub">Received {{ obj.created_at|date:"j M Y, H:i" }}</p>
+  </div>
+
+  <div class="head-actions">
+    {% if c.review_field %}
+    <form method="post" action="{% url 'staff:toggle' c.slug obj.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="field" value="{{ c.review_field }}">
+      <input type="hidden" name="next" value="{{ here }}">
+      <button type="submit" class="staff-btn {% if reviewed %}staff-btn-quiet{% else %}staff-btn-primary{% endif %} staff-btn-inline">
+        {% if reviewed %}Mark not reviewed{% else %}Mark reviewed{% endif %}
+      </button>
+    </form>
+    {% endif %}
+    <a class="staff-btn staff-btn-quiet" href="{{ c.url }}">← Back</a>
+  </div>
+</header>
+
+{% if c.note %}<p class="staff-caveat">{{ c.note }}</p>{% endif %}
+
+{% if reviewed is not None %}
+<p class="detail-state">
+  {% if reviewed %}<span class="pill pill-good">Reviewed</span>
+  {% else %}<span class="pill pill-wait">Awaiting review</span>{% endif %}
+</p>
+{% endif %}
+
+<section class="card detail-card">
+  <h2>What they submitted</h2>
+  <dl class="detail-list">
+    {% for r in rows %}
+    <div class="detail-row{% if r.long %} detail-row-wide{% endif %}{% if r.empty %} is-empty{% endif %}">
+      <dt>{{ r.label }}</dt>
+      <dd>
+        {% if r.empty %}<span class="cell-none">— not answered —</span>
+        {% elif r.is_bool %}<span class="flag flag-{{ r.value|yesno:"yes,no" }}">
+            <span aria-hidden="true">{{ r.value|yesno:"✓,—" }}</span> {{ r.value|yesno:"Yes,No" }}</span>
+        {% elif r.is_url %}<a href="{{ r.value }}" target="_blank" rel="noopener noreferrer">{{ r.value }} ↗</a>
+        {% elif r.is_file %}<a href="{% url 'submissions:download_video' obj.pk %}">Download {{ r.value.name }}</a>
+        {% elif r.long %}<div class="detail-prose">{{ r.value|linebreaks }}</div>
+        {% else %}{{ r.value }}{% endif %}
+      </dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+
+{% if extras %}
+<section class="card detail-card">
+  <h2>Worked out from the answers</h2>
+  <dl class="detail-list">
+    {% for e in extras %}
+    <div class="detail-row detail-row-wide">
+      <dt>{{ e.label }}</dt>
+      <dd>{% if e.pre %}<pre class="detail-pre">{{ e.value }}</pre>{% else %}{{ e.value }}{% endif %}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+{% endif %}
+
+{% if may_delete %}
+<p class="detail-danger">
+  <a class="form-delete" href="{% url 'staff:delete' c.slug obj.pk %}">Delete this {{ c.singular }}</a>
+  — it is the only copy, and the analytics are counted from it.
+</p>
+{% endif %}
+
+{% endblock %}

@@ -233,6 +233,61 @@ class Milestone(models.Model):
         return f"{self.year} — {self.text}"
 
 
+class Cohort(models.Model):
+    """The dates of the programme cycle currently being advertised.
+
+    These used to be constants in core/cohort.py, which meant that a cohort
+    slipping by a week — an ordinary thing that happens to a programme — needed
+    a developer and a deploy. In practice it meant the schedule band on /embark/
+    said one thing while the team said another.
+
+    One row is "current"; everything reads that (see cohort.current). Past
+    cohorts can be left here with the tick cleared, which is more useful than
+    deleting them: next year's dates are usually last year's plus a year.
+    """
+    name = models.CharField(
+        max_length=40, default="Cohort 5",
+        help_text="What this cycle is called on the site, e.g. “Cohort 5”.")
+    applications_open = models.DateField(
+        help_text="First day people can apply.")
+    applications_close = models.DateField(
+        help_text="Last day people can apply. The staff dashboard counts down to this.")
+    notify_from = models.DateField("Notifications from")
+    notify_to = models.DateField("Notifications until")
+    is_current = models.BooleanField(
+        "This is the cohort we are advertising", default=True,
+        help_text="Only one cohort is used at a time. Ticking this one is enough "
+                  "— the most recent ticked cohort wins.")
+
+    class Meta:
+        ordering = ["-applications_open"]
+
+    def __str__(self):
+        return f"{self.name} ({self.applications_open:%b %Y})"
+
+    def clean(self):
+        """Dates that run backwards would produce a negative window.
+
+        Checked here rather than left to the view, so it holds for the admin and
+        for anything else that saves a cohort. A close date before the open date
+        makes `window_progress` compute a negative total and the meter divide by
+        a negative number — better to refuse it at the form.
+        """
+        from django.core.exceptions import ValidationError
+        errors = {}
+        if self.applications_open and self.applications_close and                 self.applications_close < self.applications_open:
+            errors["applications_close"] = "Applications cannot close before they open."
+        if self.notify_from and self.notify_to and self.notify_to < self.notify_from:
+            errors["notify_to"] = "The end of the notification period is before its start."
+        if errors:
+            raise ValidationError(errors)
+
+    @classmethod
+    def current(cls):
+        """The cohort the site is advertising, or None to use the built-in dates."""
+        return cls.objects.filter(is_current=True).first()
+
+
 class PageMeta(models.Model):
     """Editable SEO title + meta description for any static page (spec requirement).
 

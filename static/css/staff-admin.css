@@ -1,0 +1,555 @@
+/* ============================================================
+   IADEBAYO Foundation — staff area, management layer
+
+   Loads after staff.css and, like it, every rule is scoped under `.staff-body`.
+   It adds no colours of its own: the tokens (--viz-1, --plane, --surface,
+   --viz-ink, --viz-muted, --card-ring, --card-shadow, --viz-grid) are all
+   declared in staff.css, and the brand type and motion tokens (--dur-1,
+   --ease-out-expo, --ink, --gold) in site.css. A second palette here is how a
+   dashboard ends up with two slightly different greys.
+
+   What is new is the working furniture: the nav rail, the list tables with
+   their switches and reorder grips, the edit forms, the submission read-out.
+
+   One deliberate constraint runs through the whole file: nothing here needs
+   JavaScript to work. The switches are forms, the reorder arrows are submit
+   buttons, the filters have an Apply button, and the rail is a <details>.
+   staff-admin.js only adds shortcuts on top — see the head of that file.
+
+   Sections
+     1. shell and nav rail      5. edit forms
+     2. page furniture          6. submission detail
+     3. list tables             7. dashboard
+     4. switches and chips      8. narrow screens
+   ============================================================ */
+
+
+/* ==================================================== 1. shell and nav rail */
+.staff-body .staff-shell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  max-width: 1560px;
+  margin: 0 auto;
+}
+
+.staff-body .staff-rail {
+  width: 258px;
+  border-right: 1px solid var(--card-ring);
+  background: var(--surface);
+  min-height: calc(100vh - 64px);
+}
+/* Collapsed, the rail gives its column back rather than leaving a 258px hole. */
+.staff-body .staff-rail:not([open]) { width: auto; min-height: 0; }
+
+.staff-body .staff-rail-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; min-height: 48px; cursor: pointer;
+  font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--viz-muted); list-style: none;
+  border-bottom: 1px solid var(--card-ring);
+}
+.staff-body .staff-rail-toggle::-webkit-details-marker { display: none; }
+.staff-body .staff-rail-toggle:hover { color: var(--viz-1); }
+.staff-body .staff-rail-burger {
+  width: 16px; height: 2px; background: currentColor; border-radius: 2px;
+  position: relative; flex: none;
+}
+.staff-body .staff-rail-burger::before,
+.staff-body .staff-rail-burger::after {
+  content: ""; position: absolute; left: 0; width: 16px; height: 2px;
+  background: currentColor; border-radius: 2px;
+  transition: transform var(--dur-1) var(--ease-out-expo);
+}
+.staff-body .staff-rail-burger::before { top: -5px; }
+.staff-body .staff-rail-burger::after { top: 5px; }
+/* Open, the three bars fold to an X — the control says which way it goes next. */
+.staff-body .staff-rail[open] .staff-rail-burger { background: transparent; }
+.staff-body .staff-rail[open] .staff-rail-burger::before { transform: translateY(5px) rotate(45deg); }
+.staff-body .staff-rail[open] .staff-rail-burger::after { transform: translateY(-5px) rotate(-45deg); }
+
+/* Sticky under the top bar, and scrollable on its own: eighteen collections is
+   taller than a laptop screen, and a rail that scrolls the page away from the
+   thing you are editing is worse than no rail. */
+.staff-body .staff-rail-inner {
+  position: sticky; top: 64px;
+  max-height: calc(100vh - 64px); overflow-y: auto;
+  padding: 16px 12px 50px;
+}
+
+.staff-body .rail-head {
+  margin: 20px 10px 6px; font-size: .64rem; font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--viz-base);
+}
+.staff-body .rail-list { list-style: none; margin: 0; padding: 0; }
+
+.staff-body .rail-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px; min-height: 44px; border-radius: 9px;
+  color: var(--viz-ink); text-decoration: none;
+  font-size: .87rem; font-weight: 600; line-height: 1.3;
+  transition: background var(--dur-1) ease, color var(--dur-1) ease;
+}
+.staff-body .rail-link:hover { background: #F3F2F8; color: var(--viz-1); }
+.staff-body .rail-link.is-on {
+  background: rgba(86, 90, 194, .1); color: var(--viz-1); font-weight: 800;
+  box-shadow: inset 2px 0 0 var(--viz-1);
+}
+.staff-body .rail-top { font-weight: 800; }
+.staff-body .rail-icon {
+  flex: none; width: 20px; text-align: center; color: var(--viz-muted);
+  font-size: .95rem;
+}
+.staff-body .rail-link.is-on .rail-icon { color: var(--viz-1); }
+.staff-body .rail-label { flex: 1 1 auto; min-width: 0; }
+.staff-body .rail-badge {
+  flex: none; min-width: 22px; padding: 2px 7px; border-radius: 999px;
+  background: var(--viz-2); color: #fff;
+  font-size: .68rem; font-weight: 800; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-body .staff-main { padding: 28px 26px 90px; min-width: 0; }
+
+
+/* ==================================================== 2. page furniture */
+.staff-body .head-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.staff-body .head-actions form { margin: 0; }
+.staff-body .staff-btn-inline { width: auto; }
+.staff-body .staff-btn-danger {
+  background: #fff; color: #9B1C1C; border-color: #E9C4C2; font-size: .82rem;
+  padding: 11px 16px; min-height: 44px;
+}
+.staff-body .staff-btn-danger:hover { background: #FDF1F0; border-color: #C0392B; }
+
+.staff-body .head-where { display: block; margin-top: 4px; font-size: .84rem; }
+.staff-body .head-where a { color: var(--viz-1); font-weight: 700; text-decoration: none; }
+.staff-body .head-where a:hover { text-decoration: underline; }
+
+/* A standing caveat about a whole collection — the unfinished-applications
+   warning, the newsletter-purpose note. Bordered rather than tinted so it reads
+   as a note from the people who built this, not as an error. */
+.staff-body .staff-caveat {
+  margin: 0 0 18px; padding: 13px 16px; border-radius: 10px;
+  background: #FFFBF0; border: 1px solid #F0E2BE; border-left: 3px solid var(--gold);
+  font-size: .86rem; line-height: 1.6; color: #5A4A21; max-width: 82ch;
+}
+
+/* ------------------------------------------------------------ search + filters */
+.staff-body .filter-bar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+  margin-bottom: 14px;
+}
+.staff-body .filter-search { flex: 1 1 260px; min-width: 200px; }
+.staff-body .filter-search input,
+.staff-body .filter-pick select {
+  width: 100%; font: inherit; font-size: .92rem; color: var(--viz-ink);
+  padding: 11px 13px; border-radius: 10px; background: #fff;
+  border: 1.5px solid #D8D5CE; min-height: 46px;
+  transition: border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
+}
+.staff-body .filter-search input:focus,
+.staff-body .filter-pick select:focus {
+  outline: none; border-color: var(--viz-1);
+  box-shadow: 0 0 0 3px rgba(86, 90, 194, .18);
+}
+.staff-body .filter-pick { flex: 0 1 190px; }
+.staff-body .filter-pick label {
+  display: block; font-size: .66rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--viz-muted); margin-bottom: 5px;
+}
+.staff-body .filter-clear {
+  color: var(--viz-muted); font-size: .84rem; font-weight: 700;
+  text-decoration: underline; padding: 12px 6px; min-height: 44px;
+  display: inline-flex; align-items: center;
+}
+.staff-body .filter-clear:hover { color: var(--viz-1); }
+
+.staff-body .list-count {
+  margin: 0 0 12px; font-size: .84rem; color: var(--viz-muted); font-weight: 600;
+}
+
+/* ------------------------------------------------------------- bulk action bar */
+.staff-body .bulk-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 12px; padding: 10px 14px; border-radius: 11px;
+  background: #F3F2F8; border: 1px solid var(--card-ring);
+}
+.staff-body .bulk-note {
+  font-size: .82rem; font-weight: 700; color: var(--viz-muted); margin-right: auto;
+}
+.staff-body .bulk-bar.has-picked { background: rgba(86, 90, 194, .11); border-color: rgba(86,90,194,.3); }
+.staff-body .bulk-bar.has-picked .bulk-note { color: var(--viz-1); }
+
+
+/* ==================================================== 3. list tables */
+.staff-body .list-card { padding: 0; overflow: hidden; }
+.staff-body .list-table { min-width: 760px; }
+.staff-body .list-table th, .staff-body .list-table td { padding: 10px 14px; }
+.staff-body .list-table thead th { background: #FBFAF8; }
+.staff-body .list-table tbody tr:last-child th,
+.staff-body .list-table tbody tr:last-child td { border-bottom: 0; }
+
+.staff-body .col-tick { width: 40px; }
+.staff-body .col-tick input { width: 18px; height: 18px; accent-color: var(--viz-1); cursor: pointer; }
+.staff-body .col-thumb { width: 60px; }
+.staff-body .col-count, .staff-body .cell-count { text-align: right; }
+.staff-body .col-do { width: 1%; white-space: nowrap; }
+
+.staff-body .cell-thumb {
+  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  display: block; background: var(--viz-track);
+}
+.staff-body .cell-thumb-empty { border: 1px dashed var(--viz-base); background: transparent; }
+.staff-body .cell-none { color: var(--viz-base); font-size: .82rem; }
+/* Two lines, then stop. A 400-word excerpt in a table cell makes every other
+   row in the list unreadable. */
+.staff-body .cell-long {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; max-width: 34ch; color: var(--viz-muted); font-size: .84rem;
+  line-height: 1.45;
+}
+
+.staff-body .row-do { display: flex; gap: 4px; }
+.staff-body .row-link {
+  font-size: .8rem; font-weight: 700; color: var(--viz-1); text-decoration: none;
+  padding: 8px 10px; border-radius: 7px; min-height: 36px;
+  display: inline-flex; align-items: center;
+  transition: background var(--dur-1) ease;
+}
+.staff-body .row-link:hover { background: rgba(86, 90, 194, .1); }
+.staff-body .row-link-danger { color: #9B1C1C; }
+.staff-body .row-link-danger:hover { background: rgba(155, 28, 28, .08); }
+
+/* ------------------------------------------------------------------ reordering */
+.staff-body .col-grip { width: 56px; }
+.staff-body .grip { display: flex; align-items: center; gap: 4px; }
+.staff-body .grip-dots {
+  width: 14px; height: 22px; flex: none; cursor: grab; border-radius: 4px;
+  background-image: radial-gradient(circle, var(--viz-base) 1.3px, transparent 1.3px);
+  background-size: 6px 6px; background-position: 1px 2px;
+}
+.staff-body .grip-dots:active { cursor: grabbing; }
+.staff-body .grip-moves { display: flex; flex-direction: column; gap: 1px; margin: 0; }
+.staff-body .grip-btn {
+  font: inherit; font-size: .58rem; line-height: 1; cursor: pointer;
+  background: #fff; border: 1px solid var(--card-ring); color: var(--viz-muted);
+  border-radius: 5px; padding: 4px 6px; min-width: 24px;
+  transition: color var(--dur-1) ease, border-color var(--dur-1) ease;
+}
+.staff-body .grip-btn:hover:not(:disabled) { color: var(--viz-1); border-color: var(--viz-1); }
+.staff-body .grip-btn:disabled { opacity: .3; cursor: default; }
+
+/* Drag states, set by staff-admin.js. The row being carried is dimmed; the row
+   it would land above gets the line, so the drop target is a position between
+   two rows rather than a row that might be either. */
+.staff-body .list-table tr.is-dragging { opacity: .4; }
+.staff-body .list-table tr.is-over > * { box-shadow: inset 0 2px 0 var(--viz-1); }
+
+/* --------------------------------------------------------------- pagination */
+.staff-body .pager {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: wrap; margin-top: 20px;
+}
+.staff-body .pager-nums { display: flex; gap: 4px; align-items: center; }
+.staff-body .pager-step, .staff-body .pager-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px; padding: 10px 14px; border-radius: 9px;
+  font-size: .84rem; font-weight: 700; text-decoration: none;
+  color: var(--viz-ink); background: #fff; border: 1px solid var(--card-ring);
+  transition: color var(--dur-1) ease, border-color var(--dur-1) ease;
+}
+.staff-body .pager-step:hover, .staff-body .pager-num:hover {
+  color: var(--viz-1); border-color: var(--viz-1);
+}
+.staff-body .pager-num.is-on {
+  background: var(--viz-1); border-color: var(--viz-1); color: #fff;
+}
+.staff-body .pager-step.is-off { opacity: .4; }
+.staff-body .pager-gap { padding: 0 4px; color: var(--viz-base); }
+
+/* -------------------------------------------------------------- empty states */
+.staff-body .empty-card { text-align: center; padding: 48px 28px; }
+.staff-body .empty-lead {
+  margin: 0 0 8px; font-size: 1.05rem; font-weight: 700; color: var(--ink);
+}
+.staff-body .empty-card .chart-note { max-width: 46ch; margin: 0 auto 18px; }
+.staff-body .reorder-hint { margin: 12px 2px 0; }
+.staff-body .reorder-hint a { color: var(--viz-1); font-weight: 700; }
+
+
+/* ==================================================== 4. switches and chips */
+.staff-body .switch-form { margin: 0; }
+.staff-body .switch {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: .76rem; font-weight: 700; color: var(--viz-muted);
+  background: transparent; border: 0; cursor: pointer;
+  padding: 7px 6px; border-radius: 8px; min-height: 40px;
+}
+.staff-body .switch:hover { color: var(--viz-1); }
+.staff-body .switch-track {
+  width: 34px; height: 19px; border-radius: 999px; flex: none;
+  background: var(--viz-base); position: relative;
+  transition: background var(--dur-1) ease;
+}
+.staff-body .switch-knob {
+  position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+  border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform var(--dur-1) var(--ease-out-expo);
+}
+.staff-body .switch.is-on .switch-track { background: var(--viz-good); }
+.staff-body .switch.is-on .switch-knob { transform: translateX(15px); }
+.staff-body .switch.is-on { color: #0A6B0A; }
+/* The word beside the track is the point: the state is never only a colour and
+   never only a position. */
+.staff-body .switch-text { min-width: 22px; text-align: left; }
+
+.staff-body .chip {
+  display: inline-block; padding: 4px 9px; border-radius: 7px;
+  background: #F1F0F6; color: var(--viz-ink);
+  font-size: .74rem; font-weight: 700; white-space: nowrap;
+}
+.staff-body .flag { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; }
+.staff-body .flag-yes { color: #0A6B0A; }
+.staff-body .flag-no { color: var(--viz-muted); }
+
+
+/* ==================================================== 5. edit forms */
+.staff-body .edit-form { max-width: 980px; }
+.staff-body .form-block { margin-bottom: 16px; }
+.staff-body .form-block > .chart-note { margin-bottom: 18px; max-width: 76ch; }
+.staff-body .form-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0 22px;
+}
+/* Anything you write in prose gets the full width — a 280px column is a bad
+   place to compose three paragraphs. */
+.staff-body .form-grid .staff-field:has(textarea),
+.staff-body .form-grid .field-check,
+.staff-body .form-grid .staff-field:has(input[type="file"]) { grid-column: 1 / -1; }
+
+.staff-body .staff-field textarea,
+.staff-body .staff-field select {
+  width: 100%; font: inherit; font-size: 1rem; color: var(--viz-ink);
+  padding: 12px 14px; border-radius: 10px; background: #fff;
+  border: 1.5px solid #D8D5CE;
+  transition: border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
+}
+.staff-body .staff-field textarea { line-height: 1.6; resize: vertical; min-height: 96px; }
+.staff-body .staff-field textarea:focus,
+.staff-body .staff-field select:focus {
+  outline: none; border-color: var(--viz-1);
+  box-shadow: 0 0 0 3px rgba(86, 90, 194, .18);
+}
+/* staff.css makes every input in a .staff-field full width, which is right for
+   a text box and absurd for a tick box. */
+.staff-body .check-row input[type="checkbox"] {
+  width: 20px; height: 20px; flex: none; margin: 0; padding: 0;
+  accent-color: var(--viz-1); cursor: pointer;
+}
+.staff-body .check-row {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 12px 14px; border-radius: 10px; background: #FAF9F7;
+  border: 1px solid var(--card-ring);
+}
+.staff-body .check-row label {
+  margin: 0; text-transform: none; letter-spacing: 0; font-size: .92rem;
+  font-weight: 600; color: var(--viz-ink); cursor: pointer;
+}
+.staff-body .field-check { margin-bottom: 14px; }
+
+.staff-body .staff-field input[type="file"] {
+  padding: 10px 12px; background: #FAF9F7; font-size: .88rem;
+  border-style: dashed; cursor: pointer;
+}
+.staff-body .staff-field input[type="number"] { max-width: 200px; }
+
+.staff-body .req { color: var(--viz-2); }
+.staff-body .field-help {
+  margin: 7px 0 0; font-size: .8rem; line-height: 1.55; color: var(--viz-muted);
+  max-width: 72ch;
+}
+.staff-body .field-help a { color: var(--viz-1); }
+.staff-body .field-help ol, .staff-body .field-help ul { margin: 6px 0 0; padding-left: 20px; }
+.staff-body .field-help li { margin-bottom: 3px; }
+
+/* What is already uploaded, shown as itself rather than as a stored path. */
+.staff-body .field-current {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 10px 12px; border-radius: 10px;
+  background: #FAF9F7; border: 1px solid var(--card-ring);
+  font-size: .8rem; color: var(--viz-muted); line-height: 1.5;
+}
+.staff-body .field-current img {
+  width: 76px; height: 76px; object-fit: cover; border-radius: 8px; flex: none;
+}
+.staff-body .field-current a { color: var(--viz-1); font-weight: 700; }
+.staff-body .field-current span { flex: 1 1 200px; min-width: 0; }
+/* The live preview staff-admin.js swaps in when a new file is chosen. */
+.staff-body .field-preview {
+  margin: 10px 0 0; display: flex; align-items: center; gap: 12px;
+  font-size: .8rem; color: var(--viz-1); font-weight: 700;
+}
+.staff-body .field-preview img {
+  width: 76px; height: 76px; object-fit: cover; border-radius: 8px;
+  border: 2px solid var(--viz-1);
+}
+
+.staff-body .has-error input, .staff-body .has-error textarea,
+.staff-body .has-error select { border-color: var(--viz-crit); }
+
+.staff-body .form-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--card-ring);
+}
+.staff-body .form-actions form { margin: 0; }
+.staff-body .form-delete {
+  margin-left: auto; color: #9B1C1C; font-size: .84rem; font-weight: 700;
+  text-decoration: underline; padding: 12px 4px; min-height: 44px;
+  display: inline-flex; align-items: center;
+}
+.staff-body .form-delete:hover { color: #6E1212; }
+
+
+/* ==================================================== 6. submission detail */
+.staff-body .detail-state { margin: 0 0 16px; }
+.staff-body .detail-card { margin-bottom: 16px; }
+.staff-body .detail-list { margin: 14px 0 0; display: grid; gap: 0; }
+.staff-body .detail-row {
+  display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 8px 22px; padding: 12px 2px; border-bottom: 1px solid var(--viz-grid);
+}
+.staff-body .detail-row:last-child { border-bottom: 0; }
+.staff-body .detail-row dt {
+  font-size: .76rem; font-weight: 800; letter-spacing: .04em;
+  color: var(--viz-muted); text-transform: uppercase; line-height: 1.5;
+}
+.staff-body .detail-row dd { margin: 0; font-size: .94rem; line-height: 1.6; word-break: break-word; }
+/* An unanswered optional question is shown, not hidden — the gap is information
+   to whoever is comparing two applications. It is just quieter. */
+.staff-body .detail-row.is-empty dd { color: var(--viz-base); }
+.staff-body .detail-row-wide { grid-template-columns: 1fr; gap: 6px; }
+.staff-body .detail-prose { max-width: 78ch; }
+.staff-body .detail-prose p { margin: 0 0 .7em; }
+.staff-body .detail-pre {
+  white-space: pre-wrap; margin: 0; font-size: .86rem; line-height: 1.65;
+  background: #FAF9F7; border: 1px solid var(--card-ring);
+  border-radius: 10px; padding: 14px 16px; max-width: 80ch;
+}
+.staff-body .detail-row dd a { color: var(--viz-1); font-weight: 600; }
+.staff-body .detail-danger { margin-top: 22px; font-size: .84rem; color: var(--viz-muted); }
+.staff-body .detail-danger .form-delete { margin: 0 6px 0 0; }
+
+/* ------------------------------------------------------------ delete confirm */
+.staff-body .danger-card { border-left: 4px solid var(--viz-crit); max-width: 760px; }
+.staff-body .danger-name { font-size: 1.2rem; margin: 0 0 16px; }
+.staff-body .danger-facts { margin: 0 0 18px; }
+.staff-body .danger-facts > div {
+  display: grid; grid-template-columns: minmax(130px, 190px) 1fr; gap: 6px 18px;
+  padding: 9px 0; border-bottom: 1px solid var(--viz-grid);
+}
+.staff-body .danger-facts dt {
+  font-size: .72rem; font-weight: 800; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--viz-muted);
+}
+.staff-body .danger-facts dd { margin: 0; font-size: .92rem; }
+
+
+/* ==================================================== 7. dashboard */
+.staff-body .wait-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px; margin-bottom: 10px;
+}
+.staff-body .wait-card {
+  text-decoration: none; color: inherit; display: block; padding: 18px 20px;
+  transition: transform var(--dur-2) var(--ease-out-expo), box-shadow var(--dur-2) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .staff-body .wait-card:hover, .staff-body .content-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 4px rgba(55,12,15,.06), 0 14px 34px rgba(55,12,15,.10);
+  }
+}
+/* A queue with something in it is marked by a rule down its side as well as by
+   the colour of the number, so the distinction survives being printed, and
+   survives a reader who cannot separate the two colours. */
+.staff-body .wait-card.has-pending { border-left: 3px solid var(--viz-2); }
+.staff-body .wait-label {
+  display: flex; align-items: center; gap: 7px; margin: 0 0 8px;
+  font-size: .78rem; font-weight: 700; color: var(--viz-muted);
+}
+.staff-body .wait-value {
+  margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -.03em;
+  color: var(--viz-base); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.staff-body .wait-card.has-pending .wait-value { color: var(--viz-2); }
+.staff-body .wait-foot { margin: 8px 0 0; font-size: .76rem; color: var(--viz-muted); }
+
+.staff-body .promo-now { display: flex; gap: 16px; align-items: flex-start; margin-top: 14px; }
+.staff-body .promo-now img {
+  width: 96px; border-radius: 10px; flex: none; border: 1px solid var(--card-ring);
+}
+.staff-body .promo-title { margin: 0 0 6px; font-weight: 800; color: var(--ink); }
+.staff-body .promo-now .staff-btn { margin-top: 10px; }
+
+.staff-body .flag-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.staff-body .flag-item {
+  padding: 11px 0 11px 14px; border-bottom: 1px solid var(--viz-grid);
+  border-left: 3px solid var(--viz-base); margin-bottom: 2px;
+}
+.staff-body .flag-item:last-child { border-bottom: 0; }
+.staff-body .flag-item-warn { border-left-color: var(--viz-warn); }
+.staff-body .flag-item-note { border-left-color: var(--viz-1); }
+.staff-body .flag-item a {
+  display: block; color: var(--ink); font-weight: 700; font-size: .92rem;
+  text-decoration: none; margin-bottom: 2px;
+}
+.staff-body .flag-item a:hover { color: var(--viz-1); text-decoration: underline; }
+
+.staff-body .content-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;
+}
+.staff-body .content-card {
+  text-decoration: none; color: inherit; display: block; padding: 20px;
+  transition: transform var(--dur-2) var(--ease-out-expo), box-shadow var(--dur-2) ease;
+}
+.staff-body .content-icon { margin: 0 0 10px; font-size: 1.3rem; color: var(--viz-1); line-height: 1; }
+.staff-body .content-name { margin: 0 0 6px; font-weight: 800; color: var(--ink); font-size: 1rem; }
+.staff-body .content-count {
+  margin: 12px 0 0; font-size: .76rem; font-weight: 700; color: var(--viz-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ==================================================== 8. narrow screens */
+@media (max-width: 1000px) {
+  .staff-body .staff-shell { grid-template-columns: 1fr; }
+  .staff-body .staff-rail {
+    width: auto; min-height: 0; border-right: 0;
+    border-bottom: 1px solid var(--card-ring);
+  }
+  .staff-body .staff-rail-inner {
+    position: static; max-height: none; overflow: visible;
+    padding: 8px 12px 20px;
+  }
+  /* Two columns of links, so a collapsed-then-opened menu is one screen rather
+     than a column you scroll past to reach the page. */
+  .staff-body .rail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .staff-body .staff-main { padding: 22px 16px 70px; }
+}
+@media (max-width: 700px) {
+  .staff-body .staff-head { align-items: flex-start; }
+  .staff-body .head-actions { width: 100%; }
+  .staff-body .head-actions .staff-btn { flex: 1 1 auto; }
+  .staff-body .filter-pick { flex: 1 1 140px; }
+  .staff-body .form-grid { grid-template-columns: 1fr; }
+  .staff-body .detail-row { grid-template-columns: 1fr; gap: 4px; }
+  .staff-body .danger-facts > div { grid-template-columns: 1fr; }
+  .staff-body .form-delete { margin-left: 0; }
+  .staff-body .wait-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+
+/* Reveal animations come from site.js / site.css, same as the analytics cards.
+   Without scripting the .reveal class never flips, and those files already
+   leave everything in its final state — nothing here re-implements that. */

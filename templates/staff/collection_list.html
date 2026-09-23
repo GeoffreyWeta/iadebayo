@@ -1,0 +1,241 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One list, for all eighteen collections. Everything that differs between them —
+  the columns, the filters, whether rows can be reordered or deleted — arrived in
+  the context from core.staff_content, so there is no per-model branch here.
+
+  Form layout note: the bulk-action form is a sibling of the table, not its
+  parent, and the row checkboxes join it with `form="bulkform"`. That is what
+  lets each row carry its own little form for the on/off switches — forms cannot
+  nest, so wrapping the table in the bulk form would mean every switch had to
+  become a scripted checkbox, and stop working when the script does.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow">{% if c.is_inbox %}Submissions{% else %}Site content{% endif %}</p>
+    <h1>{{ c.label }}</h1>
+    <p class="staff-head-sub">
+      {{ c.blurb }}
+      {% if public_links %}
+      <span class="head-where">Appears on
+        {% for l in public_links %}<a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.label }} ↗</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+      </span>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="head-actions">
+    {% if c.export %}
+    <a class="staff-btn staff-btn-quiet" href="{{ export_url }}">
+      Download CSV{% if has_narrowing %} (filtered){% endif %}
+    </a>
+    {% endif %}
+    {% if not c.is_inbox %}
+    <a class="staff-btn staff-btn-primary staff-btn-inline" href="{% url 'staff:new' c.slug %}">
+      + New {{ c.singular }}
+    </a>
+    {% endif %}
+  </div>
+</header>
+
+{% if c.note %}
+<p class="staff-caveat">{{ c.note }}</p>
+{% endif %}
+
+{# ------------------------------------------------------------- search + filters #}
+{% if c.search or c.filters %}
+<form method="get" class="filter-bar" role="search">
+  {% if c.search %}
+  <div class="filter-search">
+    <label class="visually-hidden" for="q">Search {{ c.label|lower }}</label>
+    <input type="search" id="q" name="q" value="{{ query }}"
+           placeholder="Search {{ c.label|lower }}…" autocomplete="off">
+  </div>
+  {% endif %}
+
+  {% for f in filters %}
+  <div class="filter-pick">
+    <label for="filter-{{ f.name }}">{{ f.label }}</label>
+    {% comment %} Auto-submits with staff-admin.js; the Apply button is what makes it work
+       without it, so the select is never a control that does nothing. {% endcomment %}
+    <select id="filter-{{ f.name }}" name="{{ f.name }}" data-autosubmit>
+      <option value="">Any</option>
+      {% for value, label in f.options %}
+      <option value="{{ value }}"{% if value == f.current %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endfor %}
+
+  <button type="submit" class="staff-btn staff-btn-quiet">Apply</button>
+  {% if has_narrowing %}
+  <a class="filter-clear" href="{{ c.url }}">Clear</a>
+  {% endif %}
+</form>
+{% endif %}
+
+<p class="list-count">
+  {% if has_narrowing %}
+    {{ total }} match{{ total|pluralize:"es" }}{% if query %} for “{{ query }}”{% endif %}
+  {% else %}
+    {{ total }} {{ total_label }}
+  {% endif %}
+  {% if page.paginator.num_pages > 1 %}
+  · page {{ page.number }} of {{ page.paginator.num_pages }}
+  {% endif %}
+</p>
+
+{% if rows %}
+
+{# --------------------------------------------------------------- bulk actions #}
+{% if c.review_field or may_delete %}
+<form id="bulkform" method="post" action="{% url 'staff:bulk' c.slug %}" class="bulk-bar"
+      data-bulk-bar>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ here }}">
+  <span class="bulk-note" data-bulk-count>Tick rows to act on them</span>
+  {% if c.review_field %}
+  <button type="submit" name="action" value="review" class="staff-btn staff-btn-quiet">Mark reviewed</button>
+  <button type="submit" name="action" value="unreview" class="staff-btn staff-btn-quiet">Mark not reviewed</button>
+  {% endif %}
+  {% if may_delete %}
+  <button type="submit" name="action" value="delete" class="staff-btn staff-btn-danger"
+          data-confirm="Delete the ticked rows? This cannot be undone.">Delete ticked</button>
+  {% endif %}
+</form>
+{% endif %}
+
+{# ------------------------------------------------------------------ the table #}
+<div class="card list-card">
+<div class="table-scroll">
+  <table class="data-table list-table"{% if may_reorder %} data-reorder{% endif %}>
+    <thead>
+      <tr>
+        {% if c.review_field or may_delete %}
+        <th scope="col" class="col-tick">
+          <input type="checkbox" form="bulkform" data-check-all
+                 aria-label="Select every row on this page">
+        </th>
+        {% endif %}
+        {% if may_reorder %}<th scope="col" class="col-grip"><span class="visually-hidden">Order</span></th>{% endif %}
+        {% for col in c.columns %}
+        <th scope="col" class="col-{{ col.kind }}">{{ col.heading }}</th>
+        {% endfor %}
+        <th scope="col" class="col-do"><span class="visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr data-pk="{{ row.pk }}">
+        {% if c.review_field or may_delete %}
+        <td class="col-tick">
+          <input type="checkbox" name="pks" value="{{ row.pk }}" form="bulkform"
+                 aria-label="Select {{ row.title }}">
+        </td>
+        {% endif %}
+
+        {% if may_reorder %}
+        <td class="col-grip">
+          {% comment %}
+            Up and down are the real control: they are buttons, they post, and
+            they work on a phone and from the keyboard. The drag handle
+            staff-admin.js adds on top of this is a shortcut, not the mechanism.
+          {% endcomment %}
+          <div class="grip">
+            <span class="grip-dots" aria-hidden="true" data-grip title="Drag to reorder"></span>
+            <form method="post" action="{% url 'staff:reorder' c.slug %}" class="grip-moves">
+              {% csrf_token %}
+              <input type="hidden" name="pk" value="{{ row.pk }}">
+              <input type="hidden" name="next" value="{{ here }}">
+              <button type="submit" name="direction" value="up" class="grip-btn"
+                      {% if forloop.first %}disabled{% endif %}
+                      aria-label="Move {{ row.title }} up">▲</button>
+              <button type="submit" name="direction" value="down" class="grip-btn"
+                      {% if forloop.last %}disabled{% endif %}
+                      aria-label="Move {{ row.title }} down">▼</button>
+            </form>
+          </div>
+        </td>
+        {% endif %}
+
+        {% for cell in row.cells %}
+        {% if cell.kind == "strong" %}
+        <th scope="row" class="col-strong">{% include "staff/_cell.html" %}</th>
+        {% else %}
+        <td class="col-{{ cell.kind }}">{% include "staff/_cell.html" %}</td>
+        {% endif %}
+        {% endfor %}
+
+        <td class="col-do">
+          <div class="row-do">
+            {% if c.is_inbox %}
+            <a class="row-link" href="{% url 'staff:detail' c.slug row.pk %}">Open</a>
+            {% else %}
+            <a class="row-link" href="{% url 'staff:edit' c.slug row.pk %}">Edit</a>
+            {% endif %}
+            {% if may_delete %}
+            <a class="row-link row-link-danger" href="{% url 'staff:delete' c.slug row.pk %}">Delete</a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+
+{% if may_reorder %}
+{% comment %} The drag handler fills this with one hidden input per row and submits it.
+   With no script it is an empty form nothing ever posts. {% endcomment %}
+<form id="orderform" method="post" action="{% url 'staff:reorder' c.slug %}" hidden>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ here }}">
+</form>
+<p class="chart-note reorder-hint">
+  Rows are shown in the order the public sees them. Use ▲▼ to move one, or drag
+  a row by its handle.
+</p>
+{% elif c.orderable %}
+<p class="chart-note reorder-hint">
+  Reordering is off while the list is searched, filtered or split across pages —
+  <a href="{{ c.url }}">show them all</a> to change the order.
+</p>
+{% endif %}
+
+{# ----------------------------------------------------------------- pagination #}
+{% if pages.links %}
+<nav class="pager" aria-label="Pages">
+  {% if pages.prev %}<a class="pager-step" href="{{ pages.prev }}" rel="prev">← Previous</a>
+  {% else %}<span class="pager-step is-off">← Previous</span>{% endif %}
+  <span class="pager-nums">
+    {% for p in pages.links %}
+      {% if p.gap %}<span class="pager-gap">…</span>
+      {% elif p.current %}<span class="pager-num is-on" aria-current="page">{{ p.n }}</span>
+      {% else %}<a class="pager-num" href="{{ p.url }}">{{ p.n }}</a>{% endif %}
+    {% endfor %}
+  </span>
+  {% if pages.next %}<a class="pager-step" href="{{ pages.next }}" rel="next">Next →</a>
+  {% else %}<span class="pager-step is-off">Next →</span>{% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+{# ---------------------------------------------------------------- empty state #}
+<div class="card empty-card">
+  {% if has_narrowing %}
+  <p class="empty-lead">Nothing matches that.</p>
+  <p class="chart-note">Try a shorter search, or <a href="{{ c.url }}">clear the filters</a>.</p>
+  {% else %}
+  <p class="empty-lead">{{ c.empty|default:"Nothing here yet." }}</p>
+  {% if not c.is_inbox %}
+  <p><a class="staff-btn staff-btn-primary staff-btn-inline" href="{% url 'staff:new' c.slug %}">
+    + Add the first {{ c.singular }}</a></p>
+  {% endif %}
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

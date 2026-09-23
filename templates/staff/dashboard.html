@@ -1,0 +1,147 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  `/staff/` — the first thing the team sees after signing in.
+
+  Three questions, in the order someone actually has them: is anything waiting
+  for me, is the site currently saying what we think it is saying, and where do
+  I go to change something. Deliberately not a grid of every link in the
+  sidebar, which the sidebar already is.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow">{{ today|date:"l j F Y" }}</p>
+    <h1>Welcome{% if user.get_short_name %}, {{ user.get_short_name }}{% endif %}</h1>
+    <p class="staff-head-sub">
+      Everything the public site shows is edited from here. Changes go live
+      immediately — there is no separate publish step.
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-quiet" href="{% url 'core:home' %}" target="_blank" rel="noopener">View the site ↗</a>
+    <a class="staff-btn staff-btn-primary staff-btn-inline" href="{% url 'staff:analytics' %}">Analytics →</a>
+  </div>
+</header>
+
+{# ------------------------------------------------------------- what is waiting #}
+<h2 class="staff-section-h">Waiting for the team</h2>
+<div class="wait-grid">
+  {% for w in waiting %}
+  <a class="card wait-card reveal{% if w.pending %} has-pending{% endif %}" href="{{ w.c.url }}">
+    <p class="wait-label"><span class="rail-icon" aria-hidden="true">{{ w.c.icon }}</span> {{ w.c.label }}</p>
+    {% if w.c.review_field %}
+    <p class="wait-value">{{ w.pending }}</p>
+    <p class="wait-foot">
+      {% if w.pending %}awaiting review{% else %}all caught up{% endif %}
+      · {{ w.total }} in total
+    </p>
+    {% else %}
+    <p class="wait-value">{{ w.total }}</p>
+    <p class="wait-foot">on record</p>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{# ------------------------------------------------------- what the public sees #}
+<h2 class="staff-section-h">Live on the site right now</h2>
+<div class="grid-2">
+
+  <section class="card reveal">
+    <h2>Campaign popup</h2>
+    {% if promo %}
+    <p class="chart-note">Showing to every visitor who has not closed it.</p>
+    <div class="promo-now">
+      {% if promo.image %}<img src="{{ promo.image.url }}" alt="" loading="lazy">{% endif %}
+      <div>
+        <p class="promo-title">{{ promo.title }}</p>
+        <p class="chart-note">
+          Button “{{ promo.link_label }}” → {{ promo.link_href }}<br>
+          {% if promo.ends_at %}Runs until {{ promo.ends_at|date:"j M Y, H:i" }}.
+          {% else %}Runs until someone unticks Active.{% endif %}
+        </p>
+        <p><a class="staff-btn staff-btn-quiet" href="{% url 'staff:edit' 'promos' promo.pk %}">Edit this campaign</a></p>
+      </div>
+    </div>
+    {% else %}
+    <p class="chart-note">No popup is showing. Nothing interrupts a visitor.</p>
+    <p><a class="staff-btn staff-btn-quiet" href="{% url 'staff:new' 'promos' %}">Set one up</a></p>
+    {% endif %}
+  </section>
+
+  <section class="card reveal">
+    <h2>Worth a look</h2>
+    {% if flags %}
+    <ul class="flag-list">
+      {% for f in flags %}
+      <li class="flag-item flag-item-{{ f.tone }}">
+        <a href="{{ f.url }}">{{ f.label }}</a>
+        <span class="chart-note">{{ f.detail }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="chart-note">Nothing is hidden or half-finished — every blog post is
+      published, every alumnus has consent on file, and no faculty member is
+      switched off.</p>
+    {% endif %}
+  </section>
+</div>
+
+{# ------------------------------------------------------------ latest arrivals #}
+<section class="card chart-card reveal">
+  <div class="chart-head">
+    <div>
+      <h2>Latest applications</h2>
+      <p class="chart-note">Newest first. Open one to read everything they sent.</p>
+    </div>
+    <a class="staff-btn staff-btn-quiet" href="{% url 'staff:list' 'applications' %}">All applications →</a>
+  </div>
+  {% if recent %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr><th scope="col">Applicant</th><th scope="col">Business</th>
+            <th scope="col">Where</th><th scope="col">Received</th><th scope="col">Status</th></tr>
+      </thead>
+      <tbody>
+        {% for a in recent %}
+        <tr>
+          <th scope="row"><a href="{% url 'staff:detail' 'applications' a.pk %}">{{ a.name }}</a></th>
+          <td>{{ a.business_name }}</td>
+          <td>{{ a.city }}{% if a.country %}, {{ a.country }}{% endif %}</td>
+          <td>{{ a.created_at|date:"j M, H:i" }}</td>
+          <td>{% if a.reviewed %}<span class="pill pill-good">Reviewed</span>
+              {% else %}<span class="pill pill-wait">Awaiting review</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="chart-empty">No applications yet.</p>
+  {% endif %}
+</section>
+
+{# --------------------------------------------------------------- what you edit #}
+<h2 class="staff-section-h">Everything you can change</h2>
+<div class="content-grid">
+  {% for row in content_rows %}
+  <a class="card content-card reveal" href="{{ row.c.url }}">
+    <p class="content-icon" aria-hidden="true">{{ row.c.icon }}</p>
+    <p class="content-name">{{ row.c.label }}</p>
+    <p class="chart-note">{{ row.c.blurb }}</p>
+    <p class="content-count">{{ row.total }} {% if row.total == 1 %}entry{% else %}entries{% endif %}</p>
+  </a>
+  {% endfor %}
+</div>
+
+<p class="staff-foot">
+  Everything here writes straight to the live database, so a change is public the
+  moment you save it. There is no draft state except the one the content itself
+  has — an unpublished blog post, a faculty member switched off, a promo popup
+  that is not active.
+</p>
+
+{% endblock %}

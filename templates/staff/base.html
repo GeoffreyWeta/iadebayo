@@ -27,23 +27,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <link rel="stylesheet" href="{% static 'css/staff.css' %}">
+  {% comment %} The management layer: the nav rail, list tables, forms. Loaded after
+     staff.css because it builds on that file's tokens and its .card. {% endcomment %}
+  <link rel="stylesheet" href="{% static 'css/staff-admin.css' %}">
 </head>
 <body class="staff-body {% block body_class %}{% endblock %}">
 <a class="skip-link" href="#main">Skip to main content</a>
 
 <header class="staff-bar">
   <div class="staff-bar-inner">
-    <a class="staff-brand" href="{% url 'staff:analytics' %}">
+    <a class="staff-brand" href="{% url 'staff:home' %}">
       <img src="{% static 'img/mark-white.png' %}" alt="" onerror="this.style.display='none'">
       <span>iAdebayo <em>Foundation</em></span>
       <span class="staff-tag">Staff</span>
     </a>
 
     {% if user.is_authenticated %}
+    {% comment %}
+      Only the two places that are not a list of something: the dashboard and the
+      numbers. Everything else the team edits is in the rail on the left (see
+      staff/manage_base.html), where it can be grouped and can carry a count —
+      eighteen collections across the top bar would be a scrolling strip nobody
+      can find anything in.
+    {% endcomment %}
     <nav class="staff-nav" aria-label="Staff area">
+      <a href="{% url 'staff:home' %}"{% if nav == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
       <a href="{% url 'staff:analytics' %}"{% if nav == 'analytics' %} aria-current="page"{% endif %}>Analytics</a>
-      <a href="{% url 'admin:index' %}">Admin</a>
-      <a href="{% url 'staff:password_change' %}"{% if nav == 'password' %} aria-current="page"{% endif %}>Password</a>
       <a href="{% url 'core:home' %}">View site</a>
     </nav>
     <div class="staff-who">
@@ -68,5 +77,6 @@
 
 <script src="{% static 'js/site.js' %}" defer></script>
 <script src="{% static 'js/staff.js' %}" defer></script>
+<script src="{% static 'js/staff-admin.js' %}" defer></script>
 </body>
 </html>

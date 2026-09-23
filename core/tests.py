@@ -8,6 +8,7 @@ import datetime as dt
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -16,6 +17,7 @@ from submissions.models import (ContactMessage, EmbarkApplication,
                                 NewsletterSubscriber)
 
 from . import analytics, cohort
+from .models import Cohort
 
 PASSWORD = "pw-for-tests-only"
 
@@ -82,10 +84,12 @@ class StaffAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Applications per day")
 
-    def test_staff_root_redirects_to_analytics(self):
+    def test_staff_root_is_the_dashboard(self):
+        """`/staff/` used to redirect to the numbers; it is now a page of its own."""
         self.sign_in("staffer", is_staff=True)
         response = self.client.get(reverse("staff:home"))
-        self.assertRedirects(response, reverse("staff:analytics"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Waiting for the team")
 
     def test_dashboard_is_not_indexable_or_cacheable(self):
         self.sign_in("staffer", is_staff=True)
@@ -241,8 +245,9 @@ class AnalyticsNumbersTests(TestCase):
 
     def test_the_window_range_uses_the_real_cohort_dates(self):
         _key, _label, start, end = analytics.resolve_range("cohort")
-        self.assertEqual(start, cohort.APPLICATIONS_OPEN)
-        self.assertEqual(end, cohort.APPLICATIONS_CLOSE)
+        dates = cohort.current()
+        self.assertEqual(start, dates.applications_open)
+        self.assertEqual(end, dates.applications_close)
 
     def test_range_filter_excludes_submissions_outside_it(self):
         backdate(make_application(), dt.datetime(2025, 1, 1, 9, 0))
@@ -306,14 +311,20 @@ class PlotGeometryTests(TestCase):
 
 
 class CohortWindowTests(TestCase):
+    """The dates now come from a `Cohort` row, so these read them through
+    `current()` — which with an empty table is the shipped fallback."""
+
+    def setUp(self):
+        self.dates = cohort.current()
+
     def test_day_one_is_day_one_not_day_zero(self):
-        progress = cohort.window_progress(cohort.APPLICATIONS_OPEN)
+        progress = cohort.window_progress(self.dates.applications_open)
         self.assertEqual(progress["state"], "open")
         self.assertEqual(progress["elapsed"], 1)
 
     def test_before_and_after_the_window_are_distinguishable(self):
-        before = cohort.window_progress(cohort.APPLICATIONS_OPEN - dt.timedelta(days=3))
-        after = cohort.window_progress(cohort.APPLICATIONS_CLOSE + dt.timedelta(days=2))
+        before = cohort.window_progress(self.dates.applications_open - dt.timedelta(days=3))
+        after = cohort.window_progress(self.dates.applications_close + dt.timedelta(days=2))
         self.assertEqual(before["state"], "upcoming")
         self.assertEqual(before["days_until_open"], 3)
         self.assertEqual(after["state"], "closed")
@@ -323,9 +334,42 @@ class CohortWindowTests(TestCase):
         """These strings are on /embark/ and /embark/apply/ — deriving them from
         dates must not change what an applicant sees."""
         self.assertEqual(cohort.key_dates(), [
-            ("Applications open", "1 August – 11 September 2026"),
-            ("Admission notifications", "14 – 25 September 2026"),
+            ("Applications open", "1 August – 30 September 2026"),
+            ("Admission notifications", "25 September – 7 October 2026"),
         ])
+
+    def test_a_saved_cohort_replaces_the_built_in_dates(self):
+        """The point of the model: the team moves the window without a deploy."""
+        Cohort.objects.create(
+            name="Cohort 6", applications_open=dt.date(2027, 3, 1),
+            applications_close=dt.date(2027, 4, 15),
+            notify_from=dt.date(2027, 4, 20), notify_to=dt.date(2027, 5, 1))
+
+        dates = cohort.current()
+        self.assertEqual(dates.name, "Cohort 6")
+        self.assertEqual(dates.applications_open, dt.date(2027, 3, 1))
+        self.assertEqual(
+            cohort.key_dates()[0],
+            ("Applications open", "1 March – 15 April 2027"))
+        self.assertEqual(analytics.resolve_range("cohort")[2], dt.date(2027, 3, 1))
+
+    def test_a_cohort_that_is_not_current_is_ignored(self):
+        Cohort.objects.create(
+            name="Cohort 4", applications_open=dt.date(2025, 3, 1),
+            applications_close=dt.date(2025, 4, 15),
+            notify_from=dt.date(2025, 4, 20), notify_to=dt.date(2025, 5, 1),
+            is_current=False)
+        self.assertEqual(cohort.current().name, cohort.DEFAULT_NAME)
+
+    def test_dates_that_run_backwards_are_refused(self):
+        """A close date before the open date makes the window meter divide by a
+        negative number, so it must not be savable."""
+        backwards = Cohort(name="Wrong", applications_open=dt.date(2027, 4, 1),
+                           applications_close=dt.date(2027, 3, 1),
+                           notify_from=dt.date(2027, 5, 1),
+                           notify_to=dt.date(2027, 5, 2))
+        with self.assertRaises(ValidationError):
+            backwards.full_clean()
 
 
 @SSL_REDIRECT_OFF

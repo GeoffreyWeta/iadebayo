@@ -1,0 +1,76 @@
+{% extends "staff/base.html" %}
+{% comment %}
+  The two-column shell every working page in the staff area sits in: a nav rail
+  listing everything the team can change, and the page itself.
+
+  The rail is a <details> element, open by default. On a desktop the CSS ignores
+  the disclosure entirely and pins it as a sidebar; below 1000px it collapses to
+  a "Menu" button, because eighteen collections stacked above the content is a
+  page you have to scroll past to reach what you came for. One element, two
+  behaviours, no JavaScript in either — a nav that needs a script to open is a
+  nav that is sometimes shut.
+
+  The sign-in and password pages deliberately do NOT extend this: there is
+  nothing to navigate to until you are signed in.
+{% endcomment %}
+
+{% block content %}
+<div class="staff-shell">
+
+  <details class="staff-rail" open>
+    <summary class="staff-rail-toggle">
+      <span class="staff-rail-burger" aria-hidden="true"></span>
+      <span>Menu</span>
+    </summary>
+
+    <nav class="staff-rail-inner" aria-label="Staff area sections">
+      <a class="rail-link rail-top{% if nav == 'dashboard' %} is-on{% endif %}"
+         href="{% url 'staff:home' %}"{% if nav == 'dashboard' %} aria-current="page"{% endif %}>
+        <span class="rail-icon" aria-hidden="true">⌂</span> Dashboard
+      </a>
+      <a class="rail-link rail-top{% if nav == 'analytics' %} is-on{% endif %}"
+         href="{% url 'staff:analytics' %}"{% if nav == 'analytics' %} aria-current="page"{% endif %}>
+        <span class="rail-icon" aria-hidden="true">◢</span> Analytics
+      </a>
+
+      {% for section in nav_sections %}
+      <p class="rail-head">{{ section.title }}</p>
+      <ul class="rail-list">
+        {% for item in section.items %}
+        <li>
+          <a class="rail-link{% if nav == item.c.slug %} is-on{% endif %}"
+             href="{{ item.c.url }}"{% if nav == item.c.slug %} aria-current="page"{% endif %}>
+            <span class="rail-icon" aria-hidden="true">{{ item.c.icon }}</span>
+            <span class="rail-label">{{ item.c.label }}</span>
+            {% comment %}
+              The badge counts what has not been marked reviewed. It carries its
+              own words for a screen reader, because "7" on its own announces as
+              a number with no noun attached to it.
+            {% endcomment %}
+            {% if item.badge %}
+            <span class="rail-badge">{{ item.badge }}<span class="visually-hidden"> awaiting review</span></span>
+            {% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+
+      <p class="rail-head">Elsewhere</p>
+      <ul class="rail-list">
+        <li><a class="rail-link" href="{% url 'core:home' %}">
+          <span class="rail-icon" aria-hidden="true">↗</span>
+          <span class="rail-label">View the public site</span></a></li>
+        <li><a class="rail-link" href="{% url 'staff:password_change' %}">
+          <span class="rail-icon" aria-hidden="true">✳</span>
+          <span class="rail-label">Change your password</span></a></li>
+        <li><a class="rail-link" href="{% url 'admin:index' %}">
+          <span class="rail-icon" aria-hidden="true">⚙</span>
+          <span class="rail-label">Django admin</span></a></li>
+      </ul>
+    </nav>
+  </details>
+
+  <div class="staff-main">{% block main %}{% endblock %}</div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-"""The staff area: a branded sign-in, and the analytics dashboard behind it.
+"""The staff area: a branded sign-in, and the team's own admin behind it.
 
 Auth is Django's, unchanged — same `auth_user` table, same password hashing, same
 sessions, and the same `is_staff` flag the admin and the applicant-video download
@@ -6,9 +6,13 @@ already gate on (submissions.views.download_application_video). Nothing here
 introduces a second idea of who a staff member is; it only puts a page the team
 recognises in front of it, instead of the bare Django admin form.
 
-Accounts are still created in the admin. That is deliberate — there is no
-self-service registration, because every account here can read applicants'
-personal data.
+Accounts are still created by an administrator (`manage.py create_staff`). That
+is deliberate — there is no self-service registration, because every account
+here can read applicants' personal data.
+
+This module is only the door: sign-in, sign-out, password change. What is behind
+it is core.staff_views (content management, driven by core.staff_content) and
+the analytics dashboard below.
 """
 from django.contrib import messages
 from django.contrib.auth import views as auth_views
@@ -16,7 +20,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.decorators.cache import never_cache
 
@@ -132,12 +136,12 @@ class StaffPasswordChangeView(auth_views.PasswordChangeView):
     it, and the redirect lands on the branded sign-in like everything else.
     """
     template_name = "staff/password_change.html"
-    success_url = reverse_lazy("staff:analytics")
+    success_url = reverse_lazy("staff:home")
     extra_context = {"page_title": "Change password"}
 
     def form_valid(self, response):
         # update_session_auth_hash inside the parent keeps the current session
-        # alive; without this message the redirect to analytics looks like the
+        # alive; without this message the redirect to the dashboard looks like the
         # form silently did nothing.
         messages.success(self.request, "Your password has been changed.")
         return super().form_valid(response)
@@ -155,16 +159,14 @@ def analytics_dashboard(request):
     `never_cache` because the page is per-user and behind auth: without it a
     shared proxy is free to hand one staffer's dashboard to the next visitor.
     """
+    # Imported here, not at module scope: staff_views imports `staff_required`
+    # from this module, so a top-level import would be a cycle.
+    from .staff_views import shell
+
     data = analytics.dashboard(request.GET.get("range"))
-    return render(request, "staff/analytics.html", {
-        "page_title": "Analytics",
-        "nav": "analytics",
-        **data,
-    })
+    return render(request, "staff/analytics.html", shell(
+        request, page_title="Analytics", nav="analytics", **data))
 
 
-@never_cache
-@staff_required
-def staff_home(request):
-    """`/staff/` — nothing to choose between yet, so go straight to the numbers."""
-    return redirect("staff:analytics")
+# `/staff/` itself is core.staff_views.dashboard — there is something to land on
+# now, so it is no longer a redirect to the numbers.

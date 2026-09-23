@@ -92,6 +92,18 @@ class MilestoneAdmin(admin.ModelAdmin):
     list_editable = ("order",)
 
 
+@admin.register(models.Cohort)
+class CohortAdmin(admin.ModelAdmin):
+    """Kept in step with the staff area, which is where the team edits this.
+
+    See core.models.Cohort — the dates drive the public schedule band and the
+    staff dashboard's countdown, so only one row is ever used.
+    """
+    list_display = ("name", "applications_open", "applications_close",
+                    "notify_from", "notify_to", "is_current")
+    list_filter = ("is_current",)
+
+
 @admin.register(models.PageMeta)
 class PageMetaAdmin(admin.ModelAdmin):
     list_display = ("path", "title", "description")

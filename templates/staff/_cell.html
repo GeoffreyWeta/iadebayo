@@ -1,0 +1,81 @@
+{% comment %}
+  One table cell. Which branch runs was decided in Python — core.staff_views.cell
+  resolved the field to a `kind` and everything the branch needs — so this file
+  is only shapes, and adding a column to a collection never means touching it.
+
+  Params: cell, row, c (the collection), here (where to come back to).
+{% endcomment %}
+
+{% if cell.kind == "thumb" %}
+  {% if cell.url %}
+  {% comment %} Decorative here: the name beside it is the row's identity, and alt text
+     repeating that name would have a screen reader say it twice. {% endcomment %}
+  <img class="cell-thumb" src="{{ cell.url }}" alt="" loading="lazy" decoding="async">
+  {% else %}
+  <span class="cell-thumb cell-thumb-empty" aria-hidden="true"></span>
+  <span class="visually-hidden">No image</span>
+  {% endif %}
+
+{% elif cell.kind == "strong" %}
+  {% if c.is_inbox %}
+  <a href="{% url 'staff:detail' c.slug row.pk %}">{{ cell.text|default:"— no name given —" }}</a>
+  {% else %}
+  <a href="{% url 'staff:edit' c.slug row.pk %}">{{ cell.text|default:"— untitled —" }}</a>
+  {% endif %}
+
+{% elif cell.kind == "switch" %}
+  {% comment %}
+    A real form, not a checkbox that posts itself with script. The button says
+    what it will do and what the state is now, so it works from the keyboard and
+    announces correctly; staff-admin.js does not touch it.
+  {% endcomment %}
+  <form method="post" action="{% url 'staff:toggle' c.slug row.pk %}" class="switch-form">
+    {% csrf_token %}
+    <input type="hidden" name="field" value="{{ cell.name }}">
+    <input type="hidden" name="next" value="{{ here }}">
+    <button type="submit" class="switch{% if cell.on %} is-on{% endif %}"
+            aria-pressed="{% if cell.on %}true{% else %}false{% endif %}">
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      <span class="switch-text">{{ cell.on|yesno:"On,Off" }}</span>
+    </button>
+  </form>
+
+{% elif cell.kind == "bool" %}
+  <span class="flag flag-{{ cell.on|yesno:"yes,no" }}">
+    <span aria-hidden="true">{{ cell.on|yesno:"✓,—" }}</span> {{ cell.text }}
+  </span>
+
+{% elif cell.kind == "when" %}
+  {% if cell.value %}<time datetime="{{ cell.value|date:'c' }}">{{ cell.value|date:"j M Y, H:i" }}</time>
+  {% else %}<span class="cell-none">—</span>{% endif %}
+
+{% elif cell.kind == "date" %}
+  {% comment %}A DateField has no time, and rendering one as "00:00" invents a
+     precision that is not in the data.{% endcomment %}
+  {% if cell.value %}<time datetime="{{ cell.value|date:'Y-m-d' }}">{{ cell.value|date:"j M Y" }}</time>
+  {% else %}<span class="cell-none">—</span>{% endif %}
+
+{% elif cell.kind == "chip" %}
+  {% if cell.text %}<span class="chip">{{ cell.text }}</span>{% else %}<span class="cell-none">—</span>{% endif %}
+
+{% elif cell.kind == "link" %}
+  {% if cell.url %}<a href="{{ cell.url }}" target="_blank" rel="noopener noreferrer">{{ cell.text|default:cell.url }} ↗</a>
+  {% else %}<span class="cell-none">—</span>{% endif %}
+
+{% elif cell.kind == "file" %}
+  {% if cell.missing %}
+  <span class="flag flag-no" title="{{ cell.text }}">Missing from storage</span>
+  {% elif cell.url %}
+  <a href="{{ cell.url }}" target="_blank" rel="noopener">{{ cell.text }}</a>
+  <span class="cell-none">{{ cell.size|filesizeformat }}</span>
+  {% else %}<span class="cell-none">— none —</span>{% endif %}
+
+{% elif cell.kind == "long" %}
+  <span class="cell-long">{{ cell.text|default:"—" }}</span>
+
+{% elif cell.kind == "count" %}
+  <span class="cell-count">{{ cell.text|default:"0" }}</span>
+
+{% else %}
+  {{ cell.text|default:"—" }}
+{% endif %}

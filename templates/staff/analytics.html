@@ -1,7 +1,6 @@
-{% extends "staff/base.html" %}
-{% block content %}
+{% extends "staff/manage_base.html" %}
+{% block main %}
 
-<div class="staff-page">
 
   {# ------------------------------------------------------- page head + filter #}
   <header class="staff-head">
@@ -119,8 +118,8 @@
         <text class="plot-ylab" x="{{ plot.PAD_L }}" y="{{ g.y }}" dx="-8" dy="3.5">{{ g.label }}</text>
         {% endfor %}
 
-        {# pathLength="1" normalises the dash units so the draw-on in staff.css
-           works whatever the real path length is. #}
+        {% comment %} pathLength="1" normalises the dash units so the draw-on in staff.css
+           works whatever the real path length is. {% endcomment %}
         <path class="plot-area" d="{{ plot.area }}" fill="url(#plot-fill)"/>
         <path class="plot-line" d="{{ plot.line }}" pathLength="1"/>
         {% if plot.mean_line %}<path class="plot-mean" d="{{ plot.mean_line }}" pathLength="1"/>{% endif %}
@@ -252,8 +251,8 @@
   <h2 class="staff-section-h reveal">Who is applying</h2>
   <div class="grid-2">
     {% include "staff/_bars.html" with title="Countries" data=countries note="Top 8, rest folded into Other" %}
-    {# Named with their country: subdivision names repeat across borders, see
-       analytics.region_breakdown. #}
+    {% comment %} Named with their country: subdivision names repeat across borders, see
+       analytics.region_breakdown. {% endcomment %}
     {% include "staff/_bars.html" with title="States and regions" data=states note="Top 8, rest folded into Other" %}
     {% include "staff/_bars.html" with title="Sectors" data=sectors note="Top 8, rest folded into Other" %}
     {% include "staff/_bars.html" with title="Academic status" data=status %}
@@ -274,10 +273,10 @@
     <div class="chart-head">
       <div>
         <h2 id="recent-h">Latest applications</h2>
-        <p class="chart-note">Newest first. Open one in the admin to review it.</p>
+        <p class="chart-note">Newest first. Open one to read everything they sent.</p>
       </div>
       <a class="staff-btn staff-btn-quiet"
-         href="{% url 'admin:submissions_embarkapplication_changelist' %}">All in admin →</a>
+         href="{% url 'staff:list' 'applications' %}">All applications →</a>
     </div>
     {% if recent %}
     <div class="table-scroll">
@@ -290,7 +289,7 @@
           {% for a in recent %}
           <tr>
             <th scope="row">
-              <a href="{% url 'admin:submissions_embarkapplication_change' a.pk %}">{{ a.name }}</a>
+              <a href="{% url 'staff:detail' 'applications' a.pk %}">{{ a.name }}</a>
             </th>
             <td>{{ a.business_name }}</td>
             <td>{{ a.city }}{% if a.country %}, {{ a.country }}{% endif %}</td>
@@ -315,6 +314,5 @@
     the applicants who answered that question, not of everyone, because most
     fields have been optional since the 2025 form.
   </p>
-</div>
 
 {% endblock %}

@@ -139,10 +139,11 @@ def cohort_schedule():
             items.append({"name": name, "slug": slugify(name), "starts_here": name not in seen})
             seen.add(name)
         months.append({"step": step, "label": label, "activities": items})
-    return {"name": cohort.NAME, "months": months,
+    dates = cohort.current()
+    return {"name": dates.name, "months": months,
             "strands": cohort_strands(),
             "month_labels": [label for label, _ in COHORT_MONTHS],
-            "key_dates": cohort.key_dates()}
+            "key_dates": cohort.key_dates(dates)}
 
 
 CORE_VALUES = ["Resilience", "Conscientiousness", "Innovation", "Excellence", "Integrity", "Possibility Thinking"]

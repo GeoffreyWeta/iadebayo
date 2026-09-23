@@ -1,0 +1,63 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  The confirmation step. It exists because the list's Delete is a link, and a
+  link is followed by prefetchers, by a mistaken middle-click, and by anything
+  that crawls the page — so the link can only ever lead here, and only the POST
+  below actually destroys anything.
+
+  The row is shown again, with the same columns the list used, so the thing
+  being confirmed is the thing that was clicked rather than a primary key.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow"><a href="{{ c.url }}">{{ c.label }}</a></p>
+    <h1>Delete this {{ c.singular }}?</h1>
+    <p class="staff-head-sub">This cannot be undone.</p>
+  </div>
+</header>
+
+<section class="card danger-card">
+  <h2 class="danger-name">{{ obj }}</h2>
+
+  <dl class="danger-facts">
+    {% for cell in row.cells %}
+    {% if cell.kind != "switch" %}
+    <div>
+      <dt>{{ cell.heading }}</dt>
+      <dd>
+        {% if cell.kind == "thumb" %}
+          {% if cell.url %}<img class="cell-thumb" src="{{ cell.url }}" alt="">{% else %}—{% endif %}
+        {% elif cell.kind == "when" %}{{ cell.value|date:"j M Y, H:i"|default:"—" }}
+        {% elif cell.kind == "date" %}{{ cell.value|date:"j M Y"|default:"—" }}
+        {% else %}{{ cell.text|default:"—" }}{% endif %}
+      </dd>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </dl>
+
+  {% if c.is_inbox %}
+  <p class="staff-caveat">
+    This is the only copy of what this person sent us, and the analytics are
+    counted from it. Deleting it changes the numbers on the dashboard.
+  </p>
+  {% elif c.where %}
+  <p class="staff-caveat">
+    It will disappear from the public site as soon as you confirm.
+  </p>
+  {% endif %}
+
+  <div class="form-actions">
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="staff-btn staff-btn-danger">
+        Yes, delete “{{ obj|truncatechars:40 }}”
+      </button>
+    </form>
+    <a class="staff-btn staff-btn-quiet" href="{{ c.url }}">Cancel, keep it</a>
+  </div>
+</section>
+
+{% endblock %}
