@@ -116,6 +116,41 @@
 </section>
 {% endif %}
 
+{% if c.mailable and not c.decides %}
+{% comment %}
+  The nudge for somebody who started an application and stopped. Deliberately
+  one button and one message: these people did not apply, did not consent to
+  anything, and are being written to once about finishing the thing they began.
+  The sent stamp is what keeps "once" true across a team of seven.
+{% endcomment %}
+<section class="card detail-card">
+  <h2>Write to them</h2>
+
+  {% if obj.nudge_sent_at %}
+  <p class="detail-state"><span class="pill pill-good">Reminder sent
+    {{ obj.nudge_sent_at|date:"j M Y, H:i" }}</span></p>
+  <p class="chart-note">They have already had their one message. Send another
+    only if there is a real reason to.</p>
+  {% elif obj.email %}
+  <p class="chart-note">One message, about finishing the application they
+    started. The <code>{% verbatim %}{{ resume_link }}{% endverbatim %}</code> placeholder becomes a
+    private link straight back to their own part-filled form.</p>
+  {% else %}
+  <p class="staff-caveat">No email address on this draft, so there is no way to
+    reach them. A phone number may be recorded below.</p>
+  {% endif %}
+
+  {% if obj.email %}
+  <div class="head-actions">
+    <a class="staff-btn {% if obj.nudge_sent_at %}staff-btn-quiet{% else %}staff-btn-primary{% endif %} staff-btn-inline"
+       href="{% url 'staff:email' c.slug obj.pk %}">
+      {% if obj.nudge_sent_at %}Write another{% else %}Write mail{% endif %}
+    </a>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 <section class="card detail-card">
   <h2>What they submitted</h2>
   <dl class="detail-list">

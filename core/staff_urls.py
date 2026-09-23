@@ -29,6 +29,7 @@ urlpatterns = [
     path("c/<slug:slug>/export/", staff_views.collection_export, name="export"),
     path("c/<slug:slug>/reorder/", staff_views.collection_reorder, name="reorder"),
     path("c/<slug:slug>/bulk/", staff_views.collection_bulk, name="bulk"),
+    path("c/<slug:slug>/email/", staff_views.collection_email_many, name="email_many"),
     path("c/<slug:slug>/<int:pk>/", staff_views.submission_detail, name="detail"),
     path("c/<slug:slug>/<int:pk>/edit/", staff_views.collection_edit, name="edit"),
     path("c/<slug:slug>/<int:pk>/delete/", staff_views.collection_delete, name="delete"),

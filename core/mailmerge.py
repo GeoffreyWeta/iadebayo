@@ -48,6 +48,9 @@ FIELDS = {
                       lambda o: getattr(o, "business_name", "") or ""),
     "country": ("The country they applied from",
                 lambda o: getattr(o, "country", "") or ""),
+    "resume_link": ("Unfinished applications only: a private link back to their "
+                    "own part-filled form. Expires after 45 days.",
+                    lambda o: getattr(o, "resume_url", "")),
     "cohort": ("The cohort currently being advertised, e.g. Cohort 5",
                lambda o: _cohort().name),
     "notifications_from": ("First day of the notification window",

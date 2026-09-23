@@ -114,6 +114,10 @@ class Collection:
     # column rather than a bare bool is what lets the list show and filter on it.
     decision_field: str = ""        # inbox only: the approved/declined column
     mailable: bool = False          # inbox only: offer "Send email" on the detail page
+    # Which column records that a message went. Stamped only on a successful
+    # send, so "sent" never means "we tried". Applications record the decision
+    # mail; unfinished drafts record the one-time nudge.
+    email_stamp_field: str = "decision_email_sent_at"
     icon: str = "•"
 
     # ---------------------------------------------------------------- helpers
@@ -495,6 +499,8 @@ UNFINISHED = Collection(
     filters=("reviewed", "furthest_step", "country"),
     ordering=("-updated_at",),
     review_field="reviewed",
+    mailable=True,
+    email_stamp_field="nudge_sent_at",
     export=True,
     per_page=30,
     note="Nobody in this list pressed submit, and nobody here consented to "

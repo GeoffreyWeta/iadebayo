@@ -4,6 +4,7 @@ from django.utils.text import slugify
 
 from blog.models import Post
 from submissions import forms as f
+from submissions.models import PartialApplication
 
 from . import cohort
 from .models import (FacultyMember, GalleryImage, ImpactStat, Resource,
@@ -201,11 +202,23 @@ def embark(request):
     })
 
 
-def apply_context(form=None):
+def apply_context(form=None, draft=None):
     """Context for the apply page. Shared with submissions.views so a form with
-    validation errors can be re-rendered instead of throwing the answers away."""
+    validation errors can be re-rendered instead of throwing the answers away.
+
+    `draft` is a PartialApplication reached through a resume link. Its answers
+    become the form's initial values, which is what makes "carry on where you
+    left off" work on a device that is not the one they started on - the local
+    draft in form-steps.js only ever helps on the same browser.
+    """
+    if form is None:
+        form = f.EmbarkApplicationForm(initial=_draft_initial(draft))
     return {
-        "form": form if form is not None else f.EmbarkApplicationForm(),
+        "form": form,
+        "draft": draft,
+        # Handed to form-steps.js so autosave keeps updating the same row rather
+        # than opening a second one under a freshly generated id.
+        "resume_draft_id": draft.draft_id if draft else "",
         "faqs": FAQS,
         # Shown above the form: the Commitment questions ask whether the
         # applicant can see the programme through, which is a fairer question
@@ -219,8 +232,28 @@ def apply_context(form=None):
     }
 
 
+def _draft_initial(draft):
+    """A half-finished application's stored answers, as form initial data.
+
+    Only keys the form actually has are passed through. `answers` is whatever
+    the applicant's browser posted, so a field renamed since they typed would
+    otherwise raise on a page a real person is sitting in front of.
+    """
+    if draft is None:
+        return None
+    fields = set(f.EmbarkApplicationForm().fields)
+    return {k: v for k, v in (draft.answers or {}).items() if k in fields}
+
+
 def apply(request):
-    return render(request, "core/apply.html", apply_context())
+    """The application form, optionally pre-filled from a resume link.
+
+    A bad, expired or deleted token gives `draft = None`, which renders the
+    ordinary empty form. Somebody who clicks a stale link six weeks later should
+    get a form they can fill in, not an error telling them off.
+    """
+    draft = PartialApplication.from_resume_token(request.GET.get("resume", ""))
+    return render(request, "core/apply.html", apply_context(draft=draft))
 
 
 def gallery(request):

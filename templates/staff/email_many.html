@@ -1,0 +1,142 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One message, written once, sent to everybody ticked.
+
+  Unlike the single-recipient page, the box here holds the placeholders
+  unsubstituted - it has to, because one body serves many people. So this page
+  owes the writer two things that page does not:
+
+    * the full recipient list, by name and address, before anything is sent;
+    * a worked preview of what the first person will actually receive, so the
+      placeholders can be checked against a real row rather than imagined.
+
+  Sending needs the `send` button specifically, so neither choosing a template
+  nor reloading the page can post the message.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow"><a href="{{ c.url }}">{{ c.label }}</a></p>
+    <h1>Write to {{ rows|length }} {{ c.count_label|default:"people" }}</h1>
+    <p class="staff-head-sub">
+      One message, personalised for each person and sent individually. Nobody
+      sees anyone else's address.
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-quiet" href="{{ c.url }}">← Back without sending</a>
+  </div>
+</header>
+
+{% if without %}
+<p class="staff-caveat">
+  {{ without|length }} of the rows you ticked have no email address and will be
+  left out: {{ without|join:", "|truncatechars:300 }}
+</p>
+{% endif %}
+
+{% if not rows %}
+<div class="card empty-card">
+  <p class="empty-lead">None of the ticked rows has an email address.</p>
+  <p><a class="staff-btn staff-btn-quiet" href="{{ c.url }}">Back to the list</a></p>
+</div>
+{% else %}
+
+<div class="grid-2">
+  <div>
+    {# ------------------------------------------------------ template picker #}
+    {% if templates %}
+    <form method="get" class="filter-bar">
+      {% for pk in pks %}<input type="hidden" name="pks" value="{{ pk }}">{% endfor %}
+      <div class="filter-pick">
+        <label for="template">Start from a saved template</label>
+        <select id="template" name="template">
+          <option value="">Write from scratch</option>
+          {% for t in templates %}<option value="{{ t.pk }}">{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="staff-btn staff-btn-quiet">Load it</button>
+    </form>
+    {% endif %}
+
+    {# --------------------------------------------------------- the message #}
+    <form method="post" class="staff-form edit-form" novalidate>
+      {% csrf_token %}
+      {% for pk in pks %}<input type="hidden" name="pks" value="{{ pk }}">{% endfor %}
+
+      {% if form.non_field_errors %}
+      <div class="staff-form-error" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <section class="card form-block">
+        <h2>The message</h2>
+        <p class="chart-note">
+          Placeholders are filled in per person as each message goes out.
+        </p>
+        {% for field in form %}
+        <div class="staff-field{% if field.errors %} has-error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="field-help">{{ field.help_text|safe }}</p>{% endif %}
+          {% for error in field.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+          {# The name is what the view checks, so a stray Enter in the subject
+             box cannot be a send. #}
+          <button type="submit" name="send" value="1"
+                  class="staff-btn staff-btn-primary staff-btn-inline"
+                  data-confirm="Send this message to {{ rows|length }} people? It cannot be taken back.">
+            Send to {{ rows|length }}
+          </button>
+          <a class="staff-btn staff-btn-quiet" href="{{ c.url }}">Cancel</a>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <div>
+    {# -------------------------------------------------------- what they get #}
+    {% if preview %}
+    <section class="card">
+      <h2>Placeholders, for {{ preview.who|truncatechars:40 }}</h2>
+      <p class="chart-note">The first person on the list, as a worked example.</p>
+      <dl class="detail-list">
+        {% for token, meaning in tokens %}
+        <div class="detail-row">
+          <dt>{{ token }}</dt>
+          <dd>{{ meaning }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </section>
+    {% endif %}
+
+    {# ------------------------------------------------------------ the list #}
+    <section class="card">
+      <h2>Going to {{ rows|length }} {{ c.count_label|default:"people" }}</h2>
+      <p class="chart-note">Each gets their own message. Check this list before
+        you send.</p>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th scope="col">Name</th><th scope="col">Email</th></tr></thead>
+          <tbody>
+            {% for r in rows %}
+            <tr>
+              <th scope="row">{{ r.name|default:"— no name —" }}</th>
+              <td>{{ r.email }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

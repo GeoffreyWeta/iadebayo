@@ -370,6 +370,12 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
     answers = models.JSONField("Everything typed so far", default=dict, blank=True)
     furthest_step = models.PositiveSmallIntegerField("Furthest section reached", default=1)
     updated_at = models.DateTimeField(auto_now=True)
+    nudge_sent_at = models.DateTimeField(
+        "Reminder sent", null=True, blank=True, editable=False,
+        help_text="When the 'you were nearly there' email was accepted for "
+                  "delivery. Written only on a successful send, so a failure "
+                  "can be retried, and a second send is a deliberate choice "
+                  "rather than an accident.")
     completed_at = models.DateTimeField(
         "Finished the application", null=True, blank=True,
         help_text="Set when a full application arrives from this draft or this "
@@ -384,9 +390,67 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
         who = self.name or self.email or self.phone_display or "Anonymous"
         return f"{who} - step {self.furthest_step}"
 
+    # Signing salt for the resume link. Namespaced so a token minted here can
+    # never be replayed against another signed value in the project.
+    RESUME_SALT = "embark-resume-draft"
+    RESUME_MAX_AGE_DAYS = 45
+
     @property
     def is_complete(self):
         return self.completed_at is not None
+
+    @property
+    def was_nudged(self):
+        return self.nudge_sent_at is not None
+
+    # ------------------------------------------------- the "come back" link
+    @property
+    def resume_token(self):
+        """A signed, expiring token standing in for this row's draft id.
+
+        The draft id itself is deliberately NOT what goes in the link. It is a
+        value the applicant's own browser generated and it never expires, so a
+        link built from it would be a permanent, guessable-in-principle key to
+        one person's half-written application - forwarded in a mail thread,
+        sitting in an inbox, valid forever. Signing it means the link cannot be
+        forged without the SECRET_KEY and stops working after
+        RESUME_MAX_AGE_DAYS, which is the same bargain a password-reset link
+        makes.
+        """
+        from django.core.signing import TimestampSigner
+        return TimestampSigner(salt=self.RESUME_SALT).sign(self.draft_id)
+
+    @property
+    def resume_url(self):
+        """The absolute link to put in the email.
+
+        Absolute because it is going into a message read outside the site, where
+        a relative path means nothing.
+        """
+        from django.conf import settings
+        from django.urls import reverse
+        base = settings.SITE_BASE_URL.rstrip("/")
+        return f"{base}{reverse('core:apply')}?resume={self.resume_token}"
+
+    @classmethod
+    def from_resume_token(cls, token):
+        """The draft a resume link points at, or None if it is bad or stale.
+
+        Returns None rather than raising for every failure mode: an expired
+        link, a mangled one, and a row since deleted are the same thing to the
+        person clicking it, and all three should land on a normal empty form
+        rather than an error page.
+        """
+        from django.core.signing import BadSignature, TimestampSigner
+
+        if not token:
+            return None
+        try:
+            draft_id = TimestampSigner(salt=cls.RESUME_SALT).unsign(
+                token, max_age=cls.RESUME_MAX_AGE_DAYS * 24 * 3600)
+        except BadSignature:            # covers SignatureExpired, its subclass
+            return None
+        return cls.objects.filter(draft_id=draft_id).first()
 
     @property
     def answers_display(self):

@@ -657,6 +657,90 @@ def collection_bulk(request, slug):
     return back_to(request, collection.url())
 
 
+# ============================================================ mail the ticked
+@never_cache
+@staff_required
+def collection_email_many(request, slug):
+    """Write one message and send it to everybody ticked, personalised per row.
+
+    Two deliberate properties, both of which exist because this is the screen
+    that can annoy the most people at once:
+
+      * **The recipients are listed by name and address before anything is
+        sent.** A bulk send whose audience you cannot see is how the wrong forty
+        people get told they were admitted.
+      * **Each message is rendered per recipient**, so `{{ first_name }}` is
+        their name and `{{ resume_link }}` is their own link. It is one message
+        written once, not one message shared.
+
+    Rows with no email address are dropped and named, rather than silently
+    skipped, because "I sent it to everyone" needs to be true or corrected.
+    """
+    from .models import EmailTemplate
+    from .staff_forms import ApplicantEmailForm
+    from submissions.services import send_to_applicant
+
+    collection = _mailable(slug)
+    pks = [int(p) for p in request.POST.getlist("pks") or request.GET.getlist("pks")
+           if p.isdigit()]
+    rows = list(collection.model._default_manager.filter(pk__in=pks))
+    if not rows:
+        messages.error(request, "Nothing was ticked.")
+        return redirect(collection.url())
+
+    with_email = [r for r in rows if (getattr(r, "email", "") or "").strip()]
+    without = [str(r) for r in rows if not (getattr(r, "email", "") or "").strip()]
+
+    if request.method == "POST" and request.POST.get("send"):
+        form = ApplicantEmailForm(request.POST)
+        if form.is_valid():
+            sent, failed = [], []
+            for row in with_email:
+                context = mailmerge.context_for(row)
+                ok = send_to_applicant(
+                    (row.email or "").strip(),
+                    mailmerge.render(form.cleaned_data["subject"], context),
+                    mailmerge.render(form.cleaned_data["body"], context),
+                    obj=row, stamp_field=collection.email_stamp_field)
+                (sent if ok else failed).append(str(row))
+
+            if sent:
+                messages.success(request, f"Sent to {len(sent)} "
+                                          f"{collection.count_label(len(sent))}.")
+            if failed:
+                # Named, not counted: a failure the team cannot identify is one
+                # they cannot retry.
+                messages.error(request, "Could not send to: " + "; ".join(failed[:20]))
+            if not failed:
+                return redirect(collection.url())
+    else:
+        chosen = None
+        if request.POST.get("template") or request.GET.get("template"):
+            want = request.POST.get("template") or request.GET.get("template")
+            chosen = EmailTemplate.objects.filter(pk=want).first()
+        # Unrendered on purpose: the placeholders are the point on this screen,
+        # because one body serves many people. The preview below shows what the
+        # first recipient will actually get.
+        form = ApplicantEmailForm(initial={
+            "subject": chosen.subject if chosen else "",
+            "body": chosen.body if chosen else "",
+        })
+
+    preview = None
+    if with_email:
+        first = with_email[0]
+        preview = {"who": str(first), "context": mailmerge.context_for(first)}
+
+    return render(request, "staff/email_many.html", shell(
+        request, page_title=f"Email {len(with_email)} people",
+        nav=collection.slug, c=collection, form=form,
+        rows=with_email, without=without, preview=preview,
+        templates=list(EmailTemplate.objects.all()),
+        tokens=mailmerge.catalogue(),
+        pks=[r.pk for r in rows],
+    ))
+
+
 # ============================================================ export
 @never_cache
 @staff_required
@@ -704,6 +788,20 @@ def collection_export(request, slug):
 
 
 # ============================================================ decisions and mail
+def _mailable(slug):
+    """The collection for `slug`, if staff may write to the people in it.
+
+    Separate from `_decidable` because the two are no longer the same set:
+    unfinished applications are mailed (one "you were nearly there" nudge) but
+    never approved or declined - nobody in that list has applied for anything
+    yet.
+    """
+    collection = collection_or_404(slug)
+    if not collection.mailable:
+        raise Http404("That collection is not one staff write to.")
+    return collection
+
+
 def _decidable(slug):
     """The collection for `slug`, if it records decisions. 404 otherwise.
 
@@ -770,16 +868,17 @@ def collection_email(request, slug, pk):
     from .staff_forms import ApplicantEmailForm
     from submissions.services import send_to_applicant
 
-    collection = _decidable(slug)
+    collection = _mailable(slug)
     obj = get_object_or_404(collection.model, pk=pk)
     to_email = (getattr(obj, "email", "") or "").strip()
+    already = getattr(obj, collection.email_stamp_field, None)
 
     templates = list(EmailTemplate.objects.all())
     chosen = None
     if request.GET.get("template"):
         chosen = next((t for t in templates
                        if str(t.pk) == request.GET["template"]), None)
-    elif getattr(obj, collection.decision_field, ""):
+    elif collection.decides and getattr(obj, collection.decision_field, ""):
         chosen = EmailTemplate.preferred(getattr(obj, collection.decision_field))
 
     context = mailmerge.context_for(obj)
@@ -793,7 +892,8 @@ def collection_email(request, slug, pk):
         elif form.is_valid():
             subject = mailmerge.render(form.cleaned_data["subject"], context)
             body = mailmerge.render(form.cleaned_data["body"], context)
-            sent = send_to_applicant(to_email, subject, body, obj=obj)
+            sent = send_to_applicant(to_email, subject, body, obj=obj,
+                                     stamp_field=collection.email_stamp_field)
             if sent:
                 messages.success(request, f"Email sent to {to_email}.")
                 return redirect(collection.url("detail", pk=pk))
@@ -813,6 +913,7 @@ def collection_email(request, slug, pk):
     return render(request, "staff/email_compose.html", shell(
         request, page_title=f"Email {getattr(obj, 'name', '') or to_email}",
         nav=collection.slug, c=collection, obj=obj, form=form,
+        already_sent=already,
         to_email=to_email, templates=templates, chosen=chosen,
         placeholders=mailmerge.catalogue(),
         sent_at=getattr(obj, "decision_email_sent_at", None),

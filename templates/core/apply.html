@@ -80,12 +80,26 @@
         Only this form asks for it. The note under the buttons tells the
         applicant it is happening - a silent copy would not be honest.
       {% endcomment %}
-      <form method="post" action="{% url 'submissions:apply' %}" class="form-steps"
+      {% if draft %}
+{% comment %}
+  Shown only when a resume link was followed. Saying it out loud matters: the
+  boxes are already full, and somebody who does not know why will assume the
+  site has confused them with someone else.
+{% endcomment %}
+<div class="form-resumed" role="status">
+  <p><strong>Welcome back{% if draft.name %}, {{ draft.name|truncatechars:40 }}{% endif %}.</strong>
+     We have brought back what you typed last time, so you can carry on from
+     where you stopped. Check it still reads the way you want before you send it.</p>
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'submissions:apply' %}" class="form-steps"
             enctype="multipart/form-data" novalidate
             id="embark-form" data-draft-key="embark-application"
+            {% if resume_draft_id %}data-resume-draft-id="{{ resume_draft_id }}"{% endif %}
             data-progress-url="{% url 'submissions:apply_progress' %}">
         {% csrf_token %}
-        <input type="hidden" name="draft_id" value="">
+        <input type="hidden" name="draft_id" value="{{ resume_draft_id }}">
 
         {# Progress rail - becomes clickable once the step script runs #}
         <ol class="step-rail">

@@ -92,6 +92,13 @@
   {% endif %}
 </section>
 
+{% if already_sent %}
+<p class="staff-caveat">
+  A message was already sent to this person on {{ already_sent|date:"j M Y, H:i" }}.
+  Sending again is a deliberate act - they will receive a second email.
+</p>
+{% endif %}
+
 <form method="post" class="staff-form edit-form" novalidate>
   {% csrf_token %}
 

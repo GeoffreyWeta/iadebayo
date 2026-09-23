@@ -223,6 +223,15 @@
        unlikely to collide. */
     function draftId() {
       var id;
+      /* A resume link wins over anything stored locally. The server has just
+         told us which row this person is continuing, and generating a fresh id
+         here would fork their application into a second half-finished row that
+         nobody is chasing. */
+      var seeded = form.getAttribute("data-resume-draft-id");
+      if (seeded) {
+        try { localStorage.setItem(idKey, seeded); } catch (err) { /* private mode */ }
+        return seeded;
+      }
       try { id = localStorage.getItem(idKey); } catch (err) { /* private mode */ }
       if (id) return id;
       if (window.crypto && window.crypto.randomUUID) {

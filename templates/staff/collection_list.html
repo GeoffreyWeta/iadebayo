@@ -96,6 +96,12 @@
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ here }}">
   <span class="bulk-note" data-bulk-count>Tick rows to act on them</span>
+  {% if c.mailable %}
+  {# formaction, so the same ticked boxes can go to a different view without a
+     second form or a line of JavaScript. #}
+  <button type="submit" formaction="{% url 'staff:email_many' c.slug %}"
+          class="staff-btn staff-btn-quiet">Write to ticked</button>
+  {% endif %}
   {% if c.review_field %}
   <button type="submit" name="action" value="review" class="staff-btn staff-btn-quiet">Mark reviewed</button>
   <button type="submit" name="action" value="unreview" class="staff-btn staff-btn-quiet">Mark not reviewed</button>
