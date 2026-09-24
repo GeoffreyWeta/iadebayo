@@ -186,6 +186,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 if env("EMAIL_BACKEND", "console") == "zeptomail":
     EMAIL_BACKEND = "core.mail_backends.ZeptoMailBackend"
     ZEPTOMAIL_TOKEN = env("ZEPTOMAIL_TOKEN", "")
+    # The agent's SMTP/API tab prints the host to use. Older accounts are on
+    # api.zeptomail.com (the default in core.mail_backends), newer ones on
+    # cpaas.zoho.com, and the EU/India accounts on their own hosts. Wrong host
+    # is a 401 or a 404 that reads exactly like a bad token, so it is worth
+    # setting explicitly rather than relying on the default.
+    ZEPTOMAIL_API_URL = env("ZEPTOMAIL_API_URL", "")
 elif env("EMAIL_BACKEND", "console") == "smtp":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = env("EMAIL_HOST", "mail.iadebayo.foundation")

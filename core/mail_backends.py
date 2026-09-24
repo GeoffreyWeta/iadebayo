@@ -19,6 +19,11 @@ from django.core.mail.backends.base import BaseEmailBackend
 
 log = logging.getLogger(__name__)
 
+# ZeptoMail answers on a different host depending on the account's region and
+# age: api.zeptomail.com, api.zeptomail.eu, api.zeptomail.in, and newer accounts
+# are shown cpaas.zoho.com. The Mail Agent's SMTP/API tab prints the exact URL
+# for that agent. This is the default; ZEPTOMAIL_API_URL in .env overrides it,
+# so pointing at the right host never needs a code change and a deploy.
 API_URL = "https://api.zeptomail.com/v1.1/email"
 
 
@@ -84,13 +89,15 @@ def build_payload(message):
 
 
 class ZeptoMailBackend(BaseEmailBackend):
-    def __init__(self, fail_silently=False, token=None, timeout=15, **kwargs):
+    def __init__(self, fail_silently=False, token=None, api_url=None, timeout=15,
+                 **kwargs):
         super().__init__(fail_silently=fail_silently, **kwargs)
         token = token or getattr(settings, "ZEPTOMAIL_TOKEN", "")
         # The dashboard shows the token with its scheme ("Zoho-enczapikey ...");
         # accept it pasted either way.
         prefix = "Zoho-enczapikey "
         self.token = token[len(prefix):] if token.startswith(prefix) else token
+        self.api_url = api_url or getattr(settings, "ZEPTOMAIL_API_URL", "") or API_URL
         self.timeout = timeout
 
     def send_messages(self, email_messages):
@@ -111,7 +118,7 @@ class ZeptoMailBackend(BaseEmailBackend):
         if not self.token:
             raise ZeptoMailError("ZEPTOMAIL_TOKEN is empty.")
         request = urllib.request.Request(
-            API_URL,
+            self.api_url,
             data=json.dumps(build_payload(message)).encode(),
             method="POST",
             headers={

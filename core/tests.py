@@ -671,6 +671,21 @@ class ZeptoMailBackendTests(TestCase):
         self.assertEqual(payload["textbody"], "Plain body")
         self.assertNotIn("htmlbody", payload)
 
+    def test_the_endpoint_defaults_to_zeptomails_own_host(self):
+        message = mail.EmailMessage("s", "b", "a@iadebayo.foundation", ["x@example.com"])
+        _, urlopen = self.send(message)
+        self.assertEqual(urlopen.call_args.args[0].full_url,
+                         "https://api.zeptomail.com/v1.1/email")
+
+    def test_the_endpoint_can_be_pointed_at_the_accounts_own_host(self):
+        """Newer accounts are told to use cpaas.zoho.com, the EU ones their own
+        host. Wrong host answers 401, which reads exactly like a bad token."""
+        message = mail.EmailMessage("s", "b", "a@iadebayo.foundation", ["x@example.com"])
+        with override_settings(ZEPTOMAIL_API_URL="https://cpaas.zoho.com/v1.1/email"):
+            _, urlopen = self.send(message)
+        self.assertEqual(urlopen.call_args.args[0].full_url,
+                         "https://cpaas.zoho.com/v1.1/email")
+
     def test_a_rejection_raises_with_zeptomail_s_explanation(self):
         import io
         import urllib.error
