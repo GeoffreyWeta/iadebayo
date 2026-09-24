@@ -29,7 +29,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import models as dj
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -215,15 +215,18 @@ def filter_specs(collection, selected):
     return specs
 
 
-def apply_filters(qs, collection, request):
-    """Narrow the queryset by `?q=` and any `?<field>=` the collection allows.
+def apply_filters(qs, collection, params):
+    """Narrow the queryset by `q=` and any `<field>=` the collection allows.
 
-    Only names in `collection.filters` are read out of the query string, so a
-    crafted `?password=` cannot become a queryset lookup.
+    Takes the query mapping rather than the request so that the same narrowing
+    can be reapplied from a query string carried in a POST - which is how "send
+    to everyone" resolves to the same set the list was showing. Only names in
+    `collection.filters` are read, so a crafted `password=` cannot become a
+    queryset lookup.
     """
     selected = {}
     for name in collection.filters:
-        raw = (request.GET.get(name) or "").strip()
+        raw = (params.get(name) or "").strip()
         if not raw:
             continue
         selected[name] = raw
@@ -233,7 +236,7 @@ def apply_filters(qs, collection, request):
         else:
             qs = qs.filter(**{name: raw})
 
-    query = (request.GET.get("q") or "").strip()
+    query = (params.get("q") or "").strip()
     if query and collection.search:
         clause = Q()
         for name in collection.search:
@@ -386,7 +389,7 @@ def dashboard(request):
 @staff_required
 def collection_list(request, slug):
     collection = collection_or_404(slug)
-    qs, query, selected = apply_filters(collection.queryset(), collection, request)
+    qs, query, selected = apply_filters(collection.queryset(), collection, request.GET)
 
     paginator = Paginator(qs, collection.per_page)
     page = paginator.get_page(request.GET.get("page"))
@@ -658,18 +661,39 @@ def collection_reorder(request, slug):
 
 
 # ============================================================ bulk actions
+def bulk_selection(request, collection):
+    """The rows a bulk action applies to, and whether "everyone" was asked for.
+
+    Either the ticked rows, or - when the "apply to all" box is ticked - every
+    row the list is currently showing. Those two differ the moment a search or
+    a filter is on, and the set a person means by "everyone" is always the one
+    in front of them, never every row in the table. The narrowing is read back
+    out of `next`, which the bulk bar already carries for its own redirect.
+
+    Returning a queryset rather than a list matters for the "everyone" case:
+    the caller pins it to concrete ids before showing anybody a recipient list,
+    so a row added between choosing and sending cannot join the send silently.
+    """
+    if request.POST.get("all"):
+        params = QueryDict(urlparse(request.POST.get("next") or "").query)
+        qs, _, _ = apply_filters(collection.queryset(), collection, params)
+        return qs, True
+    pks = [int(p) for p in (request.POST.getlist("pks")
+                            or request.GET.getlist("pks")) if p.isdigit()]
+    return collection.queryset().filter(pk__in=pks), False
+
+
 @require_POST
 @staff_required
 def collection_bulk(request, slug):
-    """Mark, unmark or delete the ticked rows."""
+    """Mark, unmark or delete the ticked rows, or every row in the list."""
     collection = collection_or_404(slug)
     action = request.POST.get("action", "")
-    pks = [int(p) for p in request.POST.getlist("pks") if p.isdigit()]
-    if not pks:
-        messages.error(request, "Nothing was ticked.")
+    qs, whole_list = bulk_selection(request, collection)
+    if not qs.exists():
+        messages.error(request, "Nothing was ticked." if not whole_list
+                       else "That list is empty, so there was nothing to act on.")
         return back_to(request, collection.url())
-
-    qs = collection.model._default_manager.filter(pk__in=pks)
 
     if action in ("review", "unreview") and collection.review_field:
         count = qs.update(**{collection.review_field: action == "review"})
@@ -693,9 +717,9 @@ def collection_bulk(request, slug):
 @never_cache
 @staff_required
 def collection_email_many(request, slug):
-    """Write one message and send it to everybody ticked, personalised per row.
+    """Write one message and send it to many people, personalised per row.
 
-    Two deliberate properties, both of which exist because this is the screen
+    Three deliberate properties, all of which exist because this is the screen
     that can annoy the most people at once:
 
       * **The recipients are listed by name and address before anything is
@@ -704,6 +728,11 @@ def collection_email_many(request, slug):
       * **Each message is rendered per recipient**, so `{{ first_name }}` is
         their name and `{{ resume_link }}` is their own link. It is one message
         written once, not one message shared.
+      * **Anyone already written to is held back by default**, and shown rather
+        than hidden. The team is seven people and the list outlives any one of
+        them, so "have we already nudged this person" cannot live in somebody's
+        memory. Including them again is one tick, which is the right amount of
+        friction for a thing that is occasionally correct.
 
     Rows with no email address are dropped and named, rather than silently
     skipped, because "I sent it to everyone" needs to be true or corrected.
@@ -713,28 +742,48 @@ def collection_email_many(request, slug):
     from submissions.services import send_to_applicant
 
     collection = _mailable(slug)
-    pks = [int(p) for p in request.POST.getlist("pks") or request.GET.getlist("pks")
-           if p.isdigit()]
-    rows = list(collection.queryset().filter(pk__in=pks))
+    qs, whole_list = bulk_selection(request, collection)
+    # Pinned to a list here, before anybody is shown a recipient list. With
+    # "everyone" that queryset is live, and a draft saved between choosing and
+    # sending would otherwise join the send without appearing on the screen the
+    # sender checked.
+    rows = list(qs)
     if not rows:
         messages.error(request, "Nothing was ticked.")
         return redirect(collection.url())
 
+    stamp = collection.email_stamp_field
     with_email = [r for r in rows if (getattr(r, "email", "") or "").strip()]
     without = [str(r) for r in rows if not (getattr(r, "email", "") or "").strip()]
+
+    def already_written_to(row):
+        return bool(stamp and getattr(row, stamp, None))
+
+    again = bool(request.POST.get("again") or request.GET.get("again"))
+    repeats = [r for r in with_email if already_written_to(r)]
+    recipients = with_email if again else [
+        r for r in with_email if not already_written_to(r)]
 
     if request.method == "POST" and request.POST.get("send"):
         form = ApplicantEmailForm(request.POST)
         if form.is_valid():
             sent, failed = [], []
-            for row in with_email:
+            for row in recipients:
                 context = mailmerge.context_for(row)
                 ok = send_to_applicant(
                     (row.email or "").strip(),
                     mailmerge.render(form.cleaned_data["subject"], context),
                     mailmerge.render(form.cleaned_data["body"], context),
-                    obj=row, stamp_field=collection.email_stamp_field)
-                (sent if ok else failed).append(str(row))
+                    obj=row, stamp_field=stamp)
+                (sent if ok else failed).append(row)
+
+            # Marked after the loop and only for the ones that actually went. A
+            # "followed up" tick against somebody the mail server refused is
+            # worse than no tick: it is a person nobody will look at again.
+            if sent and request.POST.get("mark") and collection.review_field:
+                collection.model._default_manager.filter(
+                    pk__in=[r.pk for r in sent]
+                ).update(**{collection.review_field: True})
 
             if sent:
                 messages.success(request, f"Sent to {len(sent)} "
@@ -742,13 +791,14 @@ def collection_email_many(request, slug):
             if failed:
                 # Named, not counted: a failure the team cannot identify is one
                 # they cannot retry.
-                messages.error(request, "Could not send to: " + "; ".join(failed[:20]))
+                messages.error(request, "Could not send to: "
+                               + "; ".join(str(r) for r in failed[:20]))
             if not failed:
                 return redirect(collection.url())
     else:
         chosen = None
-        if request.POST.get("template") or request.GET.get("template"):
-            want = request.POST.get("template") or request.GET.get("template")
+        want = request.POST.get("template") or request.GET.get("template")
+        if want:
             chosen = EmailTemplate.objects.filter(pk=want).first()
         # Unrendered on purpose: the placeholders are the point on this screen,
         # because one body serves many people. The preview below shows what the
@@ -759,14 +809,20 @@ def collection_email_many(request, slug):
         })
 
     preview = None
-    if with_email:
-        first = with_email[0]
+    if recipients:
+        first = recipients[0]
         preview = {"who": str(first), "context": mailmerge.context_for(first)}
 
     return render(request, "staff/email_many.html", shell(
-        request, page_title=f"Email {len(with_email)} people",
+        request, page_title=f"Email {len(recipients)} people",
         nav=collection.slug, c=collection, form=form,
-        rows=with_email, without=without, preview=preview,
+        rows=recipients, without=without, repeats=repeats, again=again,
+        whole_list=whole_list, preview=preview,
+        # "Followed up" on unfinished drafts, "Reviewed" on applications. The
+        # column already carries the word the team uses; inventing a second one
+        # here is how a checkbox ends up describing a different tick.
+        mark_label=next((col.heading for col in collection.columns
+                         if col.name == collection.review_field), "reviewed"),
         templates=list(EmailTemplate.objects.all()),
         tokens=mailmerge.catalogue(),
         pks=[r.pk for r in rows],
@@ -786,7 +842,7 @@ def collection_export(request, slug):
     if not collection.export:
         raise Http404("This collection is not exportable.")
 
-    qs, query, selected = apply_filters(collection.queryset(), collection, request)
+    qs, query, selected = apply_filters(collection.queryset(), collection, request.GET)
 
     fields = [f for f in collection.model._meta.fields
               if f.name not in ("acknowledged_at",)]

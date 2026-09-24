@@ -7,12 +7,14 @@ stamp behind, that a resumed draft updates the row it came from instead of
 forking a second one, and that nothing sends on a GET.
 """
 import datetime as dt
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.signing import TimestampSigner
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from submissions.models import EmbarkApplication, PartialApplication
 
@@ -202,3 +204,125 @@ class MailTheTickedTests(TestCase):
         response = self.client.post(reverse("staff:email_many", args=["team"]),
                                     {"pks": [1]})
         self.assertEqual(response.status_code, 404)
+
+
+@SSL_REDIRECT_OFF
+@LOCMEM
+class WriteToEveryoneTests(TestCase):
+    """"Everyone", as opposed to "the thirty rows currently on screen"."""
+
+    def setUp(self):
+        mail.outbox = []
+        a_staff_user(self.client)
+        self.url = reverse("staff:email_many", kwargs={"slug": "unfinished"})
+        self.list_url = reverse("staff:list", kwargs={"slug": "unfinished"})
+
+    def drafts(self, n, **kwargs):
+        return [a_draft(draft_id=f"d{i}", email=f"p{i}@example.com",
+                        name=f"Person {i}", **kwargs) for i in range(n)]
+
+    # ------------------------------------------------------------- selection
+    def test_apply_to_all_reaches_rows_that_were_never_ticked(self):
+        self.drafts(5)
+        response = self.client.post(self.url, {"all": "1", "next": self.list_url})
+        self.assertEqual(len(response.context["rows"]), 5)
+
+    def test_apply_to_all_means_the_list_as_filtered_not_the_whole_table(self):
+        """The set someone means by "everyone" is the one in front of them."""
+        self.drafts(3)
+        a_draft(draft_id="odd", email="zed@example.com", name="Zed Findable")
+        response = self.client.post(
+            self.url, {"all": "1", "next": self.list_url + "?q=Findable"})
+        names = [str(r) for r in response.context["rows"]]
+        self.assertEqual(len(names), 1)
+        self.assertIn("Zed", names[0])
+
+    def test_without_apply_to_all_only_the_ticked_rows_are_used(self):
+        rows = self.drafts(4)
+        response = self.client.post(self.url, {"pks": [rows[0].pk, rows[1].pk]})
+        self.assertEqual(len(response.context["rows"]), 2)
+
+    def test_a_crafted_filter_name_cannot_become_a_queryset_lookup(self):
+        self.drafts(2)
+        response = self.client.post(
+            self.url, {"all": "1", "next": self.list_url + "?draft_id=d0"})
+        # draft_id is not in the collection's declared filters, so it is ignored
+        # rather than applied.
+        self.assertEqual(len(response.context["rows"]), 2)
+
+    # --------------------------------------------------------- not twice
+    def test_people_already_written_to_are_held_back_by_default(self):
+        fresh = a_draft(draft_id="new", email="new@example.com", name="New Person")
+        done = a_draft(draft_id="old", email="old@example.com", name="Old Person",
+                       nudge_sent_at=timezone.now())
+        response = self.client.post(self.url, {"all": "1", "next": self.list_url})
+        self.assertEqual([r.pk for r in response.context["rows"]], [fresh.pk])
+        self.assertEqual([r.pk for r in response.context["repeats"]], [done.pk])
+
+    def test_the_held_back_are_shown_not_hidden(self):
+        """Ticking "include them" must not send to names nobody has seen."""
+        a_draft(draft_id="old", email="old@example.com", name="Old Person",
+                nudge_sent_at=timezone.now())
+        a_draft(draft_id="new", email="new@example.com", name="New Person")
+        page = self.client.post(self.url, {"all": "1", "next": self.list_url})
+        self.assertContains(page, "old@example.com")
+
+    def test_ticking_again_includes_them(self):
+        a_draft(draft_id="old", email="old@example.com", name="Old Person",
+                nudge_sent_at=timezone.now())
+        a_draft(draft_id="new", email="new@example.com", name="New Person")
+        response = self.client.post(
+            self.url, {"all": "1", "next": self.list_url, "again": "1"})
+        self.assertEqual(len(response.context["rows"]), 2)
+
+    def test_a_send_skips_the_already_written_to(self):
+        a_draft(draft_id="old", email="old@example.com", name="Old Person",
+                nudge_sent_at=timezone.now())
+        fresh = a_draft(draft_id="new", email="new@example.com", name="New Person")
+        self.client.post(self.url, {
+            "pks": [fresh.pk, PartialApplication.objects.get(draft_id="old").pk],
+            "send": "1", "subject": "Finish your application", "body": "Hello"})
+        self.assertEqual([m.to[0] for m in mail.outbox], ["new@example.com"])
+
+    # ------------------------------------------------------------- marking
+    def test_marking_ticks_everyone_the_message_reached(self):
+        rows = self.drafts(3)
+        self.client.post(self.url, {
+            "pks": [r.pk for r in rows], "send": "1", "mark": "1",
+            "subject": "Finish your application", "body": "Hello"})
+        self.assertEqual(
+            PartialApplication.objects.filter(reviewed=True).count(), 3)
+
+    def test_without_the_tick_nothing_is_marked(self):
+        rows = self.drafts(2)
+        self.client.post(self.url, {
+            "pks": [r.pk for r in rows], "send": "1",
+            "subject": "Finish your application", "body": "Hello"})
+        self.assertEqual(
+            PartialApplication.objects.filter(reviewed=True).count(), 0)
+
+    def test_a_failed_send_is_never_marked(self):
+        """A "followed up" tick on somebody nothing reached is worse than none:
+        it is a person nobody will look at again."""
+        rows = self.drafts(2)
+        with mock.patch("submissions.services.send_to_applicant", return_value=False):
+            self.client.post(self.url, {
+                "pks": [r.pk for r in rows], "send": "1", "mark": "1",
+                "subject": "Finish your application", "body": "Hello"})
+        self.assertEqual(
+            PartialApplication.objects.filter(reviewed=True).count(), 0)
+
+    # --------------------------------------------------------- bulk marking
+    def test_mark_reviewed_can_cover_the_whole_filtered_list(self):
+        self.drafts(4)
+        self.client.post(reverse("staff:bulk", kwargs={"slug": "unfinished"}),
+                         {"action": "review", "all": "1", "next": self.list_url})
+        self.assertEqual(
+            PartialApplication.objects.filter(reviewed=True).count(), 4)
+
+    def test_nothing_ticked_and_no_all_is_refused_rather_than_applied(self):
+        self.drafts(3)
+        self.client.post(reverse("staff:bulk", kwargs={"slug": "unfinished"}),
+                         {"action": "review", "next": self.list_url})
+        self.assertEqual(
+            PartialApplication.objects.filter(reviewed=True).count(), 0)

@@ -1,15 +1,22 @@
 {% extends "staff/manage_base.html" %}
 {% block main %}
 {% comment %}
-  One message, written once, sent to everybody ticked.
+  One message, written once, sent to many people.
 
   Unlike the single-recipient page, the box here holds the placeholders
   unsubstituted - it has to, because one body serves many people. So this page
-  owes the writer two things that page does not:
+  owes the writer three things that page does not:
 
     * the full recipient list, by name and address, before anything is sent;
     * a worked preview of what the first person will actually receive, so the
-      placeholders can be checked against a real row rather than imagined.
+      placeholders can be checked against a real row rather than imagined;
+    * everyone who is being HELD BACK, and why. People already written to are
+      excluded by default, and listing them beside the recipients is what keeps
+      "send to everyone" from quietly meaning something narrower.
+
+  Both lists are on screen at once on purpose. The "include them" tick only
+  takes effect on send, so if the excluded names were hidden, ticking it would
+  send to people the sender had never seen.
 
   Sending needs the `send` button specifically, so neither choosing a template
   nor reloading the page can post the message.
@@ -22,6 +29,10 @@
     <p class="staff-head-sub">
       One message, personalised for each person and sent individually. Nobody
       sees anyone else's address.
+      {% if whole_list %}
+      <span class="head-where">Everyone in the list as you had it filtered, not
+        just one page.</span>
+      {% endif %}
     </p>
   </div>
   <div class="head-actions">
@@ -31,14 +42,20 @@
 
 {% if without %}
 <p class="staff-caveat">
-  {{ without|length }} of the rows you ticked have no email address and will be
+  {{ without|length }} of the rows you picked have no email address and will be
   left out: {{ without|join:", "|truncatechars:300 }}
 </p>
 {% endif %}
 
 {% if not rows %}
 <div class="card empty-card">
-  <p class="empty-lead">None of the ticked rows has an email address.</p>
+  <p class="empty-lead">
+    {% if repeats and not again %}
+    Everyone you picked has already been written to.
+    {% else %}
+    None of the rows you picked has an email address.
+    {% endif %}
+  </p>
   <p><a class="staff-btn staff-btn-quiet" href="{{ c.url }}">Back to the list</a></p>
 </div>
 {% else %}
@@ -49,6 +66,7 @@
     {% if templates %}
     <form method="get" class="filter-bar">
       {% for pk in pks %}<input type="hidden" name="pks" value="{{ pk }}">{% endfor %}
+      {% if again %}<input type="hidden" name="again" value="1">{% endif %}
       <div class="filter-pick">
         <label for="template">Start from a saved template</label>
         <select id="template" name="template">
@@ -84,6 +102,49 @@
           {% for error in field.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
         </div>
         {% endfor %}
+      </section>
+
+      <section class="card form-block">
+        <h2>Before you send</h2>
+
+        {% if c.review_field %}
+        <div class="staff-field field-check">
+          <div class="check-row">
+            <input type="checkbox" name="mark" id="mark-them" value="1" checked
+                   class="staff-check">
+            <label for="mark-them">
+              Mark everyone this reaches as “{{ mark_label|lower }}”
+            </label>
+          </div>
+          <p class="field-help">
+            Only the people the message actually reached are marked. Anyone the
+            mail server refuses is left untouched, so they stay visible to
+            whoever looks next.
+          </p>
+        </div>
+        {% endif %}
+
+        {% if repeats %}
+        <div class="staff-field field-check">
+          <div class="check-row">
+            <input type="checkbox" name="again" id="again" value="1"
+                   {% if again %}checked{% endif %} class="staff-check">
+            <label for="again">
+              Also write to the {{ repeats|length }} who have already had one
+            </label>
+          </div>
+          <p class="field-help">
+            They are listed on the right. Leave this unticked and they are
+            skipped.
+          </p>
+        </div>
+        {% endif %}
+
+        <p class="chart-note">
+          This sends to <strong>{{ rows|length }}</strong>
+          {{ c.count_label|default:"people" }}{% if repeats and not again %},
+          and to {{ repeats|length }} more if you tick the box above{% endif %}.
+        </p>
 
         <div class="form-actions">
           {% comment %} The name is what the view checks, so a stray Enter in the subject
@@ -135,6 +196,32 @@
         </table>
       </div>
     </section>
+
+    {% if repeats %}
+    <section class="card">
+      <h2>Already written to: {{ repeats|length }}</h2>
+      <p class="chart-note">
+        {% if again %}
+        Included, because you ticked the box. They will get a second message.
+        {% else %}
+        Skipped. Tick the box on the left to include them anyway.
+        {% endif %}
+      </p>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th scope="col">Name</th><th scope="col">Email</th></tr></thead>
+          <tbody>
+            {% for r in repeats %}
+            <tr>
+              <th scope="row">{{ r.name|default:"- no name -" }}</th>
+              <td>{{ r.email }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
   </div>
 </div>
 
