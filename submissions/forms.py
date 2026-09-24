@@ -2,6 +2,8 @@ from datetime import date
 from urllib.parse import urlparse
 
 from django import forms
+from django.db import IntegrityError, transaction
+from django.db.models.functions import Lower, Trim
 
 from core.countries import country_choices, dial_code_choices
 
@@ -183,6 +185,35 @@ class NewsletterForm(forms.ModelForm):
 
 class EmbarkApplicationForm(SectionedFormMixin, BaseStyledForm):
     """The three-section Embark application."""
+
+    DUPLICATE_EMAIL = "An application has already been submitted with this email address. Contact the Foundation if you need to correct it."
+
+    def clean_email(self):
+        from .applicants import normalized_email
+        email = normalized_email(self.cleaned_data["email"])
+        existing = models.EmbarkApplication.objects.annotate(
+            email_key=Lower(Trim("email"))).filter(email_key=email)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        if existing.exists():
+            raise forms.ValidationError(self.DUPLICATE_EMAIL)
+        return email
+
+    def save(self, commit=True):
+        if not commit or self.instance.pk:
+            return super().save(commit=commit)
+        email = self.cleaned_data["email"]
+        try:
+            with transaction.atomic():
+                application = super().save()
+                # The unique reservation handles simultaneous valid POSTs too.
+                models.ApplicationEmailIdentity.objects.create(
+                    email=email, application=application)
+                return application
+        except IntegrityError:
+            if models.ApplicationEmailIdentity.objects.filter(email=email).exists():
+                raise forms.ValidationError(self.DUPLICATE_EMAIL)
+            raise
 
     SECTIONS = [
         ("Section A - About the applicant",

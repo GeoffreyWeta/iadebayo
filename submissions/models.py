@@ -322,6 +322,12 @@ class EmbarkApplication(TimestampedSubmission, DiallingCodeMixin,
         return ", ".join(picked)
 
 
+class ApplicationEmailIdentity(models.Model):
+    """Reserve an email for public submissions without deleting legacy duplicates."""
+    email = models.EmailField(unique=True)
+    application = models.OneToOneField(EmbarkApplication, on_delete=models.CASCADE)
+
+
 class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
     """An Embark application that was typed but never submitted.
 
@@ -398,6 +404,14 @@ class PartialApplication(TimestampedSubmission, DiallingCodeMixin):
     @property
     def is_complete(self):
         return self.completed_at is not None
+
+    @property
+    def business_sector_display(self):
+        sector = self.answers.get("business_sector", "")
+        if not isinstance(sector, str):
+            return "Not provided"
+        sector = sector.strip()
+        return dict(EmbarkApplication.SECTOR_CHOICES).get(sector, sector or "Not provided")
 
     @property
     def was_nudged(self):

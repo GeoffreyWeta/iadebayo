@@ -1,35 +1,21 @@
 {% load static %}<!DOCTYPE html>
 <html lang="en">
-{% comment %}
-  Shell for the staff area. Deliberately NOT extending base.html: the marketing
-  chrome - nav, footer, promo modal, the floating Apply pill - is all wrong on a
-  working dashboard, and base.html's context (page_meta, newsletter form, promo)
-  comes from the public views.
 
-  site.css still loads first, for two reasons: the brand tokens and type live
-  there, and so does the scroll-reveal machinery, so dashboard cards animate
-  through the same system the public pages use rather than a second copy of it.
-  staff.css is the layer on top. Same for site.js - its nav/promo/pill sections
-  no-op with none of that markup present, and section 3 gives us the reveals.
-{% endcomment %}
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#821417">
+  <meta name="theme-color" content="#ffffff">
   <meta name="color-scheme" content="light">
   {# Applicant data behind this login must never reach an index or a cache. #}
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <script>document.documentElement.classList.add('js');</script>
   <title>{{ page_title }} - {{ SITE_NAME }} staff</title>
   <link rel="icon" href="{% static 'img/favicon.png' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <link rel="stylesheet" href="{% static 'css/staff.css' %}">
   {% comment %} The management layer: the nav rail, list tables, forms. Loaded after
      staff.css because it builds on that file's tokens and its .card. {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/staff-admin.css' %}">
+  <link rel="stylesheet" href="{% static 'css/staff-workspace.css' %}">
 </head>
 <body class="staff-body {% block body_class %}{% endblock %}">
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -37,7 +23,7 @@
 <header class="staff-bar">
   <div class="staff-bar-inner">
     <a class="staff-brand" href="{% url 'staff:home' %}">
-      <img src="{% static 'img/mark-white.png' %}" alt="" onerror="this.style.display='none'">
+      <img src="{% static 'img/favicon.png' %}" alt="" onerror="this.style.display='none'">
       <span>iAdebayo <em>Foundation</em></span>
       <span class="staff-tag">Staff</span>
     </a>
@@ -75,7 +61,6 @@
 
 <main id="main">{% block content %}{% endblock %}</main>
 
-<script src="{% static 'js/site.js' %}" defer></script>
 <script src="{% static 'js/staff.js' %}" defer></script>
 <script src="{% static 'js/staff-admin.js' %}" defer></script>
 </body>

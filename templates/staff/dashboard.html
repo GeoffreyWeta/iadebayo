@@ -12,10 +12,9 @@
 <header class="staff-head">
   <div>
     <p class="staff-eyebrow">{{ today|date:"l j F Y" }}</p>
-    <h1>Welcome{% if user.get_short_name %}, {{ user.get_short_name }}{% endif %}</h1>
+    <h1>Dashboard</h1>
     <p class="staff-head-sub">
-      Everything the public site shows is edited from here. Changes go live
-      immediately - there is no separate publish step.
+      Review submissions and manage the Foundation website.
     </p>
   </div>
   <div class="head-actions">
@@ -25,7 +24,7 @@
 </header>
 
 {# ------------------------------------------------------------- what is waiting #}
-<h2 class="staff-section-h">Waiting for the team</h2>
+<h2 class="staff-section-h">Review queue</h2>
 <div class="wait-grid">
   {% for w in waiting %}
   <a class="card wait-card reveal{% if w.pending %} has-pending{% endif %}" href="{{ w.c.url }}">
@@ -33,7 +32,7 @@
     {% if w.c.review_field %}
     <p class="wait-value">{{ w.pending }}</p>
     <p class="wait-foot">
-      {% if w.pending %}awaiting review{% else %}all caught up{% endif %}
+      {% if w.pending %}awaiting review{% else %}up to date{% endif %}
       · {{ w.total }} in total
     </p>
     {% else %}
@@ -45,7 +44,7 @@
 </div>
 
 {# ------------------------------------------------------- what the public sees #}
-<h2 class="staff-section-h">Live on the site right now</h2>
+<h2 class="staff-section-h">Website status</h2>
 <div class="grid-2">
 
   <section class="card reveal">
@@ -59,19 +58,19 @@
         <p class="chart-note">
           Button “{{ promo.link_label }}” → {{ promo.link_href }}<br>
           {% if promo.ends_at %}Runs until {{ promo.ends_at|date:"j M Y, H:i" }}.
-          {% else %}Runs until someone unticks Active.{% endif %}
+          {% else %}Active until disabled.{% endif %}
         </p>
         <p><a class="staff-btn staff-btn-quiet" href="{% url 'staff:edit' 'promos' promo.pk %}">Edit this campaign</a></p>
       </div>
     </div>
     {% else %}
-    <p class="chart-note">No popup is showing. Nothing interrupts a visitor.</p>
-    <p><a class="staff-btn staff-btn-quiet" href="{% url 'staff:new' 'promos' %}">Set one up</a></p>
+    <p class="chart-note">No campaign popup is active.</p>
+    <p><a class="staff-btn staff-btn-quiet" href="{% url 'staff:new' 'promos' %}">Create campaign</a></p>
     {% endif %}
   </section>
 
   <section class="card reveal">
-    <h2>Worth a look</h2>
+    <h2>Content checks</h2>
     {% if flags %}
     <ul class="flag-list">
       {% for f in flags %}
@@ -82,9 +81,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    <p class="chart-note">Nothing is hidden or half-finished - every blog post is
-      published, every alumnus has consent on file, and no faculty member is
-      switched off.</p>
+    <p class="chart-note">No content issues to review.</p>
     {% endif %}
   </section>
 </div>
@@ -94,7 +91,7 @@
   <div class="chart-head">
     <div>
       <h2>Latest applications</h2>
-      <p class="chart-note">Newest first. Open one to read everything they sent.</p>
+      <p class="chart-note">Recent submissions, newest first.</p>
     </div>
     <a class="staff-btn staff-btn-quiet" href="{% url 'staff:list' 'applications' %}">All applications →</a>
   </div>
@@ -125,7 +122,7 @@
 </section>
 
 {# --------------------------------------------------------------- what you edit #}
-<h2 class="staff-section-h">Everything you can change</h2>
+<h2 class="staff-section-h">Manage content</h2>
 <div class="content-grid">
   {% for row in content_rows %}
   <a class="card content-card reveal" href="{{ row.c.url }}">
@@ -137,11 +134,6 @@
   {% endfor %}
 </div>
 
-<p class="staff-foot">
-  Everything here writes straight to the live database, so a change is public the
-  moment you save it. There is no draft state except the one the content itself
-  has - an unpublished blog post, a faculty member switched off, a promo popup
-  that is not active.
-</p>
+<p class="staff-foot">Changes to published content appear on the website as soon as you save.</p>
 
 {% endblock %}

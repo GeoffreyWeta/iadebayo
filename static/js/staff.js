@@ -1,21 +1,7 @@
-/* ============================================================
-   IADEBAYO Foundation - staff area enhancements
-
-   Same contract as site.js: everything here is additive. The dashboard is fully
-   drawn by the server (see core/analytics.py - geometry is computed in Python
-   and rendered as inline SVG), so with this file blocked you lose the crosshair
-   read-out, the count-up and the password toggle, and nothing else.
-
-   Reveal animations are NOT here - they ride on site.js section 3, which the
-   staff shell already loads.
-
-   Sections: 1. password reveal · 2. plot crosshair + tooltip · 3. count-up
-   ============================================================ */
+/* Password visibility and chart interaction for the staff workspace. */
 (function () {
   "use strict";
 
-  var REDUCED = window.matchMedia &&
-                window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ============================================ 1. password reveal */
   /* Injected rather than shipped in the template: a "Show" button that cannot
@@ -112,39 +98,4 @@
     window.addEventListener("resize", hide);
   });
 
-  /* ============================================ 3. tile count-up */
-  /* The final number is already in the HTML - this replaces it for the length of
-     the animation only, so a failure here (or reduced motion, or no
-     IntersectionObserver) leaves the correct figure on screen. */
-  if (!REDUCED && "IntersectionObserver" in window) {
-    var tiles = [].slice.call(document.querySelectorAll(".tile-value"));
-
-    var countUp = function (el) {
-      var target = parseInt(el.textContent.replace(/[^\d-]/g, ""), 10);
-      if (!isFinite(target) || target <= 0) return;
-      var DURATION = 900;
-      var started = null;
-      var final = el.textContent;
-
-      function frame(now) {
-        if (started === null) started = now;
-        var t = Math.min((now - started) / DURATION, 1);
-        // easeOutExpo, to match the CSS the bars animate with.
-        var eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
-        el.textContent = Math.round(target * eased);
-        if (t < 1) requestAnimationFrame(frame);
-        else el.textContent = final;          // restore any formatting verbatim
-      }
-      requestAnimationFrame(frame);
-    };
-
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        io.unobserve(e.target);
-        countUp(e.target);
-      });
-    }, { threshold: 0.5 });
-    tiles.forEach(function (el) { io.observe(el); });
-  }
 })();

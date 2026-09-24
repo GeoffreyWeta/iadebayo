@@ -50,9 +50,9 @@ class RegistryTests(TestCase):
             names = {f.name for f in c.model._meta.get_fields()}
             with self.subTest(collection=c.slug):
                 for col in c.columns:
-                    self.assertIn(col.name, names,
-                                  f"{c.slug} lists a column {col.name!r} the model "
-                                  f"does not have")
+                    self.assertTrue(col.name in names or
+                                    isinstance(getattr(c.model, col.name, None), property),
+                                    f"{c.slug} lists an unknown field/property {col.name!r}")
                 for field in c.form_fields:
                     self.assertIn(field, names,
                                   f"{c.slug} puts {field!r} on its form, but the "
@@ -360,4 +360,4 @@ class DashboardTests(TestCase):
             applications_close=dt.date(2027, 4, 15),
             notify_from=dt.date(2027, 4, 20), notify_to=dt.date(2027, 5, 1))
         response = self.client.get(reverse("staff:home"))
-        self.assertContains(response, "Nothing is hidden or half-finished")
+        self.assertContains(response, "No content issues to review.")

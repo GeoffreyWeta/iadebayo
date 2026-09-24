@@ -92,7 +92,7 @@ class StaffAccessTests(TestCase):
         self.sign_in("staffer", is_staff=True)
         response = self.client.get(reverse("staff:home"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Waiting for the team")
+        self.assertContains(response, "Review queue")
 
     def test_dashboard_is_not_indexable_or_cacheable(self):
         self.sign_in("staffer", is_staff=True)

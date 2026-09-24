@@ -159,6 +159,10 @@ class PartialApplicationAdmin(admin.ModelAdmin):
     "you were nearly there" note - see models.PartialApplication.
     """
 
+    def get_queryset(self, request):
+        from .applicants import unfinished_applicants
+        return unfinished_applicants(super().get_queryset(request))
+
     list_display = ("who", "email", "phone_display", "business_name", "country",
                     "furthest_step", "updated_at", "status")
     list_filter = ("furthest_step", "reviewed", "country", "updated_at")
@@ -205,20 +209,22 @@ class PartialApplicationAdmin(admin.ModelAdmin):
 
     @admin.action(description="Export selected to CSV (for a follow-up mail-out)")
     def export_csv(self, request, queryset):
+        from .applicants import unfinished_applicants
+        queryset = unfinished_applicants(queryset)
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = \
             'attachment; filename="unfinished-embark-applications.csv"'
         writer = csv.writer(response)
         writer.writerow(["Name", "Email", "Phone", "Business", "Institution",
                          "Country", "City", "Furthest step", "Started", "Last typed",
-                         "Finished later"])
+                         "Finished later", "Business sector"])
         for row in queryset:
             writer.writerow([
                 row.name, row.email, row.phone_display, row.business_name,
                 row.institution, row.country, row.city, row.furthest_step,
                 row.created_at.strftime("%Y-%m-%d %H:%M"),
                 row.updated_at.strftime("%Y-%m-%d %H:%M"),
-                "yes" if row.is_complete else "no"])
+                "yes" if row.is_complete else "no", row.business_sector_display])
         return response
 
     @admin.action(description="Mark selected as followed up")

@@ -24,6 +24,16 @@
 (function () {
   "use strict";
 
+  // Native details remains usable when JavaScript is unavailable.
+  var rail = document.querySelector(".staff-rail");
+  if (rail && window.matchMedia) {
+    var narrow = window.matchMedia("(max-width: 1000px)");
+    var syncRail = function () { rail.open = !narrow.matches; };
+    syncRail();
+    narrow.addEventListener("change", syncRail);
+  }
+
+
   /* ============================================ 1. filter auto-submit */
   document.querySelectorAll("[data-autosubmit]").forEach(function (select) {
     select.addEventListener("change", function () {

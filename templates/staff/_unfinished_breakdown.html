@@ -1,0 +1,21 @@
+<section class="card" aria-labelledby="unfinished-summary-title">
+  <h2 id="unfinished-summary-title">Unfinished applicant breakdown</h2>
+  <p class="chart-note">{{ unfinished_breakdown.total }} records matching the current filters. Completed applicants are excluded. Where an email appears more than once, only the latest draft is counted. Country is the applicant's reported country, not verified nationality.</p>
+  {% if unfinished_breakdown.missing_email %}<p class="chart-note">{{ unfinished_breakdown.missing_email }} records have no email and are counted separately; these may include repeat applicants.</p>{% endif %}
+  <div class="grid-2">
+    <div class="table-scroll">
+      <table class="data-table">
+        <caption>Business sectors</caption>
+        <thead><tr><th scope="col">Sector</th><th scope="col">Applicants</th><th scope="col">Share</th></tr></thead>
+        <tbody>{% for row in unfinished_breakdown.sectors %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.count }}</td><td>{{ row.percent }}%</td></tr>{% empty %}<tr><td colspan="3">No unfinished applicants.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <caption>Countries</caption>
+        <thead><tr><th scope="col">Country</th><th scope="col">Applicants</th><th scope="col">Share</th></tr></thead>
+        <tbody>{% for row in unfinished_breakdown.countries %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.count }}</td><td>{{ row.percent }}%</td></tr>{% empty %}<tr><td colspan="3">No unfinished applicants.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+</section>

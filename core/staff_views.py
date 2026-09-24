@@ -160,7 +160,7 @@ def _distinct_values(collection, name):
     fortieth country it should stop growing rather than become unusable. The
     cheaper alternative - no filter at all - costs more.
     """
-    qs = collection.model._default_manager.exclude(**{f"{name}__isnull": True})
+    qs = collection.queryset().exclude(**{f"{name}__isnull": True})
     if isinstance(_field(collection.model, name), dj.CharField):
         qs = qs.exclude(**{name: ""})
     values = qs.values_list(name, flat=True).distinct().order_by(name)[:40]
@@ -300,7 +300,7 @@ def shell(request, **extra):
         for c in staff_content.in_section(key):
             badge = 0
             if c.review_field:
-                badge = c.model._default_manager.filter(**{c.review_field: False}).count()
+                badge = c.queryset().filter(**{c.review_field: False}).count()
             items.append({"c": c, "badge": badge})
         sections.append({"key": key, "title": title, "note": note, "items": items})
 
@@ -319,8 +319,8 @@ def dashboard(request):
     """
     waiting = []
     for c in staff_content.in_section("inbox"):
-        total = c.model._default_manager.count()
-        pending = (c.model._default_manager.filter(**{c.review_field: False}).count()
+        total = c.queryset().count()
+        pending = (c.queryset().filter(**{c.review_field: False}).count()
                    if c.review_field else 0)
         waiting.append({"c": c, "total": total, "pending": pending})
     waiting.sort(key=lambda r: (-r["pending"], r["c"].label))
@@ -390,10 +390,15 @@ def collection_list(request, slug):
 
     paginator = Paginator(qs, collection.per_page)
     page = paginator.get_page(request.GET.get("page"))
+    breakdown = None
+    if slug == "unfinished":
+        from submissions.applicants import unfinished_breakdown
+        breakdown = unfinished_breakdown(qs)
 
     return render(request, "staff/collection_list.html", shell(
         request,
         page_title=collection.label, nav=collection.slug, c=collection,
+        unfinished_breakdown=breakdown,
         page=page, rows=[row_for(o, collection) for o in page.object_list],
         total=paginator.count, total_label=collection.count_label(paginator.count),
         query=query, pages=page_links(request, page),
@@ -710,7 +715,7 @@ def collection_email_many(request, slug):
     collection = _mailable(slug)
     pks = [int(p) for p in request.POST.getlist("pks") or request.GET.getlist("pks")
            if p.isdigit()]
-    rows = list(collection.model._default_manager.filter(pk__in=pks))
+    rows = list(collection.queryset().filter(pk__in=pks))
     if not rows:
         messages.error(request, "Nothing was ticked.")
         return redirect(collection.url())
@@ -796,7 +801,8 @@ def collection_export(request, slug):
     response.write("﻿")
 
     writer = csv.writer(response)
-    writer.writerow([f.verbose_name.capitalize() for f in fields])
+    extra_headers = ["Business sector"] if slug == "unfinished" else []
+    writer.writerow([f.verbose_name.capitalize() for f in fields] + extra_headers)
     for obj in qs.iterator(chunk_size=500):
         row = []
         for field in fields:
@@ -810,6 +816,8 @@ def collection_export(request, slug):
             elif hasattr(value, "tzinfo") and value.tzinfo is not None:
                 value = timezone.localtime(value).strftime("%Y-%m-%d %H:%M")
             row.append("" if value is None else str(value))
+        if slug == "unfinished":
+            row.append(obj.business_sector_display)
         writer.writerow(row)
     return response
 
@@ -896,7 +904,7 @@ def collection_email(request, slug, pk):
     from submissions.services import send_to_applicant
 
     collection = _mailable(slug)
-    obj = get_object_or_404(collection.model, pk=pk)
+    obj = get_object_or_404(collection.queryset(), pk=pk)
     to_email = (getattr(obj, "email", "") or "").strip()
     already = getattr(obj, collection.email_stamp_field, None)
 

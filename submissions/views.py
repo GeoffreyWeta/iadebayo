@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models as db_models
+from django.db.models.functions import Lower, Trim
 from django.http import (FileResponse, Http404, HttpResponse, HttpResponseBadRequest,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
@@ -37,7 +38,7 @@ def _pixel(request, event):
 
 
 def _handle(request, form_class, ack_text, notify_subject, redirect_to,
-            on_invalid=None, pixel_event=None):
+            on_invalid=None, pixel_event=None, on_saved=None):
     """Validate, save, notify.
 
     `on_invalid(form)` lets a caller re-render its page with the bound form so
@@ -51,7 +52,16 @@ def _handle(request, form_class, ack_text, notify_subject, redirect_to,
     if not verify_recaptcha(request):
         messages.error(request, RECAPTCHA_FAIL)
     elif form.is_valid():
-        obj = form.save()
+        try:
+            obj = form.save()
+        except ValidationError as error:
+            form.add_error(None, error)
+            if on_invalid is not None:
+                return on_invalid(form)
+            messages.error(request, "; ".join(error.messages))
+            return redirect(redirect_to)
+        if on_saved is not None:
+            on_saved(obj)
         name = getattr(obj, "name", "") or "friend"
         email = getattr(obj, "email", "")
         notify_team(notify_subject, f"New submission on the website:\n\n{_summary(obj)}\n\nReview it in the admin.")
@@ -143,16 +153,14 @@ def apply_embark(request):
         from core.views import apply_context
         return render(request, "core/apply.html", apply_context(form))
 
-    before = models.EmbarkApplication.objects.count()
     # SubmitApplication, not Lead: this is the conversion the ads are actually
     # buying, and keeping it distinct from the other forms is what makes the
     # cost-per-application figure in Ads Manager mean anything.
     response = _handle(request, forms.EmbarkApplicationForm,
                        "applying to the Embark Entrepreneurship Academy",
                        "New Embark application", "core:apply", on_invalid=rerender,
-                       pixel_event="SubmitApplication")
-    if models.EmbarkApplication.objects.count() > before:
-        _close_partial(request)
+                       pixel_event="SubmitApplication",
+                       on_saved=lambda obj: _close_partial(request))
     return response
 
 
@@ -165,13 +173,15 @@ def _close_partial(request):
     sent is the one thing this whole feature must not cause.
     """
     draft_id = _clean_draft_id(request.POST.get("draft_id"))
-    email = (request.POST.get("email") or "").strip()
+    from .applicants import normalized_email
+    email = normalized_email(request.POST.get("email"))
     match = db_models.Q(pk__in=[])
     if draft_id:
         match |= db_models.Q(draft_id=draft_id)
     if email:
-        match |= db_models.Q(email__iexact=email)
-    models.PartialApplication.objects.filter(match, completed_at__isnull=True) \
+        match |= db_models.Q(email_key=email)
+    models.PartialApplication.objects.annotate(email_key=Lower(Trim("email"))) \
+        .filter(match, completed_at__isnull=True) \
         .update(completed_at=timezone.now())
 
 
@@ -260,6 +270,13 @@ def apply_progress(request):
     step = request.POST.get("furthest_step", "1")
     mirrored["furthest_step"] = int(step) if step.isdigit() and 0 < int(step) < 100 else 1
     mirrored["answers"] = answers
+
+    # A late autosave or a new device must not reopen a submitted applicant.
+    from .applicants import normalized_email
+    submitted = models.EmbarkApplication.objects.annotate(
+        email_key=Lower(Trim("email"))).filter(email_key=normalized_email(email))
+    if email and submitted.exists():
+        mirrored["completed_at"] = timezone.now()
 
     row, created = models.PartialApplication.objects.get_or_create(
         draft_id=draft_id, defaults=mirrored)

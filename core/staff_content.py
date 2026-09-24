@@ -153,6 +153,9 @@ class Collection:
 
     def queryset(self):
         qs = self.model._default_manager.all()
+        if self.slug == "unfinished":
+            from submissions.applicants import unfinished_applicants
+            qs = unfinished_applicants(qs)
         return qs.order_by(*self.ordering) if self.ordering else qs
 
     def url(self, name="list", **kwargs):
@@ -491,7 +494,8 @@ UNFINISHED = Collection(
     icon="◌",
     blurb="People who started an application and never sent it.",
     columns=(Col("name", "Applicant", "strong"), Col("email", "Email"),
-             Col("business_name", "Business"),
+             Col("business_name", "Business"), Col("country", "Country"),
+             Col("business_sector_display", "Sector"),
              Col("furthest_step", "Reached step", "count"),
              Col("updated_at", "Last typed", "when"),
              Col("reviewed", "Followed up", "switch")),

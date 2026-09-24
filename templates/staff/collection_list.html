@@ -40,6 +40,8 @@
   </div>
 </header>
 
+{% if unfinished_breakdown %}{% include "staff/_unfinished_breakdown.html" %}{% endif %}
+
 {% if c.note %}
 <p class="staff-caveat">{{ c.note }}</p>
 {% endif %}
