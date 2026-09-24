@@ -165,6 +165,17 @@ class SectionedFormMixin:
 
 
 class ContactForm(BaseStyledForm):
+    def clean_email(self):
+        from .applicants import normalized_email
+        return normalized_email(self.cleaned_data["email"])
+
+    def save(self, commit=True):
+        message = super().save(commit=False)
+        if not commit:
+            return message
+        from .contact_protection import save_contact
+        return save_contact(message)
+
     class Meta:
         model = models.ContactMessage
         fields = ["name", "email", "subject", "message"]

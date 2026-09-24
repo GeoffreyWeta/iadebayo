@@ -22,6 +22,7 @@ urlpatterns = [
     path("analytics/", staff.analytics_dashboard, name="analytics"),
     path("password/", staff.staff_required(
         staff.StaffPasswordChangeView.as_view()), name="password_change"),
+    path("messages/<int:pk>/sender/", staff_views.contact_sender, name="contact_sender"),
 
     # ------------------------------------------------- content and submissions
     path("c/<slug:slug>/", staff_views.collection_list, name="list"),

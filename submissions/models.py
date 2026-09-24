@@ -140,6 +140,13 @@ class ContactMessage(TimestampedSubmission):
         return f"{self.name} - {self.subject}"
 
 
+class ContactSender(models.Model):
+    """Contact-only moderation and a shared database lock for submissions."""
+    email = models.EmailField(unique=True)
+    blocked = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class NewsletterSubscriber(TimestampedSubmission):
     email = models.EmailField(unique=True)
 
