@@ -29,7 +29,10 @@
   {% for w in waiting %}
   <a class="card wait-card reveal{% if w.pending %} has-pending{% endif %}" href="{{ w.c.url }}">
     <p class="wait-label"><span class="rail-icon" aria-hidden="true">{{ w.c.icon }}</span> {{ w.c.label }}</p>
-    {% if w.c.review_field %}
+    {% if w.c.slug == 'unfinished' %}
+    <p class="wait-value">{{ w.total }}</p>
+    <p class="wait-foot">Still unfinished &middot; {{ w.followed_up }} followed up &middot; {{ w.pending }} not followed up</p>
+    {% elif w.c.review_field %}
     <p class="wait-value">{{ w.pending }}</p>
     <p class="wait-foot">
       {% if w.pending %}awaiting review{% else %}up to date{% endif %}

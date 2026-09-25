@@ -107,6 +107,25 @@ class ApplicantReconciliationTests(TestCase):
         self.assertContains(exported, "ghana@example.com")
         self.assertNotContains(exported, "nigeria@example.com")
 
+    def test_follow_up_keeps_unfinished_count_until_submission(self):
+        self.staff()
+        row = self.draft("followed-up-person", "open@example.com")
+        self.client.post(reverse("staff:bulk", args=["unfinished"]),
+                         {"pks": [row.pk], "action": "review"})
+        page = self.client.get(reverse("staff:home"))
+        queue = next(item for item in page.context["waiting"] if item["c"].slug == "unfinished")
+        badge = next(item for section in page.context["nav_sections"] for item in section["items"]
+                     if item["c"].slug == "unfinished")
+        self.assertEqual((queue["total"], queue["pending"], queue["followed_up"]), (1, 0, 1))
+        self.assertEqual(badge["badge"], 1)
+        self.assertContains(page, "Still unfinished &middot; 1 followed up &middot; 0 not followed up")
+        EmbarkApplication.objects.create(email=row.email)
+        page = self.client.get(reverse("staff:home"))
+        badge = next(item for section in page.context["nav_sections"] for item in section["items"]
+                     if item["c"].slug == "unfinished")
+        self.assertEqual(badge["badge"], 0)
+        self.assertContains(page, '0<span class="visually-hidden"> unfinished applications</span>')
+
     @patch("submissions.services.send_to_applicant")
     def test_stale_email_link_cannot_nudge_a_completed_applicant(self, send):
         self.staff()

@@ -302,7 +302,9 @@ def shell(request, **extra):
         items = []
         for c in staff_content.in_section(key):
             badge = 0
-            if c.review_field:
+            if c.slug == "unfinished":
+                badge = c.queryset().count()
+            elif c.review_field:
                 badge = c.queryset().filter(**{c.review_field: False}).count()
             items.append({"c": c, "badge": badge})
         sections.append({"key": key, "title": title, "note": note, "items": items})
@@ -325,7 +327,8 @@ def dashboard(request):
         total = c.queryset().count()
         pending = (c.queryset().filter(**{c.review_field: False}).count()
                    if c.review_field else 0)
-        waiting.append({"c": c, "total": total, "pending": pending})
+        waiting.append({"c": c, "total": total, "pending": pending,
+                        "followed_up": total - pending})
     waiting.sort(key=lambda r: (-r["pending"], r["c"].label))
 
     content_rows = [{"c": c, "total": c.model._default_manager.count()}

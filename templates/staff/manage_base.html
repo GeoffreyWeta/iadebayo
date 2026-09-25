@@ -47,8 +47,8 @@
               own words for a screen reader, because "7" on its own announces as
               a number with no noun attached to it.
             {% endcomment %}
-            {% if item.badge %}
-            <span class="rail-badge">{{ item.badge }}<span class="visually-hidden"> awaiting review</span></span>
+            {% if item.badge or item.c.slug == 'unfinished' %}
+            <span class="rail-badge">{{ item.badge }}<span class="visually-hidden">{% if item.c.slug == 'unfinished' %} unfinished applications{% else %} awaiting review{% endif %}</span></span>
             {% endif %}
           </a>
         </li>
