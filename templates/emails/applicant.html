@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Embark Entrepreneurship Academy</title></head>
+<body style="margin:0;padding:0;background:#f4f5f6;color:#252b32;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f6;"><tr><td align="center" style="padding:28px 12px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #e2e5e8;border-top:4px solid #821417;">
+      <tr><td style="padding:28px 28px 20px;border-bottom:1px solid #e2e5e8;">
+        <p style="margin:0 0 6px;font-size:12px;letter-spacing:1px;color:#821417;">IADEBAYO FOUNDATION</p>
+        <p style="margin:0;font-size:22px;font-weight:bold;line-height:1.4;">Embark Entrepreneurship Academy</p>
+      </td></tr>
+      <tr><td style="padding:28px;font-size:16px;line-height:1.7;">
+        {% for paragraph in paragraphs %}
+        <div style="margin:0 0 20px;">{% for part in paragraph %}{% if part.button %}<a href="{{ part.text }}" style="display:inline-block;padding:13px 22px;background:#821417;border:1px solid #821417;border-radius:4px;color:#ffffff;text-decoration:none;font-weight:bold;">Complete my application</a>{% elif part.bold %}<strong>{{ part.text|linebreaksbr }}</strong>{% else %}{{ part.text|linebreaksbr }}{% endif %}{% endfor %}</div>
+        {% endfor %}
+      </td></tr>
+      <tr><td style="padding:18px 28px;border-top:1px solid #e2e5e8;color:#68727e;font-size:12px;line-height:1.6;">Embark Entrepreneurship Academy &middot; IADEBAYO Foundation</td></tr>
+    </table>
+  </td></tr></table>
+</body></html>

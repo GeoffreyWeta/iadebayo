@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 
 from django.conf import settings
-from django.core.mail import EmailMessage, send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils import timezone
 
 log = logging.getLogger(__name__)
@@ -115,15 +115,18 @@ def send_to_applicant(to_email: str, subject: str, body: str, obj=None,
     a stamp written before the send would make a failed send indistinguishable
     from a delivered one, and the applicant would never be written to again.
     """
-    message = EmailMessage(
+    message = EmailMultiAlternatives(
         subject=subject,
         body=body,
         from_email=settings.EMBARK_FROM_EMAIL,
         to=[to_email],
         reply_to=[settings.EMBARK_REPLY_TO] if settings.EMBARK_REPLY_TO else None,
     )
+    from .email_presentation import applicant_email_html
+    message.attach_alternative(applicant_email_html(body, obj), "text/html")
     try:
-        message.send(fail_silently=False)
+        if message.send(fail_silently=False) != 1:
+            return False
     except Exception:
         log.exception("Applicant email failed (to=%r, subject=%r)", to_email, subject)
         return False

@@ -30,6 +30,7 @@
     <a class="staff-btn staff-btn-quiet" href="{% url 'staff:detail' c.slug obj.pk %}">← Back to the application</a>
   </div>
 </header>
+<p class="staff-caveat">Emails use the Academy's branded layout with a plain-text fallback. A valid private resume link becomes a “Complete my application” button. **Bold text** is supported.</p>
 
 <p class="detail-state">
   {% if decision == "approved" %}<span class="pill pill-good">Approved</span>

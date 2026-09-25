@@ -94,7 +94,7 @@
       <section class="card form-block">
         <h2>The message</h2>
         <p class="chart-note">
-          Placeholders are filled in per person as each message goes out.
+          Sent as a branded email with a plain-text fallback. Keep {% templatetag openvariable %} resume_link {% templatetag closevariable %} in your message: each applicant's private link becomes a “Complete my application” button. **Bold text** is supported.
         </p>
         {% for field in form %}
         <div class="staff-field{% if field.errors %} has-error{% endif %}">
