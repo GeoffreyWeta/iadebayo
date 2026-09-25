@@ -20,6 +20,7 @@ urlpatterns = [
     path("login/", staff.StaffLoginView.as_view(), name="login"),
     path("logout/", staff.StaffLogoutView.as_view(), name="logout"),
     path("analytics/", staff.analytics_dashboard, name="analytics"),
+    path("messages/<int:pk>/sender/", staff_views.contact_sender, name="contact_sender"),
     path("password/", staff.staff_required(
         staff.StaffPasswordChangeView.as_view()), name="password_change"),
 

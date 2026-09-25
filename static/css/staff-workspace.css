@@ -62,6 +62,9 @@
 .staff-body .list-card { padding: 0; }
 .staff-body .filter-bar, .staff-body .bulk-bar { border-radius: 6px; box-shadow: none; }
 .staff-body .bulk-bar { background: #eef0f3; }
+.staff-body .bulk-all { display: flex; align-items: center; gap: 10px; flex-basis: 100%; padding: 8px 0; font-size: 13px; cursor: pointer; }
+.staff-body .bulk-all input { width: 18px; height: 18px; flex: none; accent-color: var(--viz-1); }
+.staff-body [data-mail-progress]:not(:empty) { margin-top: 16px; padding: 12px; border: 1px solid var(--card-ring); border-radius: 5px; }
 .staff-body .content-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; background: #fff; border: 1px solid var(--card-ring); border-radius: 6px; padding: 0 20px; }
 .staff-body .content-card { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 16px 0; border: 0; border-bottom: 1px solid var(--card-ring); border-radius: 0; }
 .staff-body .content-name { margin: 0; font-size: 14px; font-weight: 600; }

@@ -326,3 +326,58 @@ class WriteToEveryoneTests(TestCase):
                          {"action": "review", "next": self.list_url})
         self.assertEqual(
             PartialApplication.objects.filter(reviewed=True).count(), 0)
+
+    def test_all_pages_selection_has_enabled_js_hook_and_pins_every_id(self):
+        rows = self.drafts(35)
+        listing = self.client.get(self.list_url)
+        self.assertContains(listing, 'data-select-matching data-count="35"')
+        preview = self.client.post(self.url, {"all": "1", "next": self.list_url})
+        self.assertSetEqual(set(preview.context["pks"]), {r.pk for r in rows})
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_all_previously_sent_recipients_still_show_resend_controls(self):
+        self.drafts(2, nudge_sent_at=timezone.now())
+        response = self.client.post(self.url, {"all": "1", "next": self.list_url})
+        self.assertContains(response, 'name="again"')
+        self.assertContains(response, 'data-bulk-email')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_browser_delivery_sends_one_and_marks_only_on_acceptance(self):
+        row = self.drafts(1)[0]
+        response = self.client.post(self.url, {"pks": [row.pk], "bulk_async": "1",
+            "send": "1", "mark": "1", "subject": "Hello", "body": "Continue your application"})
+        self.assertEqual(response.json(), {"sent": 1, "failed": 0, "skipped": 0})
+        row.refresh_from_db()
+        self.assertTrue(row.reviewed)
+        self.assertIsNotNone(row.nudge_sent_at)
+
+    def test_browser_delivery_rejects_more_than_one_recipient(self):
+        rows = self.drafts(2)
+        response = self.client.post(self.url, {"pks": [r.pk for r in rows], "bulk_async": "1",
+            "send": "1", "subject": "Hello", "body": "Continue"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_completed_since_preview_is_skipped_at_send_time(self):
+        row = self.drafts(1)[0]
+        row.completed_at = timezone.now()
+        row.save()
+        response = self.client.post(self.url, {"pks": [row.pk], "bulk_async": "1",
+            "send": "1", "mark": "1", "subject": "Hello", "body": "Continue"})
+        self.assertEqual(response.json()["skipped"], 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_without_js_large_send_leaves_remaining_recipients_to_continue(self):
+        rows = self.drafts(12)
+        response = self.client.post(self.url, {"pks": [r.pk for r in rows],
+            "send": "1", "mark": "1", "subject": "Hello", "body": "Continue"})
+        self.assertEqual(len(mail.outbox), 10)
+        self.assertEqual(len(response.context["pks"]), 2)
+        self.assertEqual(PartialApplication.objects.filter(reviewed=True).count(), 10)
+
+    def test_invalid_browser_message_returns_errors_without_sending(self):
+        row = self.drafts(1)[0]
+        response = self.client.post(self.url, {"pks": [row.pk], "bulk_async": "1", "send": "1"})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("errors", response.json())
+        self.assertEqual(len(mail.outbox), 0)

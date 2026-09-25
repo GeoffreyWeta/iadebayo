@@ -47,7 +47,7 @@
 </p>
 {% endif %}
 
-{% if not rows %}
+{% if not has_email %}
 <div class="card empty-card">
   <p class="empty-lead">
     {% if repeats and not again %}
@@ -79,9 +79,11 @@
     {% endif %}
 
     {# --------------------------------------------------------- the message #}
-    <form method="post" class="staff-form edit-form" novalidate>
+    <form method="post" class="staff-form edit-form" novalidate data-bulk-email>
       {% csrf_token %}
       {% for pk in pks %}<input type="hidden" name="pks" value="{{ pk }}">{% endfor %}
+      {% for pk in new_recipient_pks %}<input type="hidden" data-mail-recipient value="{{ pk }}">{% endfor %}
+      {% for r in repeats %}<input type="hidden" data-mail-repeat value="{{ r.pk }}">{% endfor %}
 
       {% if form.non_field_errors %}
       <div class="staff-form-error" role="alert">
@@ -110,16 +112,15 @@
         {% if c.review_field %}
         <div class="staff-field field-check">
           <div class="check-row">
-            <input type="checkbox" name="mark" id="mark-them" value="1" checked
+            <input type="checkbox" name="mark" id="mark-them" value="1" {% if mark_after_send %}checked{% endif %}
                    class="staff-check">
             <label for="mark-them">
-              Mark everyone this reaches as “{{ mark_label|lower }}”
+              Mark successfully sent recipients as “{{ mark_label|lower }}”
             </label>
           </div>
           <p class="field-help">
-            Only the people the message actually reached are marked. Anyone the
-            mail server refuses is left untouched, so they stay visible to
-            whoever looks next.
+            Marked after the email provider accepts the message. This does not
+            confirm inbox delivery. Failed sends are left unmarked.
           </p>
         </div>
         {% endif %}
@@ -141,7 +142,7 @@
         {% endif %}
 
         <p class="chart-note">
-          This sends to <strong>{{ rows|length }}</strong>
+          This sends to <strong data-recipient-count>{{ rows|length }}</strong>
           {{ c.count_label|default:"people" }}{% if repeats and not again %},
           and to {{ repeats|length }} more if you tick the box above{% endif %}.
         </p>
@@ -149,13 +150,15 @@
         <div class="form-actions">
           {% comment %} The name is what the view checks, so a stray Enter in the subject
              box cannot be a send. {% endcomment %}
-          <button type="submit" name="send" value="1"
-                  class="staff-btn staff-btn-primary staff-btn-inline"
-                  data-confirm="Send this message to {{ rows|length }} people? It cannot be taken back.">
+          <button type="submit" name="send" value="1" data-mail-send
+                  class="staff-btn staff-btn-primary staff-btn-inline">
             Send to {{ rows|length }}
           </button>
+          <button type="button" class="staff-btn staff-btn-quiet" data-mail-stop hidden>Stop after current email</button>
           <a class="staff-btn staff-btn-quiet" href="{{ c.url }}">Cancel</a>
         </div>
+        <p class="chart-note" role="status" aria-live="polite" data-mail-progress></p>
+        <p class="field-help">Keep this page open while sending. Each recipient receives a separate email. If JavaScript is unavailable, each submission sends up to 10 emails.</p>
       </section>
     </form>
   </div>

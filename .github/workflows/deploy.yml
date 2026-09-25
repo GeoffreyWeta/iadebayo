@@ -55,6 +55,13 @@ jobs:
       - name: Test suite
         run: python manage.py test --verbosity 2
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Staff interaction tests
+        run: node --test tests/staff-interactions.test.cjs
+
       - name: Static files collect cleanly
         run: python manage.py collectstatic --noinput
 

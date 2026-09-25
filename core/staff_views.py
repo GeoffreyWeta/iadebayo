@@ -29,7 +29,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import models as dj
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect, QueryDict
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -505,6 +505,22 @@ def collection_delete(request, slug, pk):
 
 
 # ============================================================ inbox detail
+@require_POST
+@staff_required
+def contact_sender(request, pk):
+    from submissions.models import ContactMessage
+    from submissions.contact_protection import set_sender_blocked
+
+    obj = get_object_or_404(ContactMessage, pk=pk)
+    action = request.POST.get("action")
+    if action not in ("block", "unblock"):
+        raise Http404("Unknown sender action.")
+    count = set_sender_blocked(obj.email, blocked=action == "block")
+    messages.success(request, f"Sender blocked. {count} messages marked reviewed." if action == "block"
+                     else "Sender unblocked. Previous messages remain reviewed.")
+    return redirect("staff:detail", slug="messages", pk=pk)
+
+
 @never_cache
 @staff_required
 def submission_detail(request, slug, pk):
@@ -514,9 +530,16 @@ def submission_detail(request, slug, pk):
         return redirect("staff:edit", slug=slug, pk=pk)
     obj = get_object_or_404(collection.model, pk=pk)
 
+    sender_blocked = False
+    if slug == "messages":
+        from submissions.applicants import normalized_email
+        from submissions.models import ContactSender
+        sender_blocked = ContactSender.objects.filter(
+            email=normalized_email(obj.email), blocked=True).exists()
+
     return render(request, "staff/submission_detail.html", shell(
         request, page_title=str(obj)[:60], nav=collection.slug, c=collection,
-        obj=obj, rows=detail_rows(obj), extras=detail_extras(obj),
+        obj=obj, rows=detail_rows(obj), extras=detail_extras(obj), sender_blocked=sender_blocked,
         may_delete=can_delete(request.user, collection),
         here=request.get_full_path(),
         reviewed=getattr(obj, collection.review_field, None)
@@ -742,6 +765,10 @@ def collection_email_many(request, slug):
     from submissions.services import send_to_applicant
 
     collection = _mailable(slug)
+    async_send = request.method == "POST" and request.POST.get("bulk_async") == "1"
+    if async_send and (request.POST.get("all") or len(request.POST.getlist("pks")) != 1
+                       or request.POST.get("send") != "1"):
+        return JsonResponse({"error": "Choose one recipient per delivery request."}, status=400)
     qs, whole_list = bulk_selection(request, collection)
     # Pinned to a list here, before anybody is shown a recipient list. With
     # "everyone" that queryset is live, and a draft saved between choosing and
@@ -749,6 +776,8 @@ def collection_email_many(request, slug):
     # sender checked.
     rows = list(qs)
     if not rows:
+        if async_send:
+            return JsonResponse({"sent": 0, "failed": 0, "skipped": 1})
         messages.error(request, "Nothing was ticked.")
         return redirect(collection.url())
 
@@ -768,7 +797,9 @@ def collection_email_many(request, slug):
         form = ApplicantEmailForm(request.POST)
         if form.is_valid():
             sent, failed = [], []
-            for row in recipients:
+            # Browser sends one recipient per request. Without JS, send at most
+            # ten, then leave the remaining recipients on the compose page.
+            for row in recipients[:10]:
                 context = mailmerge.context_for(row)
                 ok = send_to_applicant(
                     (row.email or "").strip(),
@@ -785,6 +816,10 @@ def collection_email_many(request, slug):
                     pk__in=[r.pk for r in sent]
                 ).update(**{collection.review_field: True})
 
+            if async_send:
+                return JsonResponse({"sent": len(sent), "failed": len(failed),
+                                     "skipped": int(not recipients)})
+
             if sent:
                 messages.success(request, f"Sent to {len(sent)} "
                                           f"{collection.count_label(len(sent))}.")
@@ -793,8 +828,17 @@ def collection_email_many(request, slug):
                 # they cannot retry.
                 messages.error(request, "Could not send to: "
                                + "; ".join(str(r) for r in failed[:20]))
-            if not failed:
+            remaining = recipients[10:]
+            if not failed and not remaining:
                 return redirect(collection.url())
+            rows = failed + remaining
+            recipients = rows
+            repeats = [r for r in rows if already_written_to(r)]
+            if remaining:
+                messages.info(request, f"{len(remaining)} recipients remain. Continue below to send the next batch.")
+        elif async_send:
+            return JsonResponse({"error": "Please correct the message fields.",
+                                 "errors": form.errors.get_json_data()}, status=400)
     else:
         chosen = None
         want = request.POST.get("template") or request.GET.get("template")
@@ -817,6 +861,9 @@ def collection_email_many(request, slug):
         request, page_title=f"Email {len(recipients)} people",
         nav=collection.slug, c=collection, form=form,
         rows=recipients, without=without, repeats=repeats, again=again,
+        has_email=bool(with_email),
+        new_recipient_pks=[r.pk for r in rows if (r.email or "").strip() and not already_written_to(r)],
+        mark_after_send=request.POST.get("mark") == "1" if request.POST.get("send") else True,
         whole_list=whole_list, preview=preview,
         # "Followed up" on unfinished drafts, "Reviewed" on applications. The
         # column already carries the word the team uses; inventing a second one

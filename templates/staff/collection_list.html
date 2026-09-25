@@ -123,20 +123,17 @@
     The header tick only reaches this page. On a list of two hundred that is a
     trap: someone ticks it, presses "Write to ticked", and believes they have
     written to everyone. This box says what "everyone" means -- the list as it
-    is narrowed right now, search and filters included -- and is only offered
-    when there is more than one page to be wrong about.
+    is narrowed right now, search and filters included.
   {% endcomment %}
-  {% if total > rows|length %}
   <label class="bulk-all">
-    <input type="checkbox" name="all" value="1">
-    Apply to all {{ total }} {{ total_label }} in this list, not just this page
+    <input type="checkbox" name="all" value="1" data-select-matching data-count="{{ total }}">
+    Select all {{ total }} matching records across every page
   </label>
-  {% endif %}
   {% if c.mailable %}
   {% comment %} formaction, so the same ticked boxes can go to a different view without a
      second form or a line of JavaScript. {% endcomment %}
   <button type="submit" formaction="{% url 'staff:email_many' c.slug %}"
-          class="staff-btn staff-btn-quiet">Write to ticked</button>
+          class="staff-btn staff-btn-quiet">Email selected</button>
   {% endif %}
   {% if c.review_field %}
   <button type="submit" name="action" value="review" class="staff-btn staff-btn-quiet">Mark reviewed</button>

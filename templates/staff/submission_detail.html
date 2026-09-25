@@ -37,6 +37,18 @@
 
 {% if c.note %}<p class="staff-caveat">{{ c.note }}</p>{% endif %}
 
+{% if c.slug == 'messages' %}
+<section class="card detail-card">
+  <h2>{% if sender_blocked %}Sender blocked{% else %}Sender controls{% endif %}</h2>
+  <p class="chart-note">Blocking stops new contact messages from {{ obj.email }} and marks their existing messages reviewed. Records are kept.</p>
+  <form method="post" action="{% url 'staff:contact_sender' obj.pk %}">
+    {% csrf_token %}
+    <button type="submit" name="action" value="{% if sender_blocked %}unblock{% else %}block{% endif %}"
+            class="staff-btn staff-btn-quiet">{% if sender_blocked %}Unblock sender{% else %}Block sender{% endif %}</button>
+  </form>
+</section>
+{% endif %}
+
 {% if reviewed is not None %}
 <p class="detail-state">
   {% if reviewed %}<span class="pill pill-good">Reviewed</span>

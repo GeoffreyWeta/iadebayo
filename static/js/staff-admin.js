@@ -54,12 +54,14 @@
     var actions = [].slice.call(bulkBar.querySelectorAll("button"));
     var boxes = [].slice.call(document.querySelectorAll("input[name=pks]"));
     var all = document.querySelector("[data-check-all]");
+    var matching = bulkBar.querySelector("[data-select-matching]");
 
     var sync = function () {
-      var picked = boxes.filter(function (b) { return b.checked; }).length;
+      var acrossPages = matching && matching.checked;
+      var picked = acrossPages ? Number(matching.dataset.count) : boxes.filter(function (b) { return b.checked; }).length;
       bulkBar.classList.toggle("has-picked", picked > 0);
       if (note) {
-        note.textContent = picked
+        note.textContent = acrossPages ? "All " + picked + " matching records selected" : picked
           ? picked + (picked === 1 ? " row selected" : " rows selected")
           : "Tick rows to act on them";
       }
@@ -67,14 +69,17 @@
       // bar does not reflow under the pointer as rows are ticked.
       actions.forEach(function (b) { b.disabled = picked === 0; });
       if (all) {
-        all.checked = picked > 0 && picked === boxes.length;
-        all.indeterminate = picked > 0 && picked < boxes.length;
+        all.checked = acrossPages || (picked > 0 && picked === boxes.length);
+        all.indeterminate = !acrossPages && picked > 0 && picked < boxes.length;
       }
+      boxes.forEach(function (b) { b.disabled = !!acrossPages; });
     };
 
     boxes.forEach(function (b) { b.addEventListener("change", sync); });
+    if (matching) matching.addEventListener("change", sync);
     if (all) {
       all.addEventListener("change", function () {
+        if (matching) matching.checked = false;
         boxes.forEach(function (b) { b.checked = all.checked; });
         sync();
       });
