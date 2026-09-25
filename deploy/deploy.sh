@@ -60,14 +60,17 @@ sudo systemctl restart "$SERVICE"
 
 # --- prove it actually came back -------------------------------------------
 # Gunicorn binds 127.0.0.1:8000 and Django rejects hosts outside ALLOWED_HOSTS,
-# so borrow the first allowed host from .env for the Host header.
+# so borrow the first allowed host from .env for the Host header. Nginx normally
+# says the visitor came over HTTPS; without that header SECURE_SSL_REDIRECT
+# answers 301 and a healthy site looks down.
 HEALTH_HOST=$(grep -E '^DJANGO_ALLOWED_HOSTS=' .env 2>/dev/null \
               | cut -d= -f2- | tr -d '"'"'" | tr ',' '\n' | head -1 | xargs || true)
 HEALTH_HOST=${HEALTH_HOST:-localhost}
 
 for attempt in 1 2 3 4 5 6 7 8 9 10; do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
-              -H "Host: $HEALTH_HOST" http://127.0.0.1:8000/ || true)
+              -H "Host: $HEALTH_HOST" -H "X-Forwarded-Proto: https" \
+              http://127.0.0.1:8000/ || true)
   if [ "$code" = "200" ]; then
     echo "==> healthy: gunicorn answered 200 for Host: $HEALTH_HOST"
     echo "==> deployed $(git rev-parse --short HEAD)"
