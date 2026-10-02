@@ -19,8 +19,14 @@ Contact message detail pages provide Block/Unblock sender controls. A block
 applies to the normalized email address, stops new contact submissions and
 marks existing messages reviewed without deleting records. Contact submissions
 also reject duplicate message text from the same email within 24 hours and
-limit accepted messages to three per email per rolling hour. These controls
-do not identify a person who changes addresses and do not block a language.
+limit accepted messages to three per email per rolling hour and six per rolling
+24 hours. Generated pricing subjects matching the observed spam campaign are
+rejected even when the sender changes email addresses or message languages.
+This filter matches the complete subject pattern, not all mentions of pricing,
+and does not block a language or sender name. Rejections do not save a message
+or send notification/acknowledgement emails. Other campaigns that change
+addresses and subject patterns can still evade these controls; retain the
+honeypot and configure reCAPTCHA for additional protection.
 
 Server operators can use `python manage.py block_contact_sender ADDRESS` and
 the same command with `--unblock`. Run migrations before using these controls.

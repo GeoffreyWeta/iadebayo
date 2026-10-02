@@ -13,6 +13,47 @@ from .models import ContactMessage, ContactSender
 @override_settings(SECURE_SSL_REDIRECT=False, RECAPTCHA_SECRET_KEY="",
                    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class ContactProtectionTests(TestCase):
+    @patch("submissions.views.acknowledge")
+    @patch("submissions.views.notify_team")
+    def test_generated_pricing_spam_is_rejected_across_senders(self, notify, acknowledge):
+        subjects = [
+            "Hallo write about your prices",
+            "Hi, i write about the price",
+            "Aloha i am wrote about your price",
+            "Hallo i am writing about your the price",
+            "Hi, i am wrote about the price for reseller",
+            "Hello, wrote about your the price",
+        ]
+        for index, subject in enumerate(subjects):
+            with self.subTest(subject=subject):
+                self.post(email=f"sender{index}@example.com", subject=subject,
+                          message=f"Different message {index}")
+        self.assertFalse(ContactMessage.objects.exists())
+        self.assertFalse(ContactSender.objects.exists())
+        notify.assert_not_called()
+        acknowledge.assert_not_called()
+
+    def test_normal_pricing_questions_are_accepted(self):
+        for index, subject in enumerate([
+            "What is the price of the programme?",
+            "Hi, I am writing about your prices for the academy",
+            "Programme fees",
+        ]):
+            self.post(email=f"visitor{index}@example.com", subject=subject)
+        self.assertEqual(ContactMessage.objects.count(), 3)
+
+    def test_daily_limit_and_expiry(self):
+        for index in range(6):
+            ContactMessage.objects.create(email="visitor@example.com", message=f"Earlier {index}")
+        ContactMessage.objects.update(created_at=timezone.now() - timedelta(hours=2))
+        self.post(message="Another question")
+        self.assertEqual(ContactMessage.objects.count(), 6)
+        self.post(email="other@example.com")
+        self.assertEqual(ContactMessage.objects.count(), 7)
+        ContactMessage.objects.update(created_at=timezone.now() - timedelta(days=2))
+        self.post(message="Another question")
+        self.assertEqual(ContactMessage.objects.count(), 8)
+
     def post(self, **changes):
         values = dict(name="Visitor", email="visitor@example.com", subject="Question",
                       message="Please tell me about the next programme.")
