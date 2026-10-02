@@ -147,6 +147,11 @@ def newsletter(request):
 
 @require_POST
 def apply_embark(request):
+    from core import cohort
+    if not cohort.accepting_applications():
+        from core.views import applications_closed
+        return applications_closed(request)
+
     def rerender(form):
         # Long form: re-render in place so nothing typed is lost. (The video
         # input can't be repopulated by any browser - the template says so.)
@@ -231,6 +236,12 @@ def apply_progress(request):
     people who typed two letters and left.
     """
     if request.POST.get("website_url"):          # honeypot - a bot filled it in
+        return JsonResponse({"saved": False}, status=202)
+
+    # A tab left open past the close date keeps autosaving. Those drafts could
+    # never be sent, so they must not join the unfinished list for follow-up.
+    from core import cohort
+    if not cohort.accepting_applications():
         return JsonResponse({"saved": False}, status=202)
 
     draft_id = _clean_draft_id(request.POST.get("draft_id"))

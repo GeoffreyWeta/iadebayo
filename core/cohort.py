@@ -113,3 +113,15 @@ def window_progress(today=None, dates=None):
     return {"state": "open", "total": total, "elapsed": elapsed,
             "remaining": total - elapsed,
             "pct": round(elapsed / total * 100)}
+
+
+def accepting_applications(today=None, dates=None):
+    """Whether the apply form takes applications today.
+
+    The close date is the last day people can apply, so the form shuts at
+    midnight after it, in the site's own time zone rather than the server's UTC:
+    "closes 30 September" must not stop a Lagos applicant at 11pm on the 30th.
+    To close early, move the close date in Staff → Cohort dates to yesterday.
+    """
+    from django.utils import timezone
+    return window_progress(today or timezone.localdate(), dates)["state"] == "open"

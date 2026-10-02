@@ -20,6 +20,11 @@ from submissions.models import EmbarkApplication, PartialApplication
 
 PASSWORD = "pw-for-tests-only"
 SSL_REDIRECT_OFF = override_settings(SECURE_SSL_REDIRECT=False)
+
+# These exercise the form while it takes applications. The real window is
+# dated, so without this they would start failing the day it closes.
+WINDOW_OPEN = mock.patch("core.cohort.accepting_applications", lambda *a, **k: True)
+
 LOCMEM = override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 
 
@@ -39,6 +44,7 @@ def a_draft(**kwargs):
     return PartialApplication.objects.create(**fields)
 
 
+@WINDOW_OPEN
 @SSL_REDIRECT_OFF
 class ResumeLinkTests(TestCase):
     """The link in the nudge email, and what happens when it goes stale."""

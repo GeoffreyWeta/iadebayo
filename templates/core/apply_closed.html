@@ -1,0 +1,54 @@
+{% extends "embark_base.html" %}
+{% load static %}
+{% comment %}
+  The apply page outside the application window. Same address as the form, so
+  every "Apply to Embark" button and every resume link in an old email lands
+  here and is told why, rather than on a form that would refuse the submit.
+{% endcomment %}
+{% block body_class %}theme-embark page-apply{% endblock %}
+{% block content %}
+<section class="page-head on-dark">
+  <div class="container">
+    <img src="{% static 'img/embark-logo.png' %}" alt="Embark Entrepreneurship Academy" style="height:56px;width:auto;margin-bottom:6px">
+    <div class="subbrand-note" style="display:inline-flex">✳ An IADEBAYO Foundation programme</div>
+    {% if window.state == "upcoming" %}
+    <h1 style="margin-top:20px">{{ dates.name }} applications <span class="accent accent-orange">open soon.</span></h1>
+    <p class="lead">Applications open on {{ dates.applications_open|date:"j F Y" }}. Come back then to apply.</p>
+    {% else %}
+    <h1 style="margin-top:20px">{{ dates.name }} applications <span class="accent accent-orange">are closed.</span></h1>
+    <p class="lead">Applications closed on {{ dates.applications_close|date:"j F Y" }}. Thank you to everyone who applied.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section-cream">
+  <div class="container split" style="align-items:flex-start">
+    <div class="reveal">
+      {% if window.state == "upcoming" %}
+      <p>The form will be here on {{ dates.applications_open|date:"j F" }}. Embark is free,
+        online, and built for undergraduates and graduates already running businesses in Africa.</p>
+      {% else %}
+      {% if notifications_done %}
+      <p>If you applied to {{ dates.name }} and have not heard from us, check your
+        spam folder, then <a href="{% url 'core:contact' %}">get in touch</a>.</p>
+      {% else %}
+      <p>If you sent an application, it has been received. We will email you
+        between {{ dates.notify_from|date:"j F" }} and {{ dates.notify_to|date:"j F Y" }}
+        to let you know the outcome.</p>
+      {% endif %}
+      <p>If you did not finish yours in time, the next cohort will be announced
+        here. Subscribe to the newsletter at the bottom of this page to hear first.</p>
+      {% endif %}
+      <p><a class="btn btn-orange" href="{% url 'core:embark' %}">About the Academy</a></p>
+    </div>
+    <div class="reveal">
+      <p class="eyebrow" style="color:var(--orange)">Frequently asked questions</p>
+      <div class="faq">
+        {% for q, a in faqs %}
+        <details><summary>{{ q }}</summary><div class="answer">{{ a }}</div></details>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render
+from django.utils import timezone
 from django.utils.text import slugify
 
 from blog.models import Post
@@ -252,8 +253,29 @@ def apply(request):
     ordinary empty form. Somebody who clicks a stale link six weeks later should
     get a form they can fill in, not an error telling them off.
     """
+    if not cohort.accepting_applications():
+        return applications_closed(request)
     draft = PartialApplication.from_resume_token(request.GET.get("resume", ""))
     return render(request, "core/apply.html", apply_context(draft=draft))
+
+
+def applications_closed(request):
+    """The apply page outside the window: before it opens or after it closes.
+
+    Also what a submit or a resume link gets once the window has shut, so the
+    applicant reads why rather than meeting a form that silently goes nowhere.
+    """
+    dates, today = cohort.current(), timezone.localdate()
+    return render(request, "core/apply_closed.html", {
+        "dates": dates,
+        "window": cohort.window_progress(today, dates),
+        # Once the notification period is over, "we will email you" is untrue.
+        "notifications_done": today > dates.notify_to,
+        "schedule": cohort_schedule(),
+        "faqs": FAQS,
+        "meta_title": "Applications closed",
+        "meta_description": "Applications to the Embark Entrepreneurship Academy are not open right now.",
+    })
 
 
 def gallery(request):

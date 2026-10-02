@@ -14,7 +14,12 @@ from .forms import EmbarkApplicationForm
 from .models import ApplicationEmailIdentity, EmbarkApplication, PartialApplication
 from .tests import EMBARK
 
+# These exercise the form while it takes applications. The real window is
+# dated, so without this they would start failing the day it closes.
+WINDOW_OPEN = patch("core.cohort.accepting_applications", lambda *a, **k: True)
 
+
+@WINDOW_OPEN
 @override_settings(SECURE_SSL_REDIRECT=False, RECAPTCHA_SECRET_KEY="",
                    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class ApplicantReconciliationTests(TestCase):

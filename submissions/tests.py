@@ -1,3 +1,4 @@
+import datetime as dt
 import io
 from unittest import mock
 import shutil
@@ -12,6 +13,7 @@ from django.core.management.base import CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from . import models
 from .services import acknowledge
@@ -28,6 +30,10 @@ PASSWORD = "pw-for-tests-only"
 # Pinning it here keeps the result the same on a developer's machine, in CI, and
 # against a production-shaped .env.
 SSL_REDIRECT_OFF = override_settings(SECURE_SSL_REDIRECT=False)
+
+# These exercise the form while it takes applications. The real window is
+# dated, so without this they would start failing the day it closes.
+WINDOW_OPEN = mock.patch("core.cohort.accepting_applications", lambda *a, **k: True)
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
@@ -186,6 +192,7 @@ PARTNER = {"name": "Amaka Obi", "phone_code": "+234", "phone": "8044444444",
            "proposal": "We would like to co-host a pitch day."}
 
 
+@WINDOW_OPEN
 @override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
 @SSL_REDIRECT_OFF
 class PublicFormTests(TestCase):
@@ -373,6 +380,7 @@ class PublicFormTests(TestCase):
                 self.assertContains(response, "recaptcha/api.js")
 
 
+@WINDOW_OPEN
 @override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
 @SSL_REDIRECT_OFF
 class UnfinishedApplicationTests(TestCase):
@@ -503,6 +511,53 @@ class UnfinishedApplicationTests(TestCase):
         self.assertContains(response, 'name="draft_id"')
 
 
+@override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
+@SSL_REDIRECT_OFF
+class ApplicationWindowTests(TestCase):
+    """Outside the cohort's dates the form is gone and the server refuses it,
+    so a bookmarked page or an old resume link cannot slip one in late."""
+
+    def cohort(self, open_offset, close_offset):
+        from core.models import Cohort
+        today = timezone.localdate()
+        Cohort.objects.create(
+            name="Cohort 5", applications_open=today + dt.timedelta(days=open_offset),
+            applications_close=today + dt.timedelta(days=close_offset),
+            notify_from=today + dt.timedelta(days=close_offset + 1),
+            notify_to=today + dt.timedelta(days=close_offset + 10))
+
+    def test_the_close_date_is_the_last_day_to_apply(self):
+        self.cohort(-30, 0)
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, 'id="embark-form"')
+
+    def test_after_the_close_date_the_form_is_replaced_by_a_notice(self):
+        self.cohort(-30, -1)
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, "Cohort 5 applications")
+        self.assertContains(response, "are closed.")
+        self.assertNotContains(response, 'id="embark-form"')
+
+    def test_a_late_submission_is_not_saved_or_acknowledged(self):
+        self.cohort(-30, -1)
+        response = self.client.post(reverse("submissions:apply"), EMBARK)
+        self.assertContains(response, "are closed.")
+        self.assertEqual(EmbarkApplication.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_a_tab_left_open_past_the_close_stops_saving_drafts(self):
+        self.cohort(-30, -1)
+        self.client.post(reverse("submissions:apply_progress"),
+                         {"draft_id": "draft-late1234", "email": "late@example.com"})
+        self.assertEqual(models.PartialApplication.objects.count(), 0)
+
+    def test_before_the_window_opens_the_page_says_when(self):
+        self.cohort(5, 40)
+        response = self.client.get(reverse("core:apply"))
+        self.assertContains(response, "open soon.")
+        self.assertNotContains(response, 'id="embark-form"')
+
+
 # The backfill refuses to --send on a backend whose name contains "locmem",
 # because stamping every row as acknowledged while sending nothing is the one
 # failure that cannot be undone by re-running. That guard also blocks the test
@@ -631,6 +686,7 @@ class BackfillCommandTests(TestCase):
 PIXEL_ID = "1221975869207645"
 
 
+@WINDOW_OPEN
 @override_settings(MEDIA_ROOT=MEDIA_ROOT, RECAPTCHA_SECRET_KEY="")
 @SSL_REDIRECT_OFF
 class MetaPixelTests(TestCase):
