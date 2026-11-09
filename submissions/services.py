@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import send_mail
 from django.utils import timezone
 
 log = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ def acknowledge(to_email: str, first_name: str, what: str, obj=None,
 
 
 def send_to_applicant(to_email: str, subject: str, body: str, obj=None,
-                      stamp_field="decision_email_sent_at") -> bool:
+                      stamp_field="decision_email_sent_at", user=None) -> bool:
     """One message, written by a staff member, to one applicant.
 
     Unlike `notify_team` and `acknowledge` this is not automatic - somebody
@@ -114,21 +114,19 @@ def send_to_applicant(to_email: str, subject: str, body: str, obj=None,
     The row is stamped only on success, for the reason `acknowledged_at` exists:
     a stamp written before the send would make a failed send indistinguishable
     from a delivered one, and the applicant would never be written to again.
+
+    Sent through the staff mailbox (mailroom.services.send), so the message is
+    filed as a conversation with this applicant and their reply joins it there.
     """
-    message = EmailMultiAlternatives(
-        subject=subject,
-        body=body,
-        from_email=settings.EMBARK_FROM_EMAIL,
-        to=[to_email],
-        reply_to=[settings.EMBARK_REPLY_TO] if settings.EMBARK_REPLY_TO else None,
-    )
+    from mailroom.services import send
+
     from .email_presentation import applicant_email_html
-    message.attach_alternative(applicant_email_html(body, obj), "text/html")
-    try:
-        if message.send(fail_silently=False) != 1:
-            return False
-    except Exception:
-        log.exception("Applicant email failed (to=%r, subject=%r)", to_email, subject)
+    result = send(
+        from_email=settings.EMBARK_FROM_EMAIL, to=[to_email], subject=subject,
+        text=body, html=applicant_email_html(body, obj),
+        reply_to=[settings.EMBARK_REPLY_TO] if settings.EMBARK_REPLY_TO else (),
+        user=user)
+    if not result.ok:
         return False
 
     if obj is not None and stamp_field:

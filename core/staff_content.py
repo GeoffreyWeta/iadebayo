@@ -664,7 +664,7 @@ SECTIONS = (
     ("content", "Site content", "Pages, media and the blog"),
     ("people", "People", "Team, faculty and alumni"),
     ("inbox", "Submissions", "Everything the public sent us"),
-    ("mail", "Email", "The messages you send applicants"),
+    ("mail", "Email", "The team mailbox, and the templates it writes from"),
 )
 
 

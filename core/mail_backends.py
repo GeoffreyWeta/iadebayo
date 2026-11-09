@@ -28,7 +28,16 @@ API_URL = "https://api.zeptomail.com/v1.1/email"
 
 
 class ZeptoMailError(Exception):
-    pass
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
+
+
+# The headers that make a reply thread under the message it answers in the
+# recipient's mail app. Passed through ZeptoMail's `mime_headers`. Message-ID
+# is deliberately not among them: ZeptoMail sets its own, and a message that
+# goes out carrying two is one some receivers reject outright.
+THREAD_HEADERS = ("in-reply-to", "references")
 
 
 def _address(value):
@@ -85,6 +94,11 @@ def build_payload(message):
 
     if message.attachments:
         payload["attachments"] = [_attachment(a) for a in message.attachments]
+
+    threading = {name: str(value) for name, value in (message.extra_headers or {}).items()
+                 if name.lower() in THREAD_HEADERS and value}
+    if threading:
+        payload["mime_headers"] = threading
     return payload
 
 
@@ -117,9 +131,26 @@ class ZeptoMailBackend(BaseEmailBackend):
     def _send(self, message):
         if not self.token:
             raise ZeptoMailError("ZEPTOMAIL_TOKEN is empty.")
+        payload = build_payload(message)
+        try:
+            self._post(payload)
+        except ZeptoMailError as exc:
+            # Threading headers are a nicety. ZeptoMail does not document
+            # which headers it accepts, so if it refuses a message that
+            # carries them, the message goes again without - a reply that
+            # does not thread beats a reply that was never sent. A 4xx means
+            # nothing went out the first time, so this cannot send twice.
+            if "mime_headers" not in payload or exc.status not in (400, 422):
+                raise
+            log.warning("ZeptoMail refused the threading headers; sending "
+                        "without them (%s)", exc)
+            payload.pop("mime_headers")
+            self._post(payload)
+
+    def _post(self, payload):
         request = urllib.request.Request(
             self.api_url,
-            data=json.dumps(build_payload(message)).encode(),
+            data=json.dumps(payload).encode(),
             method="POST",
             headers={
                 "Accept": "application/json",
@@ -134,4 +165,4 @@ class ZeptoMailBackend(BaseEmailBackend):
             # ZeptoMail explains a rejection in the body (unverified sender,
             # bad token, ...). Without it all you get is "HTTP Error 400".
             detail = exc.read().decode(errors="replace")[:1000]
-            raise ZeptoMailError(f"HTTP {exc.code}: {detail}") from exc
+            raise ZeptoMailError(f"HTTP {exc.code}: {detail}", status=exc.code) from exc

@@ -29,16 +29,27 @@ def _personal_resume_url(value, obj):
     return draft_id == obj.draft_id
 
 
-def applicant_email_html(body, obj=None):
+def paragraph_parts(body, obj=None):
+    """Plain text as paragraphs of {text, bold, link, button} runs.
+
+    Shared by the applicant layout below and the staff mailbox's plainer one
+    (mailroom.rendering), so **bold** and bare links behave the same in both.
+    """
     paragraphs = []
-    for paragraph in re.split(r"\n\s*\n", body.strip()):
+    for paragraph in re.split(r"\n\s*\n", (body or "").strip()):
         parts = []
         for text in re.split(r"(\*\*.+?\*\*|https?://[^\s<>]+)", paragraph, flags=re.S):
             if not text:
                 continue
             bold = text.startswith("**") and text.endswith("**")
             text = text[2:-2] if bold else text
-            parts.append({"text": text, "bold": bold,
-                          "button": _personal_resume_url(text, obj) if text.startswith(("https://", "http://")) else False})
+            is_url = text.startswith(("https://", "http://"))
+            parts.append({"text": text, "bold": bold, "link": is_url,
+                          "button": _personal_resume_url(text, obj) if is_url else False})
         paragraphs.append(parts)
-    return render_to_string("emails/applicant.html", {"paragraphs": paragraphs})
+    return paragraphs
+
+
+def applicant_email_html(body, obj=None):
+    return render_to_string("emails/applicant.html",
+                            {"paragraphs": paragraph_parts(body, obj)})

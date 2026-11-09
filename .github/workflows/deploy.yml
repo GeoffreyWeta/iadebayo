@@ -59,8 +59,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Staff interaction tests
-        run: node --test tests/staff-interactions.test.cjs
+      - name: Staff interaction and email worker tests
+        run: node --test tests/staff-interactions.test.cjs tests/email-worker.test.mjs
 
       - name: Static files collect cleanly
         run: python manage.py collectstatic --noinput

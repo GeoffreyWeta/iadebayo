@@ -1,0 +1,74 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  A new message to anyone. Templates load through their own GET form, as on
+  the applicant compose page, so choosing one can never be the same request as
+  sending. When the address belongs to someone the site knows, the template's
+  placeholders are filled in before the text reaches the box.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow"><a href="{% url 'staff:mail' %}">Email</a></p>
+    <h1>Write an email</h1>
+    <p class="staff-head-sub">To anyone. Replies come back to the inbox here, in the same conversation.</p>
+  </div>
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-quiet" href="{% url 'staff:mail' %}">← Inbox</a>
+  </div>
+</header>
+
+{% if person %}
+<p class="staff-caveat">
+  Writing to <strong>{{ person }}</strong>, who is on record:
+  {% for r in records %}<a href="{{ r.url }}">{{ r.kind|lower }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+  Placeholders are filled in from their details.
+</p>
+{% endif %}
+
+{% if templates %}
+<section class="card form-block">
+  <h2>Start from a template</h2>
+  <p class="chart-note">Replaces the subject and message below. Fill in “To” first if you want their details filled in.</p>
+  <form method="get" class="staff-form mail-template-pick">
+    <input type="hidden" name="to" value="{{ to }}">
+    <div class="staff-field">
+      <label for="template-pick">Template</label>
+      <select id="template-pick" name="template" class="staff-input staff-select">
+        <option value="">- start from an empty message -</option>
+        {% for t in templates %}
+        <option value="{{ t.pk }}"{% if chosen and t.pk == chosen.pk %} selected{% endif %}>{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="staff-btn staff-btn-quiet staff-btn-inline">Load</button>
+  </form>
+</section>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="staff-form edit-form" novalidate>
+  {% csrf_token %}
+  <section class="card form-block">
+    <h2>The message</h2>
+    {% include "mailroom/_fields.html" %}
+  </section>
+
+  <details class="card form-block mail-placeholders">
+    <summary>Placeholders</summary>
+    <p class="chart-note">
+      Only filled in when the message goes to one person the site has a record
+      for. Otherwise the send stops and asks you to write the words yourself.
+    </p>
+    <dl class="detail-list">
+      {% for token, meaning in placeholders %}
+      <div class="detail-row"><dt><code>{{ token }}</code></dt><dd>{{ meaning }}</dd></div>
+      {% endfor %}
+    </dl>
+  </details>
+
+  <div class="form-actions">
+    <button type="submit" class="staff-btn staff-btn-primary staff-btn-inline" data-mail-send>Send</button>
+    <a class="staff-btn staff-btn-quiet" href="{% url 'staff:mail' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

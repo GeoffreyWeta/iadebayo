@@ -17,6 +17,8 @@ urlpatterns = [
     path("", include("core.urls")),
     path("blog/", include("blog.urls")),
     path("forms/", include("submissions.urls")),
+    # Received mail, posted by the Cloudflare Email Worker (docs/staff-mailbox.md).
+    path("hooks/", include("mailroom.urls")),
     path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
     path(
         "robots.txt",

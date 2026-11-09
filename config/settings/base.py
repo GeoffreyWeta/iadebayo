@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "core",
     "blog",
     "submissions",
+    "mailroom",
 ]
 
 MIDDLEWARE = [
@@ -218,6 +219,29 @@ FOUNDATION_NOTIFY_EMAIL = env("FOUNDATION_NOTIFY_EMAIL", "hello@iadebayo.foundat
 EMBARK_FROM_EMAIL = env("EMBARK_FROM_EMAIL", "") or DEFAULT_FROM_EMAIL
 # Where an applicant's reply lands. Blank falls back to the team inbox.
 EMBARK_REPLY_TO = env("EMBARK_REPLY_TO", "") or FOUNDATION_NOTIFY_EMAIL
+
+# ------------------------------------------------------------- staff mailbox
+# /staff/mail/ - the team's shared inbox (mailroom app). See docs/staff-mailbox.md.
+#
+# The addresses staff may write from, first one is the default. Separated by
+# ";" because a display name may contain a comma. Each must be sendable by the
+# mail provider (in ZeptoMail: on the verified domain).
+# Left unset: the Embark address and the team inbox - but never the no-reply
+# sender, which EMBARK_FROM_EMAIL falls back to when it is not configured.
+STAFF_MAILBOXES = [a.strip() for a in env("STAFF_MAILBOXES", "").split(";") if a.strip()] or [
+    a for a in (EMBARK_FROM_EMAIL, f"IADEBAYO Foundation <{FOUNDATION_NOTIFY_EMAIL}>")
+    if a != DEFAULT_FROM_EMAIL]
+# Shared with the Cloudflare Email Worker that posts received mail to
+# /hooks/email/. Empty switches receiving off: the endpoint answers 404.
+MAIL_INBOUND_SECRET = env("MAIL_INBOUND_SECRET", "")
+# Received mail, its attachments and staff attachments live here, outside
+# MEDIA_ROOT on purpose: nginx serves /media/ to anyone, and these are private.
+MAIL_FILES_ROOT = Path(env("MAIL_FILES_ROOT", "") or BASE_DIR / "private" / "mail")
+# Cloudflare Email Routing accepts up to 25 MiB; leave headroom for encoding.
+MAIL_INBOUND_MAX_BYTES = 30 * 1024 * 1024
+# Staff attachments on one message. Base64 makes them a third larger on the
+# wire, and ZeptoMail refuses a message over 15 MB.
+MAIL_ATTACHMENTS_MAX_BYTES = 10 * 1024 * 1024
 
 # ------------------------------------------------------------------ reCAPTCHA
 # Leave keys empty in dev to disable. Get keys: https://www.google.com/recaptcha/admin

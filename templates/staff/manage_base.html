@@ -36,6 +36,32 @@
       {% for section in nav_sections %}
       <p class="rail-head">{{ section.title }}</p>
       <ul class="rail-list">
+        {% if section.key == "mail" %}
+        {% comment %} The mailbox is not a collection (core.staff_content), so its
+           links are written here, above the templates the section also holds. {% endcomment %}
+        <li>
+          <a class="rail-link{% if nav == 'mail-inbox' or nav == 'mail-archived' or nav == 'mail-junk' or nav == 'mail-all' %} is-on{% endif %}"
+             href="{% url 'staff:mail' %}"{% if nav == 'mail-inbox' %} aria-current="page"{% endif %}>
+            <span class="rail-icon" aria-hidden="true">✉</span>
+            <span class="rail-label">Inbox</span>
+            {% if mail_unread %}<span class="rail-badge">{{ mail_unread }}<span class="visually-hidden"> unread</span></span>{% endif %}
+          </a>
+        </li>
+        <li>
+          <a class="rail-link{% if nav == 'mail-sent' %} is-on{% endif %}"
+             href="{% url 'staff:mail_folder' 'sent' %}"{% if nav == 'mail-sent' %} aria-current="page"{% endif %}>
+            <span class="rail-icon" aria-hidden="true">➚</span>
+            <span class="rail-label">Sent</span>
+          </a>
+        </li>
+        <li>
+          <a class="rail-link{% if nav == 'mail-compose' %} is-on{% endif %}"
+             href="{% url 'staff:mail_compose' %}"{% if nav == 'mail-compose' %} aria-current="page"{% endif %}>
+            <span class="rail-icon" aria-hidden="true">✎</span>
+            <span class="rail-label">Write an email</span>
+          </a>
+        </li>
+        {% endif %}
         {% for item in section.items %}
         <li>
           <a class="rail-link{% if nav == item.c.slug %} is-on{% endif %}"

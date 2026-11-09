@@ -42,7 +42,7 @@ class BrandedEmailTests(TestCase):
                      "https://iadebayo.foundation/apply/?resume=forged", "https://["]:
             self.assertNotIn("Complete my application</a>", applicant_email_html(link, self.draft))
 
-    @patch("submissions.services.EmailMultiAlternatives.send", return_value=0)
+    @patch("mailroom.services.EmailMultiAlternatives.send", return_value=0)
     def test_zero_accepted_messages_does_not_mark_sent(self, send):
         self.assertFalse(send_to_applicant(self.draft.email, "Hello", "Body", self.draft, "nudge_sent_at"))
         self.draft.refresh_from_db()

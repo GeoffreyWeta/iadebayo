@@ -16,6 +16,7 @@
      staff.css because it builds on that file's tokens and its .card. {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/staff-admin.css' %}">
   <link rel="stylesheet" href="{% static 'css/staff-workspace.css' %}">
+  <link rel="stylesheet" href="{% static 'css/staff-mailbox.css' %}">
 </head>
 <body class="staff-body {% block body_class %}{% endblock %}">
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -64,5 +65,6 @@
 <script src="{% static 'js/staff.js' %}" defer></script>
 <script src="{% static 'js/staff-admin.js' %}" defer></script>
 <script src="{% static 'js/staff-mail.js' %}" defer></script>
+<script src="{% static 'js/staff-mailbox.js' %}" defer></script>
 </body>
 </html>

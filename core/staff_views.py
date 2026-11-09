@@ -309,7 +309,8 @@ def shell(request, **extra):
             items.append({"c": c, "badge": badge})
         sections.append({"key": key, "title": title, "note": note, "items": items})
 
-    return {"nav_sections": sections, **extra}
+    from mailroom.services import unread_count
+    return {"nav_sections": sections, "mail_unread": unread_count(), **extra}
 
 
 # ============================================================ dashboard
@@ -540,9 +541,14 @@ def submission_detail(request, slug, pk):
         sender_blocked = ContactSender.objects.filter(
             email=normalized_email(obj.email), blocked=True).exists()
 
+    from mailroom.services import conversations_with
+    address = (getattr(obj, "email", "") or "").strip()
+
     return render(request, "staff/submission_detail.html", shell(
         request, page_title=str(obj)[:60], nav=collection.slug, c=collection,
         obj=obj, rows=detail_rows(obj), extras=detail_extras(obj), sender_blocked=sender_blocked,
+        mail_address=address,
+        conversations=list(conversations_with(address)) if address else [],
         may_delete=can_delete(request.user, collection),
         here=request.get_full_path(),
         reviewed=getattr(obj, collection.review_field, None)
@@ -808,7 +814,7 @@ def collection_email_many(request, slug):
                     (row.email or "").strip(),
                     mailmerge.render(form.cleaned_data["subject"], context),
                     mailmerge.render(form.cleaned_data["body"], context),
-                    obj=row, stamp_field=stamp)
+                    obj=row, stamp_field=stamp, user=request.user)
                 (sent if ok else failed).append(row)
 
             # Marked after the loop and only for the ones that actually went. A
@@ -1034,7 +1040,8 @@ def collection_email(request, slug, pk):
             subject = mailmerge.render(form.cleaned_data["subject"], context)
             body = mailmerge.render(form.cleaned_data["body"], context)
             sent = send_to_applicant(to_email, subject, body, obj=obj,
-                                     stamp_field=collection.email_stamp_field)
+                                     stamp_field=collection.email_stamp_field,
+                                     user=request.user)
             if sent:
                 messages.success(request, f"Email sent to {to_email}.")
                 return redirect(collection.url("detail", pk=pk))

@@ -163,6 +163,32 @@
 </section>
 {% endif %}
 
+{% if mail_address %}
+{% comment %}
+  Every conversation the team mailbox holds with this address, whichever
+  screen it was sent from - so "have we written to them, and did they answer"
+  is answered on the person's own page.
+{% endcomment %}
+<section class="card detail-card">
+  <h2>Email with {{ mail_address }}</h2>
+  {% if conversations %}
+  <ul class="mail-records">
+    {% for conv in conversations %}
+    <li>
+      <a href="{% url 'staff:mail_thread' conv.pk %}">{{ conv }}</a>
+      <span class="cell-none">{% if conv.unread %}Unread reply · {% endif %}{% if conv.last_direction == "in" %}They wrote{% else %}We wrote{% endif %} {{ conv.last_message_at|date:"j M Y, H:i" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="chart-note">No conversations yet.</p>
+  {% endif %}
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-quiet staff-btn-inline" href="{% url 'staff:mail_compose' %}?to={{ mail_address|urlencode }}">Write an email</a>
+  </div>
+</section>
+{% endif %}
+
 <section class="card detail-card">
   <h2>What they submitted</h2>
   <dl class="detail-list">

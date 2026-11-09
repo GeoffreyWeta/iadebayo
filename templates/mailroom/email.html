@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:16px;background:#ffffff;color:#252b32;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;">
+<div style="max-width:640px;">
+{% for paragraph in paragraphs %}<p style="margin:0 0 16px;">{% for part in paragraph %}{% if part.bold %}<strong>{{ part.text|linebreaksbr }}</strong>{% elif part.link %}<a href="{{ part.text }}" style="color:#821417;">{{ part.text }}</a>{% else %}{{ part.text|linebreaksbr }}{% endif %}{% endfor %}</p>
+{% endfor %}{% if quote %}<p style="margin:24px 0 8px;color:#68727e;font-size:13px;">{{ quote.header }}</p>
+<blockquote style="margin:0;padding:0 0 0 12px;border-left:3px solid #d4d9df;color:#525b66;font-size:14px;">{{ quote.text|linebreaksbr }}</blockquote>
+{% endif %}</div>
+</body></html>

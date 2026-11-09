@@ -1,0 +1,63 @@
+{% load static %}{% comment %}
+  The message fields, shared by "Write an email" and the reply box at the foot
+  of a conversation. A reply and a new message are the same form on purpose:
+  the reply box can change who it goes to, and the new message can carry the
+  same attachments, so there is no feature one has and the other lacks.
+{% endcomment %}
+{% if form.non_field_errors %}
+<div class="staff-form-error" role="alert">
+  {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<div class="form-grid mail-fields">
+  <div class="staff-field{% if form.from_address.errors %} has-error{% endif %}">
+    <label for="{{ form.from_address.id_for_label }}">From</label>
+    {{ form.from_address }}
+    {% for error in form.from_address.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+  </div>
+
+  <div class="staff-field{% if form.to.errors %} has-error{% endif %}">
+    <label for="{{ form.to.id_for_label }}">To <span class="req" title="Required">*</span></label>
+    {{ form.to }}
+    {% for error in form.to.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+    <p class="field-help">Separate several addresses with commas.</p>
+  </div>
+
+  <details class="mail-copies"{% if form.cc.value or form.bcc.value or form.cc.errors or form.bcc.errors %} open{% endif %}>
+    <summary>Cc and Bcc</summary>
+    <div class="staff-field{% if form.cc.errors %} has-error{% endif %}">
+      <label for="{{ form.cc.id_for_label }}">Cc</label>
+      {{ form.cc }}
+      {% for error in form.cc.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="staff-field{% if form.bcc.errors %} has-error{% endif %}">
+      <label for="{{ form.bcc.id_for_label }}">Bcc</label>
+      {{ form.bcc }}
+      {% for error in form.bcc.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+      <p class="field-help">Bcc recipients get the message without the others seeing their address.</p>
+    </div>
+  </details>
+
+  <div class="staff-field field-subject{% if form.subject.errors %} has-error{% endif %}">
+    <label for="{{ form.subject.id_for_label }}">Subject <span class="req" title="Required">*</span></label>
+    {{ form.subject }}
+    {% for error in form.subject.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+  </div>
+
+  <div class="staff-field field-body{% if form.body.errors %} has-error{% endif %}">
+    <label for="{{ form.body.id_for_label }}">Message <span class="req" title="Required">*</span></label>
+    {{ form.body }}
+    {% for error in form.body.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+    <p class="field-help">Plain text. Blank lines start a new paragraph, links work as typed, and **two asterisks** make text bold.</p>
+  </div>
+
+  <div class="staff-field{% if form.attachments.errors %} has-error{% endif %}">
+    <label for="{{ form.attachments.id_for_label }}">Attachments</label>
+    {{ form.attachments }}
+    {% for error in form.attachments.errors %}<p class="staff-field-error">{{ error }}</p>{% endfor %}
+    <p class="field-help">Up to {{ max_attachments|filesizeformat }} in total. Choose all the files at once; choosing again replaces the selection.</p>
+  </div>
+</div>
+
+<datalist id="mail-contacts">{% for address in contacts %}<option value="{{ address }}">{% endfor %}</datalist>

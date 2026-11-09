@@ -12,6 +12,8 @@ better in the order it is tried.
 """
 from django.urls import path
 
+from mailroom import views as mail_views
+
 from . import staff, staff_views
 
 app_name = "staff"
@@ -23,6 +25,17 @@ urlpatterns = [
     path("messages/<int:pk>/sender/", staff_views.contact_sender, name="contact_sender"),
     path("password/", staff.staff_required(
         staff.StaffPasswordChangeView.as_view()), name="password_change"),
+
+    # ------------------------------------------- the team mailbox (mailroom app)
+    # Fixed segments first: "new" and the numeric routes must not be read as
+    # a folder name by the last pattern.
+    path("mail/", mail_views.mail_list, name="mail"),
+    path("mail/new/", mail_views.mail_compose, name="mail_compose"),
+    path("mail/<int:pk>/", mail_views.mail_thread, name="mail_thread"),
+    path("mail/<int:pk>/do/", mail_views.mail_action, name="mail_action"),
+    path("mail/file/<int:pk>/", mail_views.mail_attachment, name="mail_attachment"),
+    path("mail/original/<int:pk>/", mail_views.mail_source, name="mail_source"),
+    path("mail/<slug:folder>/", mail_views.mail_list, name="mail_folder"),
 
     # ------------------------------------------------- content and submissions
     path("c/<slug:slug>/", staff_views.collection_list, name="list"),

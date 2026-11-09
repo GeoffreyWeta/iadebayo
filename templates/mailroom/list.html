@@ -1,0 +1,111 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One folder of the team mailbox. A row is a conversation, not a message: the
+  thread with one person reads as one line, newest activity first, and bold
+  while something in it has not been opened by anyone on the team.
+
+  Read/unread is shared, not per person. Seven people work this inbox, and
+  "someone has looked at this" is the useful fact; "I have looked at this"
+  would leave every message bold for six of them forever.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow">Email</p>
+    <h1>{{ title }}</h1>
+    <p class="staff-head-sub">{{ blurb }}</p>
+  </div>
+  <div class="head-actions">
+    <a class="staff-btn staff-btn-primary staff-btn-inline" href="{% url 'staff:mail_compose' %}">Write an email</a>
+  </div>
+</header>
+
+{% if not receiving and folder == "inbox" %}
+<p class="staff-caveat">
+  Receiving is not switched on yet, so replies are not arriving here. Sending
+  works. Setup is in docs/staff-mailbox.md: a Cloudflare Email Worker and
+  MAIL_INBOUND_SECRET in the server's .env.
+</p>
+{% endif %}
+
+<nav class="mail-tabs" aria-label="Mail folders">
+  {% for tab in tabs %}
+  <a href="{{ tab.url }}"{% if tab.key == folder %} aria-current="page" class="is-on"{% endif %}>
+    {{ tab.title }}{% if tab.key == "inbox" and mail_unread %} <span class="rail-badge">{{ mail_unread }}<span class="visually-hidden"> unread</span></span>{% endif %}
+  </a>
+  {% endfor %}
+</nav>
+
+<form method="get" class="filter-bar" role="search">
+  <div class="filter-search">
+    <label class="visually-hidden" for="q">Search {{ title|lower }}</label>
+    <input type="search" id="q" name="q" value="{{ query }}" placeholder="Search by name, address, subject or words…" autocomplete="off">
+  </div>
+  {% if folder == "inbox" %}
+  <label class="mail-unread-only">
+    <input type="checkbox" name="unread" value="1"{% if unread_only %} checked{% endif %} data-autosubmit>
+    Unread only
+  </label>
+  {% endif %}
+  <button type="submit" class="staff-btn staff-btn-quiet">Search</button>
+  {% if query or unread_only %}<a class="filter-clear" href="{{ request.path }}">Clear</a>{% endif %}
+</form>
+
+<p class="list-count">
+  {{ total }} conversation{{ total|pluralize }}{% if query %} matching “{{ query }}”{% endif %}
+  {% if page.paginator.num_pages > 1 %}· page {{ page.number }} of {{ page.paginator.num_pages }}{% endif %}
+</p>
+
+{% if rows %}
+<div class="card list-card">
+  <ul class="mail-list">
+    {% for row in rows %}
+    <li>
+      <a class="mail-row{% if row.unread and folder != 'sent' %} is-unread{% endif %}" href="{% url 'staff:mail_thread' row.pk %}">
+        <span class="mail-who">
+          {% if row.unread and folder != 'sent' %}<span class="mail-dot" aria-hidden="true"></span><span class="visually-hidden">Unread: </span>{% endif %}
+          {{ row.contact_label }}
+          {% if row.message_count > 1 %}<span class="mail-count">{{ row.message_count }}</span>{% endif %}
+        </span>
+        <span class="mail-what">
+          <span class="mail-subject">{{ row }}</span>
+          {% if row.snippet %}<span class="mail-snippet">{% if row.last_direction == "out" %}You: {% endif %}{{ row.snippet }}</span>{% endif %}
+        </span>
+        <span class="mail-when"><time datetime="{{ row.last_message_at|date:'c' }}">{{ row.when }}</time></span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+{% if pages.links %}
+<nav class="pager" aria-label="Pages">
+  {% if pages.prev %}<a class="pager-step" href="{{ pages.prev }}" rel="prev">← Previous</a>
+  {% else %}<span class="pager-step is-off">← Previous</span>{% endif %}
+  <span class="pager-nums">
+    {% for p in pages.links %}
+      {% if p.gap %}<span class="pager-gap">…</span>
+      {% elif p.current %}<span class="pager-num is-on" aria-current="page">{{ p.n }}</span>
+      {% else %}<a class="pager-num" href="{{ p.url }}">{{ p.n }}</a>{% endif %}
+    {% endfor %}
+  </span>
+  {% if pages.next %}<a class="pager-step" href="{{ pages.next }}" rel="next">Next →</a>
+  {% else %}<span class="pager-step is-off">Next →</span>{% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="card empty-card">
+  {% if query or unread_only %}
+  <p class="empty-lead">Nothing matches that.</p>
+  <p class="chart-note">Try fewer words, or <a href="{{ request.path }}">show everything in {{ title|lower }}</a>.</p>
+  {% elif folder == "inbox" %}
+  <p class="empty-lead">Nothing waiting.</p>
+  <p class="chart-note">Replies and new mail to the team's addresses arrive here.</p>
+  {% else %}
+  <p class="empty-lead">Nothing here.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -656,6 +656,12 @@ down to your machine:
 
     scp -r deploy@YOUR_IP:/srv/iadebayo/media ./media-backup
 
+Received staff mail and its attachments live in `/srv/iadebayo/private/mail`
+(see docs/staff-mailbox.md). It is outside git, so a deploy never touches it,
+and the database rows point at those files. Back the two up together:
+
+    scp -r deploy@YOUR_IP:/srv/iadebayo/private ./private-backup
+
 ### 10.3 fail2ban
 
     sudo apt install -y fail2ban

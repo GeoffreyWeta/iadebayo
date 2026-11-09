@@ -1,0 +1,172 @@
+{% extends "staff/manage_base.html" %}
+{% block main %}
+{% comment %}
+  One conversation: every message in order, then the reply box.
+
+  Received HTML is shown in a sandboxed frame and never as part of this page -
+  see mailroom/rendering.py. The sandbox grants no scripts, forms or top-level
+  navigation; allow-same-origin is there only so staff-mailbox.js can size the
+  frame to its content, which is safe precisely because nothing in the frame
+  can run.
+{% endcomment %}
+
+<header class="staff-head">
+  <div>
+    <p class="staff-eyebrow"><a href="{% url 'staff:mail' %}">Email</a> › <a href="{{ folder_url }}">{{ folder_title }}</a></p>
+    <h1>{{ conversation }}</h1>
+    <p class="staff-head-sub">
+      With <strong>{{ conversation.contact_label }}</strong>{% if conversation.contact_name and conversation.contact_email %} &lt;{{ conversation.contact_email }}&gt;{% endif %}
+      {% if conversation.mailbox %}· via {{ conversation.mailbox }}{% endif %}
+    </p>
+  </div>
+  <div class="head-actions mail-actions">
+    <form method="post" action="{% url 'staff:mail_action' conversation.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ here }}">
+      {% if conversation.archived or conversation.junk %}
+      <button type="submit" name="action" value="inbox" class="staff-btn staff-btn-quiet">Move to inbox</button>
+      {% else %}
+      <button type="submit" name="action" value="archive" class="staff-btn staff-btn-primary staff-btn-inline">Archive</button>
+      {% endif %}
+      {% if conversation.has_inbound %}
+      <button type="submit" name="action" value="unread" class="staff-btn staff-btn-quiet">Mark unread</button>
+      {% endif %}
+      {% if not conversation.junk %}
+      <button type="submit" name="action" value="junk" class="staff-btn staff-btn-quiet">Junk</button>
+      {% endif %}
+    </form>
+  </div>
+</header>
+
+{% if conversation.junk %}
+<p class="staff-caveat">
+  This conversation is in junk{% if sender_blocked %} because the sender is blocked{% else %} - it failed the sender's own domain checks or was moved here by hand{% endif %}.
+  Nothing in it is deleted. Use “Move to inbox” if it is genuine.
+</p>
+{% endif %}
+
+<div class="mail-layout">
+  <div class="mail-thread">
+    {% for item in items %}
+    {% with m=item.m %}
+    <article class="card mail-msg{% if m.is_inbound %} is-in{% else %} is-out{% endif %}"{% if forloop.last %} id="latest"{% endif %}>
+      <header class="mail-msg-head">
+        <div class="mail-msg-from">
+          <strong>{{ m.sender_label }}</strong>
+          {% if m.from_name %}<span class="mail-addr">&lt;{{ m.from_email }}&gt;</span>{% endif %}
+          <p class="mail-msg-to">
+            To {{ m.to|default:"(no visible recipients)" }}{% if m.cc %} · Cc {{ m.cc }}{% endif %}{% if m.bcc %} · Bcc {{ m.bcc }}{% endif %}
+          </p>
+        </div>
+        <div class="mail-msg-meta">
+          <time datetime="{{ m.sent_at|date:'c' }}">{{ m.sent_at|date:"j M Y, H:i" }}</time>
+          {% if m.is_inbound %}
+            {% if m.suspicious %}<span class="pill pill-wait" title="{{ m.auth_results }}">Failed sender checks</span>{% endif %}
+          {% elif m.sent_elsewhere %}
+            <span class="pill pill-wait">Sent from a mail app</span>
+          {% else %}
+            <span class="pill pill-good">Sent{% if m.sent_by %} by {{ m.sent_by.get_short_name|default:m.sent_by.get_username }}{% endif %}</span>
+          {% endif %}
+        </div>
+      </header>
+
+      {% if item.frame %}
+        {% if item.remote %}
+        <p class="mail-remote">Images from the internet are hidden, which also stops the sender seeing that this was opened.
+          <a href="?images={{ m.pk }}#latest">Show images in this message</a></p>
+        {% endif %}
+        <iframe class="mail-frame" title="Message from {{ m.sender_label }}" data-mail-frame
+                sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                referrerpolicy="no-referrer" srcdoc="{{ item.frame }}"></iframe>
+      {% elif item.paragraphs %}
+        <div class="mail-text">{% for paragraph in item.paragraphs %}<p>{% for part in paragraph %}{% if part.bold %}<strong>{{ part.text|linebreaksbr }}</strong>{% elif part.link %}<a href="{{ part.text }}" target="_blank" rel="noopener noreferrer">{{ part.text }}</a>{% else %}{{ part.text|linebreaksbr }}{% endif %}{% endfor %}</p>{% endfor %}</div>
+        {% if item.quoted %}
+        <details class="mail-quote">
+          <summary>Show the earlier message</summary>
+          <div class="mail-text">{{ item.quoted|linebreaks }}</div>
+        </details>
+        {% endif %}
+      {% else %}
+        <div class="mail-text">{{ item.fresh|default:"(no text)"|urlize|linebreaks }}</div>
+        {% if item.quoted %}
+        <details class="mail-quote">
+          <summary>Show the earlier message</summary>
+          <div class="mail-text">{{ item.quoted|linebreaks }}</div>
+        </details>
+        {% endif %}
+      {% endif %}
+
+      {% if item.attachments or m.raw %}
+      <footer class="mail-msg-foot">
+        {% if item.attachments %}
+        <ul class="mail-files">
+          {% for a in item.attachments %}
+          <li><a href="{% url 'staff:mail_attachment' a.pk %}">{{ a.filename }}</a> <span class="cell-none">{{ a.size|filesizeformat }}</span></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if m.raw %}
+        <a class="mail-source" href="{% url 'staff:mail_source' m.pk %}">Original{% if m.auth_results %} ({{ m.auth_results }}){% endif %}</a>
+        {% endif %}
+      </footer>
+      {% endif %}
+    </article>
+    {% endwith %}
+    {% endfor %}
+
+    <section class="card form-block mail-reply" id="reply">
+      <h2>Reply</h2>
+      <p class="chart-note">Goes to the people below, with their last message quoted underneath, and joins this conversation.</p>
+      <form method="post" enctype="multipart/form-data" class="staff-form edit-form" novalidate>
+        {% csrf_token %}
+        {% include "mailroom/_fields.html" %}
+        <div class="form-actions">
+          <button type="submit" class="staff-btn staff-btn-primary staff-btn-inline" data-mail-send>Send reply</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <aside class="mail-aside">
+    <section class="card detail-card">
+      <h2>On record</h2>
+      {% if records %}
+      <ul class="mail-records">
+        {% for r in records %}
+        <li><a href="{{ r.url }}">{{ r.title }}</a><span class="cell-none">{{ r.kind }}{% if r.created_at %} · {{ r.created_at|date:"j M Y" }}{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="chart-note">Nothing on the site from {{ conversation.contact_email|default:"this sender" }}: no application, message or sign-up.</p>
+      {% endif %}
+    </section>
+
+    {% if conversation.participant_list|length > 1 %}
+    <section class="card detail-card">
+      <h2>Everyone on this conversation</h2>
+      <ul class="mail-records">{% for p in conversation.participant_list %}<li>{{ p }}</li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+
+    {% if conversation.contact_email %}
+    <section class="card detail-card">
+      <h2>{% if sender_blocked %}Sender blocked{% else %}Unwanted mail?{% endif %}</h2>
+      <p class="chart-note">
+        {% if sender_blocked %}Mail from {{ conversation.contact_email }} goes straight to junk, and the contact form refuses them.
+        {% else %}Blocking sends future mail from {{ conversation.contact_email }} to junk and stops them using the contact form. Nothing is deleted.{% endif %}
+      </p>
+      <form method="post" action="{% url 'staff:mail_action' conversation.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ here }}">
+        {% if sender_blocked %}
+        <button type="submit" name="action" value="unblock" class="staff-btn staff-btn-quiet">Unblock sender</button>
+        {% else %}
+        <button type="submit" name="action" value="block" class="staff-btn staff-btn-quiet"
+                data-confirm="Block {{ conversation.contact_email }}? Their mail will go to junk.">Block sender</button>
+        {% endif %}
+      </form>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
